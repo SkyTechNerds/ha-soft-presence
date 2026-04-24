@@ -26,14 +26,13 @@ from .const import (
     CONF_WORKSTATION_ENTITIES,
     CONF_WORKSTATION_POWER_SENSORS,
     CONF_LLM_ENABLED,
-    CONF_LLM_PROVIDER,
-    CONF_LLM_API_KEY,
-    CONF_LLM_MODEL,
+    CONF_CONVERSATION_AGENT,
+    CONF_LLM_UPDATE_INTERVAL,
     DEFAULT_OCCUPIED_THRESHOLD,
     DEFAULT_CLEAR_THRESHOLD,
     DEFAULT_NO_PRESENCE_TIMEOUT,
     DEFAULT_MIN_HOLD_TIME,
-    LLM_PROVIDERS,
+    DEFAULT_LLM_UPDATE_INTERVAL,
 )
 
 _ROOM_TYPE_OPTIONS = [
@@ -46,11 +45,6 @@ _ROOM_TYPE_OPTIONS = [
     selector.SelectOptionDict(value="custom",    label="Benutzerdefiniert / Custom"),
 ]
 
-_LLM_PROVIDER_OPTIONS = [
-    selector.SelectOptionDict(value="ha_conversation", label="HA AI (Gemini / Ollama / …)"),
-    selector.SelectOptionDict(value="openai",          label="OpenAI API"),
-    selector.SelectOptionDict(value="gemini",          label="Google Gemini API"),
-]
 
 
 class SoftPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -231,11 +225,11 @@ class SoftPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     )
                 ),
                 vol.Optional(CONF_LLM_ENABLED, default=False): selector.BooleanSelector(),
-                vol.Optional(CONF_LLM_PROVIDER, default="ha_conversation"): selector.SelectSelector(
-                    selector.SelectSelectorConfig(options=_LLM_PROVIDER_OPTIONS)
+                vol.Optional(CONF_CONVERSATION_AGENT): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain=["conversation"])
                 ),
-                vol.Optional(CONF_LLM_API_KEY, default=""): selector.TextSelector(
-                    selector.TextSelectorConfig(type="password")
+                vol.Optional(CONF_LLM_UPDATE_INTERVAL, default=DEFAULT_LLM_UPDATE_INTERVAL): selector.NumberSelector(
+                    selector.NumberSelectorConfig(min=60, max=3600, step=60, unit_of_measurement="s", mode="box")
                 ),
             }),
         )
@@ -266,8 +260,8 @@ class SoftPresenceOptionsFlow(config_entries.OptionsFlow):
                 CONF_NO_PRESENCE_TIMEOUT: int(user_input[CONF_NO_PRESENCE_TIMEOUT]),
                 CONF_MIN_HOLD_TIME: int(user_input[CONF_MIN_HOLD_TIME]),
                 CONF_LLM_ENABLED: user_input.get(CONF_LLM_ENABLED, False),
-                CONF_LLM_PROVIDER: user_input.get(CONF_LLM_PROVIDER, "ha_conversation"),
-                CONF_LLM_API_KEY: user_input.get(CONF_LLM_API_KEY, ""),
+                CONF_CONVERSATION_AGENT: user_input.get(CONF_CONVERSATION_AGENT),
+                CONF_LLM_UPDATE_INTERVAL: int(user_input.get(CONF_LLM_UPDATE_INTERVAL, DEFAULT_LLM_UPDATE_INTERVAL)),
             })
             self.hass.config_entries.async_update_entry(self.config_entry, data=updated)
             return self.async_create_entry(title="", data={})
@@ -303,17 +297,14 @@ class SoftPresenceOptionsFlow(config_entries.OptionsFlow):
                     CONF_LLM_ENABLED,
                     default=data.get(CONF_LLM_ENABLED, False)
                 ): selector.BooleanSelector(),
-                vol.Optional(
-                    CONF_LLM_PROVIDER,
-                    default=data.get(CONF_LLM_PROVIDER, "ha_conversation")
-                ): selector.SelectSelector(
-                    selector.SelectSelectorConfig(options=_LLM_PROVIDER_OPTIONS)
+                vol.Optional(CONF_CONVERSATION_AGENT): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain=["conversation"])
                 ),
                 vol.Optional(
-                    CONF_LLM_API_KEY,
-                    default=data.get(CONF_LLM_API_KEY, "")
-                ): selector.TextSelector(
-                    selector.TextSelectorConfig(type="password")
+                    CONF_LLM_UPDATE_INTERVAL,
+                    default=data.get(CONF_LLM_UPDATE_INTERVAL, DEFAULT_LLM_UPDATE_INTERVAL)
+                ): selector.NumberSelector(
+                    selector.NumberSelectorConfig(min=60, max=3600, step=60, unit_of_measurement="s", mode="box")
                 ),
             }),
         )

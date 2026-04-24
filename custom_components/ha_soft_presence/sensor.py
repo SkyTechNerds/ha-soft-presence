@@ -7,7 +7,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, CONF_ROOM_NAME
+from .const import DOMAIN, CONF_ROOM_NAME, CONF_LLM_ENABLED, CONF_CONVERSATION_AGENT
 from .coordinator import SoftPresenceCoordinator, slugify
 
 
@@ -18,11 +18,21 @@ async def async_setup_entry(
 ) -> None:
     coordinator: SoftPresenceCoordinator = hass.data[DOMAIN][entry.entry_id]
     room_slug = slugify(entry.data.get(CONF_ROOM_NAME, "room"))
-    async_add_entities([
+
+    entities = [
         PresenceScoreSensor(coordinator, entry, room_slug),
         PresenceConfidenceSensor(coordinator, entry, room_slug),
         PresenceReasonSensor(coordinator, entry, room_slug),
-    ])
+    ]
+
+    if entry.data.get(CONF_LLM_ENABLED) and entry.data.get(CONF_CONVERSATION_AGENT):
+        entities += [
+            LLMScoreSensor(coordinator, entry, room_slug),
+            LLMConfidenceSensor(coordinator, entry, room_slug),
+            LLMReasonSensor(coordinator, entry, room_slug),
+        ]
+
+    async_add_entities(entities)
 
 
 class _BaseSensor(CoordinatorEntity[SoftPresenceCoordinator], SensorEntity):
@@ -128,4 +138,79 @@ class PresenceReasonSensor(_BaseSensor):
         return {
             "last_positive_signal": d.get("last_positive"),
             "active_sources": d.get("active_sources"),
+        }
+
+
+# ------------------------------------------------------------------
+# LLM advisory sensors
+# ------------------------------------------------------------------
+
+class LLMScoreSensor(_BaseSensor):
+    """LLM estimated presence score 0–100."""
+
+    _attr_native_unit_of_measurement = "%"
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_icon = "mdi:brain"
+
+    def __init__(self, coordinator, entry, room_slug):
+        super().__init__(
+            coordinator, entry, room_slug,
+            "Presence Score (LLM)", "presence_llm_score", "presence_llm_score"
+        )
+
+    @property
+    def native_value(self) -> int | None:
+        llm = self.coordinator.data.get("llm", {}) if self.coordinator.data else {}
+        return llm.get("score")
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        if not self.coordinator.data:
+            return {}
+        llm = self.coordinator.data.get("llm", {})
+        return {"last_updated": llm.get("last_updated")}
+
+
+class LLMConfidenceSensor(_BaseSensor):
+    """LLM confidence: high / medium / low."""
+
+    _attr_icon = "mdi:brain"
+
+    def __init__(self, coordinator, entry, room_slug):
+        super().__init__(
+            coordinator, entry, room_slug,
+            "Presence Confidence (LLM)", "presence_llm_confidence", "presence_llm_confidence"
+        )
+
+    @property
+    def native_value(self) -> str | None:
+        llm = self.coordinator.data.get("llm", {}) if self.coordinator.data else {}
+        return llm.get("confidence")
+
+
+class LLMReasonSensor(_BaseSensor):
+    """LLM explanation for its presence decision."""
+
+    _attr_icon = "mdi:comment-text-outline"
+
+    def __init__(self, coordinator, entry, room_slug):
+        super().__init__(
+            coordinator, entry, room_slug,
+            "Presence Reason (LLM)", "presence_llm_reason", "presence_llm_reason"
+        )
+
+    @property
+    def native_value(self) -> str | None:
+        llm = self.coordinator.data.get("llm", {}) if self.coordinator.data else {}
+        return llm.get("reason")
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        if not self.coordinator.data:
+            return {}
+        llm = self.coordinator.data.get("llm", {})
+        return {
+            "last_updated": llm.get("last_updated"),
+            "rule_score": self.coordinator.data.get("score"),
+            "rule_state": self.coordinator.data.get("state_machine"),
         }

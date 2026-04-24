@@ -29,9 +29,8 @@ CONF_CAMERA_ENTITIES = "camera_entities"
 
 # Config keys — LLM
 CONF_LLM_ENABLED = "llm_enabled"
-CONF_LLM_PROVIDER = "llm_provider"
-CONF_LLM_API_KEY = "llm_api_key"
-CONF_LLM_MODEL = "llm_model"
+CONF_CONVERSATION_AGENT = "conversation_agent"
+CONF_LLM_UPDATE_INTERVAL = "llm_update_interval"
 
 # Room types
 ROOM_TYPE_OFFICE = "office"
@@ -94,13 +93,5 @@ CONFIDENCE_HIGH = "high"
 CONFIDENCE_MEDIUM = "medium"
 CONFIDENCE_LOW = "low"
 
-# LLM providers
-LLM_PROVIDER_HA = "ha_conversation"
-LLM_PROVIDER_OPENAI = "openai"
-LLM_PROVIDER_GEMINI = "gemini"
-
-LLM_PROVIDERS = [
-    LLM_PROVIDER_HA,
-    LLM_PROVIDER_OPENAI,
-    LLM_PROVIDER_GEMINI,
-]
+# LLM defaults
+DEFAULT_LLM_UPDATE_INTERVAL = 300  # seconds between LLM calls (5 min default)

@@ -1,7 +1,8 @@
-"""Coordinator for HA Soft Presence — score engine + state machine."""
+"""Coordinator for HA Soft Presence — score engine + state machine + LLM advisory."""
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import re
 import time
@@ -16,6 +17,9 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from .const import (
     DOMAIN,
     CONF_ROOM_NAME,
+    CONF_ROOM_TYPE,
+    CONF_HAS_DOOR,
+    CONF_IS_TRANSIT,
     CONF_OCCUPIED_THRESHOLD,
     CONF_CLEAR_THRESHOLD,
     CONF_NO_PRESENCE_TIMEOUT,
@@ -30,6 +34,9 @@ from .const import (
     CONF_SWITCH_ENTITIES,
     CONF_WORKSTATION_ENTITIES,
     CONF_WORKSTATION_POWER_SENSORS,
+    CONF_LLM_ENABLED,
+    CONF_CONVERSATION_AGENT,
+    CONF_LLM_UPDATE_INTERVAL,
     SM_CLEAR,
     SM_POSSIBLE_ENTRY,
     SM_OCCUPIED,
@@ -49,13 +56,13 @@ from .const import (
     DECAY_PIR,
     DECAY_DOOR,
     DECAY_LOCK,
-    DECAY_LIGHT,
     WORKSTATION_POWER_THRESHOLD_W,
     DEFAULT_OCCUPIED_THRESHOLD,
     DEFAULT_CLEAR_THRESHOLD,
     DEFAULT_NO_PRESENCE_TIMEOUT,
     DEFAULT_MIN_HOLD_TIME,
     DEFAULT_POLL_INTERVAL,
+    DEFAULT_LLM_UPDATE_INTERVAL,
     CONFIDENCE_HIGH,
     CONFIDENCE_MEDIUM,
     CONFIDENCE_LOW,
@@ -76,9 +83,28 @@ _SOURCE_LABELS: dict[str, str] = {
     "lock_recent": "Lock recently used",
 }
 
+_LLM_PROMPT = """\
+You are a home presence detection system. Based on the sensor events below, \
+decide if the room is currently occupied. Be concise and output JSON only.
+
+Room: {room_name}
+Type: {room_type}
+Has door: {has_door}
+Is transit room: {is_transit}
+
+Recent sensor events (age_sec = seconds ago, 0 = just now):
+{events}
+
+Rule engine result: score={rule_score}/100, state={rule_state}
+
+Respond with this exact JSON and nothing else:
+{{"occupied": true, "score": 75, "confidence": "high", "reason": "brief explanation"}}
+"""
+
+_MAX_EVENT_LOG = 30
+
 
 def slugify(text: str) -> str:
-    """Convert a room name to a safe entity slug."""
     text = text.lower().strip()
     text = re.sub(r"[^a-z0-9]+", "_", text)
     return text.strip("_")
@@ -92,7 +118,7 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.config = entry.data
         self.room_slug = slugify(entry.data.get(CONF_ROOM_NAME, "room"))
 
-        # Timestamps for decaying events
+        # Decaying event timestamps
         self._last_event: dict[str, float] = {}
 
         # State machine
@@ -102,10 +128,18 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._clear_pending_start: float | None = None
         self._clear_pending_timeout: float = 0.0
 
-        # Current computed values
+        # Rule engine output
         self._score: int = 0
         self._active_sources: list[str] = []
         self._reason: str = ""
+
+        # Event log for LLM (anonymised)
+        self._event_log: list[dict[str, Any]] = []
+
+        # LLM state
+        self._llm_last_called: float = 0.0
+        self._llm_last_event_count: int = 0  # track new events since last LLM call
+        self._llm_data: dict[str, Any] = {}
 
         self._unsubs: list = []
 
@@ -121,7 +155,6 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     # ------------------------------------------------------------------
 
     async def async_setup(self) -> None:
-        """Subscribe to all configured entity state changes."""
         entities = self._all_entity_ids()
         if entities:
             unsub = async_track_state_change_event(
@@ -129,43 +162,36 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             )
             self._unsubs.append(unsub)
         _LOGGER.debug(
-            "Soft Presence [%s]: watching %d entities",
+            "Soft Presence [%s]: watching %d entities, LLM=%s",
             self.config.get(CONF_ROOM_NAME),
             len(entities),
+            self.config.get(CONF_LLM_ENABLED, False),
         )
 
     def async_teardown(self) -> None:
-        """Remove listeners and cancel pending tasks."""
         for unsub in self._unsubs:
             unsub()
         self._unsubs.clear()
         self._cancel_clear_pending()
 
     # ------------------------------------------------------------------
-    # Entity listeners
+    # Entity helpers
     # ------------------------------------------------------------------
 
     def _all_entity_ids(self) -> list[str]:
         sensors = self.config.get("sensors", {})
         ids: list[str] = []
         for key in (
-            CONF_MMWAVE_SENSORS,
-            CONF_PIR_SENSORS,
-            CONF_DOOR_SENSORS,
-            CONF_WINDOW_SENSORS,
-            CONF_LOCK_ENTITIES,
-            CONF_MEDIA_PLAYERS,
-            CONF_LIGHT_ENTITIES,
-            CONF_SWITCH_ENTITIES,
-            CONF_WORKSTATION_ENTITIES,
-            CONF_WORKSTATION_POWER_SENSORS,
+            CONF_MMWAVE_SENSORS, CONF_PIR_SENSORS, CONF_DOOR_SENSORS,
+            CONF_WINDOW_SENSORS, CONF_LOCK_ENTITIES, CONF_MEDIA_PLAYERS,
+            CONF_LIGHT_ENTITIES, CONF_SWITCH_ENTITIES,
+            CONF_WORKSTATION_ENTITIES, CONF_WORKSTATION_POWER_SENSORS,
         ):
             ids.extend(sensors.get(key, []))
         return ids
 
     @callback
     def _on_entity_changed(self, event: Event) -> None:
-        """Record event timestamps and trigger a refresh."""
         entity_id: str = event.data["entity_id"]
         new_state = event.data.get("new_state")
         if new_state is None:
@@ -173,21 +199,35 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         sensors = self.config.get("sensors", {})
         now = time.time()
+        state = new_state.state
 
-        if entity_id in sensors.get(CONF_DOOR_SENSORS, []):
-            if new_state.state == "on":
-                self._last_event["door"] = now
-                _LOGGER.debug("Door opened: %s", entity_id)
-
-        if entity_id in sensors.get(CONF_LOCK_ENTITIES, []):
-            if new_state.state in ("unlocked", "unlocking"):
-                self._last_event["lock"] = now
-
-        if entity_id in sensors.get(CONF_PIR_SENSORS, []):
-            if new_state.state == "on":
+        if entity_id in sensors.get(CONF_MMWAVE_SENSORS, []):
+            self._record_event(f"mmwave_{'on' if state == 'on' else 'off'}", now)
+        elif entity_id in sensors.get(CONF_PIR_SENSORS, []):
+            if state == "on":
                 self._last_event["pir"] = now
+            self._record_event(f"pir_{'on' if state == 'on' else 'off'}", now)
+        elif entity_id in sensors.get(CONF_DOOR_SENSORS, []):
+            if state == "on":
+                self._last_event["door"] = now
+            self._record_event(f"door_{'opened' if state == 'on' else 'closed'}", now)
+        elif entity_id in sensors.get(CONF_LOCK_ENTITIES, []):
+            if state in ("unlocked", "unlocking"):
+                self._last_event["lock"] = now
+            self._record_event(f"lock_{state}", now)
+        elif entity_id in sensors.get(CONF_MEDIA_PLAYERS, []):
+            self._record_event(f"media_{state}", now)
+        elif entity_id in sensors.get(CONF_LIGHT_ENTITIES, []) + sensors.get(CONF_SWITCH_ENTITIES, []):
+            self._record_event(f"light_{'on' if state == 'on' else 'off'}", now)
+        elif entity_id in sensors.get(CONF_WORKSTATION_ENTITIES, []):
+            self._record_event(f"workstation_{'on' if state == 'on' else 'off'}", now)
 
         self.hass.async_create_task(self.async_request_refresh())
+
+    def _record_event(self, event_type: str, timestamp: float) -> None:
+        self._event_log.append({"type": event_type, "ts": timestamp})
+        if len(self._event_log) > _MAX_EVENT_LOG:
+            self._event_log = self._event_log[-_MAX_EVENT_LOG:]
 
     # ------------------------------------------------------------------
     # Core update
@@ -196,6 +236,14 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _async_update_data(self) -> dict[str, Any]:
         self._recalculate_score()
         self._run_state_machine()
+
+        if self.config.get(CONF_LLM_ENABLED) and self.config.get(CONF_CONVERSATION_AGENT):
+            interval = int(self.config.get(CONF_LLM_UPDATE_INTERVAL, DEFAULT_LLM_UPDATE_INTERVAL))
+            new_events = len(self._event_log) > self._llm_last_event_count
+            time_elapsed = (time.time() - self._llm_last_called) >= interval
+            if new_events and time_elapsed:
+                await self._async_call_llm()
+
         return self._build_data()
 
     # ------------------------------------------------------------------
@@ -208,7 +256,6 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         now = time.time()
         sensors = self.config.get("sensors", {})
 
-        # mmWave — highest weight, real-time
         for eid in sensors.get(CONF_MMWAVE_SENSORS, []):
             st = self.hass.states.get(eid)
             if st and st.state == "on":
@@ -216,7 +263,6 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 sources.append("mmwave")
                 break
 
-        # PIR — real-time + decaying residual
         pir_active = False
         for eid in sensors.get(CONF_PIR_SENSORS, []):
             st = self.hass.states.get(eid)
@@ -226,15 +272,13 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 pir_active = True
                 break
         if not pir_active:
-            last_pir = self._last_event.get("pir", 0)
-            age = now - last_pir
+            age = now - self._last_event.get("pir", 0)
             if age < DECAY_PIR:
-                contribution = int(WEIGHT_PIR_RECENT * (1.0 - age / DECAY_PIR))
-                if contribution > 0:
-                    score += contribution
+                c = int(WEIGHT_PIR_RECENT * (1.0 - age / DECAY_PIR))
+                if c > 0:
+                    score += c
                     sources.append("pir_recent")
 
-        # Media player
         for eid in sensors.get(CONF_MEDIA_PLAYERS, []):
             st = self.hass.states.get(eid)
             if st:
@@ -247,7 +291,6 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     sources.append("media_paused")
                     break
 
-        # Workstation — binary sensor (e.g., PC online)
         for eid in sensors.get(CONF_WORKSTATION_ENTITIES, []):
             st = self.hass.states.get(eid)
             if st and st.state == "on":
@@ -255,7 +298,6 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 sources.append("workstation")
                 break
 
-        # Workstation — power sensor
         for eid in sensors.get(CONF_WORKSTATION_POWER_SENSORS, []):
             st = self.hass.states.get(eid)
             if st:
@@ -267,16 +309,14 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 except (ValueError, TypeError):
                     pass
 
-        # Lights / switches on
-        light_sources = sensors.get(CONF_LIGHT_ENTITIES, []) + sensors.get(CONF_SWITCH_ENTITIES, [])
-        for eid in light_sources:
+        lights = sensors.get(CONF_LIGHT_ENTITIES, []) + sensors.get(CONF_SWITCH_ENTITIES, [])
+        for eid in lights:
             st = self.hass.states.get(eid)
             if st and st.state == "on":
                 score += WEIGHT_LIGHT_MANUAL
                 sources.append("light_manual")
                 break
 
-        # Door recently opened (decaying)
         door_age = now - self._last_event.get("door", 0)
         if door_age < DECAY_DOOR:
             c = int(WEIGHT_DOOR_OPENED * (1.0 - door_age / DECAY_DOOR))
@@ -284,7 +324,6 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 score += c
                 sources.append("door_recent")
 
-        # Lock recently used (decaying)
         lock_age = now - self._last_event.get("lock", 0)
         if lock_age < DECAY_LOCK:
             c = int(WEIGHT_LOCK_UNLOCKED * (1.0 - lock_age / DECAY_LOCK))
@@ -294,38 +333,22 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         self._score = min(100, max(0, score))
         self._active_sources = list(dict.fromkeys(sources))
-        self._reason = self._build_reason()
-
-    def _build_reason(self) -> str:
-        if not self._active_sources:
-            return "No active signals"
-        return " + ".join(_SOURCE_LABELS.get(s, s) for s in self._active_sources)
+        self._reason = " + ".join(_SOURCE_LABELS.get(s, s) for s in self._active_sources) or "No active signals"
 
     # ------------------------------------------------------------------
     # State machine
     # ------------------------------------------------------------------
 
     def _run_state_machine(self) -> None:
-        occupied_threshold = int(
-            self.config.get(CONF_OCCUPIED_THRESHOLD, DEFAULT_OCCUPIED_THRESHOLD)
-        )
-        clear_threshold = int(
-            self.config.get(CONF_CLEAR_THRESHOLD, DEFAULT_CLEAR_THRESHOLD)
-        )
-        timeout = float(
-            self.config.get(CONF_NO_PRESENCE_TIMEOUT, DEFAULT_NO_PRESENCE_TIMEOUT)
-        )
+        occupied_threshold = int(self.config.get(CONF_OCCUPIED_THRESHOLD, DEFAULT_OCCUPIED_THRESHOLD))
+        clear_threshold = int(self.config.get(CONF_CLEAR_THRESHOLD, DEFAULT_CLEAR_THRESHOLD))
+        timeout = float(self.config.get(CONF_NO_PRESENCE_TIMEOUT, DEFAULT_NO_PRESENCE_TIMEOUT))
         min_hold = float(self.config.get(CONF_MIN_HOLD_TIME, DEFAULT_MIN_HOLD_TIME))
         now = time.time()
 
         if self._score >= occupied_threshold:
-            # Strong signal → immediately OCCUPIED
             if self._sm_state != SM_OCCUPIED:
-                _LOGGER.debug(
-                    "[%s] → OCCUPIED (score=%d)",
-                    self.config.get(CONF_ROOM_NAME),
-                    self._score,
-                )
+                _LOGGER.debug("[%s] → OCCUPIED (score=%d)", self.config.get(CONF_ROOM_NAME), self._score)
                 self._sm_state = SM_OCCUPIED
                 self._occupied_since = now
                 self._cancel_clear_pending()
@@ -336,32 +359,15 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 if held >= min_hold:
                     self._sm_state = SM_CLEAR_PENDING
                     self._schedule_clear(timeout)
-                    _LOGGER.debug(
-                        "[%s] → CLEAR_PENDING (score=%d, timeout=%.0fs)",
-                        self.config.get(CONF_ROOM_NAME),
-                        self._score,
-                        timeout,
-                    )
-
             elif self._sm_state in (SM_POSSIBLE_ENTRY, SM_LIKELY_OCCUPIED, SM_POSSIBLE_EXIT):
                 self._sm_state = SM_CLEAR_PENDING
                 self._schedule_clear(timeout)
 
-            # SM_CLEAR and SM_CLEAR_PENDING: no change, timer handles transition
-
         else:
-            # Hysteresis zone (between thresholds)
             if self._sm_state == SM_CLEAR_PENDING:
-                # Score rose back — cancel pending clear, stay occupied
                 self._cancel_clear_pending()
                 self._sm_state = SM_OCCUPIED
-                _LOGGER.debug(
-                    "[%s] CLEAR_PENDING → OCCUPIED (score recovered to %d)",
-                    self.config.get(CONF_ROOM_NAME),
-                    self._score,
-                )
             elif self._sm_state == SM_CLEAR:
-                # Score crept up but not past threshold — possible entry
                 self._sm_state = SM_POSSIBLE_ENTRY
 
     def _schedule_clear(self, timeout: float) -> None:
@@ -381,17 +387,74 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _async_clear_after_timeout(self, timeout: float) -> None:
         await asyncio.sleep(timeout)
         if self._sm_state == SM_CLEAR_PENDING:
-            occupied_threshold = int(
-                self.config.get(CONF_OCCUPIED_THRESHOLD, DEFAULT_OCCUPIED_THRESHOLD)
-            )
+            occupied_threshold = int(self.config.get(CONF_OCCUPIED_THRESHOLD, DEFAULT_OCCUPIED_THRESHOLD))
             if self._score < occupied_threshold:
                 self._sm_state = SM_CLEAR
                 self._occupied_since = None
-                _LOGGER.debug(
-                    "[%s] → CLEAR (timeout expired)",
-                    self.config.get(CONF_ROOM_NAME),
-                )
+                _LOGGER.debug("[%s] → CLEAR (timeout expired)", self.config.get(CONF_ROOM_NAME))
                 await self.async_request_refresh()
+
+    # ------------------------------------------------------------------
+    # LLM advisory
+    # ------------------------------------------------------------------
+
+    async def _async_call_llm(self) -> None:
+        agent_id = self.config.get(CONF_CONVERSATION_AGENT)
+        if not agent_id:
+            return
+
+        self._llm_last_called = time.time()
+        self._llm_last_event_count = len(self._event_log)
+        now = self._llm_last_called
+
+        events_text = "\n".join(
+            f"  - {e['type']}: {int(now - e['ts'])}s ago"
+            for e in self._event_log[-20:]
+        ) or "  (no events recorded)"
+
+        prompt = _LLM_PROMPT.format(
+            room_name=self.config.get(CONF_ROOM_NAME, "room"),
+            room_type=self.config.get(CONF_ROOM_TYPE, "unknown"),
+            has_door=self.config.get(CONF_HAS_DOOR, True),
+            is_transit=self.config.get(CONF_IS_TRANSIT, False),
+            events=events_text,
+            rule_score=self._score,
+            rule_state=self._sm_state,
+        )
+
+        try:
+            from homeassistant.components.conversation import async_converse
+            from homeassistant.core import Context
+
+            result = await async_converse(
+                hass=self.hass,
+                text=prompt,
+                conversation_id=None,
+                context=Context(),
+                agent_id=agent_id,
+            )
+            speech = result.response.speech.get("plain", {}).get("speech", "")
+            self._parse_llm_response(speech)
+        except Exception as err:
+            _LOGGER.warning("[%s] LLM call failed: %s", self.config.get(CONF_ROOM_NAME), err)
+
+    def _parse_llm_response(self, text: str) -> None:
+        match = re.search(r"\{[^{}]+\}", text, re.DOTALL)
+        if not match:
+            _LOGGER.debug("No JSON found in LLM response: %.200s", text)
+            return
+        try:
+            data = json.loads(match.group())
+            self._llm_data = {
+                "occupied": bool(data.get("occupied", False)),
+                "score": max(0, min(100, int(data.get("score", 0)))),
+                "confidence": str(data.get("confidence", "low")),
+                "reason": str(data.get("reason", "")),
+                "last_updated": datetime.now(tz=timezone.utc).isoformat(),
+            }
+            _LOGGER.debug("[%s] LLM: %s", self.config.get(CONF_ROOM_NAME), self._llm_data)
+        except (json.JSONDecodeError, ValueError, TypeError) as err:
+            _LOGGER.warning("[%s] LLM parse error: %s — raw: %.200s", self.config.get(CONF_ROOM_NAME), err, text)
 
     # ------------------------------------------------------------------
     # Data output
@@ -409,9 +472,7 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         last_positive = None
         if self._occupied_since:
-            last_positive = datetime.fromtimestamp(
-                self._occupied_since, tz=timezone.utc
-            ).isoformat()
+            last_positive = datetime.fromtimestamp(self._occupied_since, tz=timezone.utc).isoformat()
 
         timeout_remaining = None
         if self._sm_state == SM_CLEAR_PENDING and self._clear_pending_start:
@@ -419,6 +480,7 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             timeout_remaining = max(0, int(self._clear_pending_timeout - elapsed))
 
         return {
+            # Rule engine
             "occupied": occupied,
             "score": self._score,
             "confidence": confidence,
@@ -428,4 +490,7 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "last_positive": last_positive,
             "timeout_remaining": timeout_remaining,
             "room_name": self.config.get(CONF_ROOM_NAME, ""),
+            # LLM advisory
+            "llm_enabled": bool(self.config.get(CONF_LLM_ENABLED)),
+            "llm": self._llm_data,
         }

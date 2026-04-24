@@ -1,0 +1,67 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Room Setup",
+        "description": "Configure the basic properties of the room.",
+        "data": {
+          "room_name": "Room Name",
+          "room_type": "Room Type",
+          "has_door": "Room has door(s)",
+          "is_transit": "Is a transit room (hallway, corridor)"
+        }
+      },
+      "presence_sensors": {
+        "title": "Presence Sensors",
+        "description": "Select mmWave and PIR sensors for this room. mmWave sensors are strongly preferred — they detect still persons.",
+        "data": {
+          "mmwave_sensors": "mmWave / Radar Sensors",
+          "pir_sensors": "PIR / Motion Sensors"
+        }
+      },
+      "context_sensors": {
+        "title": "Context Sensors",
+        "description": "These sensors provide supporting signals. None are required.",
+        "data": {
+          "door_sensors": "Door Contacts",
+          "window_sensors": "Window Contacts",
+          "lock_entities": "Smart Locks",
+          "media_players": "Media Players (TV, Speaker, …)",
+          "light_entities": "Light Entities",
+          "switch_entities": "Switch Entities",
+          "workstation_entities": "Workstation / PC (binary sensor)",
+          "workstation_power_sensors": "Workstation Power Consumption (W)"
+        }
+      },
+      "thresholds": {
+        "title": "Thresholds & LLM",
+        "description": "Score thresholds control sensitivity. LLM support is optional and disabled by default.",
+        "data": {
+          "occupied_threshold": "Occupied Threshold (score ≥ → occupied)",
+          "clear_threshold": "Clear Threshold (score ≤ → start timeout)",
+          "no_presence_timeout": "No-Presence Timeout (s)",
+          "min_hold_time": "Minimum Hold Time (s)",
+          "llm_enabled": "Enable LLM Advisory (optional)",
+          "llm_provider": "LLM Provider",
+          "llm_api_key": "LLM API Key (if required)"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Edit Room Settings",
+        "data": {
+          "occupied_threshold": "Occupied Threshold",
+          "clear_threshold": "Clear Threshold",
+          "no_presence_timeout": "No-Presence Timeout (s)",
+          "min_hold_time": "Minimum Hold Time (s)",
+          "llm_enabled": "Enable LLM Advisory",
+          "llm_provider": "LLM Provider",
+          "llm_api_key": "LLM API Key"
+        }
+      }
+    }
+  }
+}

@@ -172,6 +172,19 @@ Supported providers: **HA AI (Gemini, Ollama, …)**, OpenAI, Google Gemini dire
 
 ---
 
+## Roadmap
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Camera / Frigate support | planned | Dedicated sensor slot for Frigate person-detection binary sensors; own score weight (~65) distinct from PIR |
+| Camera snapshot + Vision LLM | planned | Send camera snapshot to vision-capable LLM for room analysis; opt-in, privacy-first |
+| Area auto-fill (UI) | ✅ done | Entity selectors pre-filled from matching HA area on setup |
+| LLM initial evaluation | ✅ done | LLM runs once on startup, not only on new sensor events |
+| Multi-language (DE/EN) | ✅ done | Full translation of UI steps and entity names |
+| Options flow | ✅ done | Full reconfiguration without deleting the integration |
+
+---
+
 ## License
 
 MIT — private use, no warranty.

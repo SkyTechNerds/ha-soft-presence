@@ -4,7 +4,7 @@ from __future__ import annotations
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import area_registry as ar, entity_registry as er, selector
+from homeassistant.helpers import area_registry as ar, device_registry as dr, entity_registry as er, selector
 
 from .const import (
     DOMAIN,
@@ -67,16 +67,30 @@ def _area_entities(
     domains: list[str],
     device_classes: list[str] | None = None,
 ) -> list[str]:
-    """Return enabled, non-hidden entity IDs in area matching domain and optional device classes."""
+    """Return enabled, non-hidden entity IDs in area matching domain and optional device classes.
+
+    Checks both entity-level area assignment and device-level area assignment,
+    since most users assign devices (not individual entities) to areas.
+    """
     ent_reg = er.async_get(hass)
+    dev_reg = dr.async_get(hass)
     result: list[str] = []
     for entry in ent_reg.entities.values():
-        if entry.area_id != area_id:
-            continue
         if entry.disabled_by is not None or entry.hidden_by is not None:
             continue
         if entry.entity_id.split(".")[0] not in domains:
             continue
+
+        # Resolve area: entity-level takes precedence, fall back to device-level
+        effective_area = entry.area_id
+        if effective_area is None and entry.device_id:
+            device = dev_reg.async_get(entry.device_id)
+            if device:
+                effective_area = device.area_id
+
+        if effective_area != area_id:
+            continue
+
         if device_classes is not None:
             dc = entry.device_class or entry.original_device_class
             if dc not in device_classes:

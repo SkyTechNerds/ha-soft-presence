@@ -232,15 +232,21 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     # ------------------------------------------------------------------
 
     async def _async_update_data(self) -> dict[str, Any]:
-        self._recalculate_score()
-        self._run_state_machine()
+        try:
+            self._recalculate_score()
+            self._run_state_machine()
+        except Exception as err:
+            _LOGGER.error("[%s] Score/state error: %s", self.config.get(CONF_ROOM_NAME), err)
 
         if self.config.get(CONF_LLM_ENABLED) and self.config.get(CONF_CONVERSATION_AGENT):
             interval = int(self.config.get(CONF_LLM_UPDATE_INTERVAL, DEFAULT_LLM_UPDATE_INTERVAL))
             new_events = len(self._event_log) > self._llm_last_event_count
             time_elapsed = (time.time() - self._llm_last_called) >= interval
             if new_events and time_elapsed:
-                await self._async_call_llm()
+                try:
+                    await self._async_call_llm()
+                except Exception as err:
+                    _LOGGER.warning("[%s] LLM call error: %s", self.config.get(CONF_ROOM_NAME), err)
 
         return self._build_data()
 

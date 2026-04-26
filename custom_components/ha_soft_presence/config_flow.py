@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.helpers import selector
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers import area_registry as ar, entity_registry as er, selector
 
 from .const import (
     DOMAIN,
@@ -23,6 +24,8 @@ from .const import (
     CONF_LIGHT_ENTITIES,
     CONF_SWITCH_ENTITIES,
     CONF_WORKSTATION_SENSORS,
+    CONF_WORKSTATION_ENTITIES,
+    CONF_WORKSTATION_POWER_SENSORS,
     CONF_LLM_ENABLED,
     CONF_CONVERSATION_AGENT,
     CONF_LLM_UPDATE_INTERVAL,
@@ -34,6 +37,49 @@ from .const import (
 )
 
 
+# ------------------------------------------------------------------
+# Area helpers
+# ------------------------------------------------------------------
+
+def _find_area_id(hass: HomeAssistant, room_name: str) -> str | None:
+    """Return the first area whose name matches room_name (case-insensitive, partial ok)."""
+    area_reg = ar.async_get(hass)
+    name = room_name.lower().strip()
+    # Exact match wins
+    for area in area_reg.async_list_areas():
+        if area.name.lower().strip() == name:
+            return area.id
+    # Substring match as fallback
+    for area in area_reg.async_list_areas():
+        area_lower = area.name.lower().strip()
+        if name in area_lower or area_lower in name:
+            return area.id
+    return None
+
+
+def _area_entities(
+    hass: HomeAssistant,
+    area_id: str,
+    domains: list[str],
+    device_classes: list[str] | None = None,
+) -> list[str]:
+    """Return enabled, non-hidden entity IDs in area matching domain and optional device classes."""
+    ent_reg = er.async_get(hass)
+    result: list[str] = []
+    for entry in ent_reg.entities.values():
+        if entry.area_id != area_id:
+            continue
+        if entry.disabled_by is not None or entry.hidden_by is not None:
+            continue
+        if entry.entity_id.split(".")[0] not in domains:
+            continue
+        if device_classes is not None:
+            dc = entry.device_class or entry.original_device_class
+            if dc not in device_classes:
+                continue
+        result.append(entry.entity_id)
+    return sorted(result)
+
 
 class SoftPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Multi-step config flow: room → sensors → thresholds → LLM."""
@@ -42,6 +88,7 @@ class SoftPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     def __init__(self) -> None:
         self._data: dict = {}
+        self._area_id: str | None = None
 
     # ------------------------------------------------------------------
     # Step 1: Room basics
@@ -50,6 +97,7 @@ class SoftPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, user_input=None):
         if user_input is not None:
             self._data.update(user_input)
+            self._area_id = _find_area_id(self.hass, user_input[CONF_ROOM_NAME])
             return await self.async_step_presence_sensors()
 
         return self.async_show_form(
@@ -74,16 +122,23 @@ class SoftPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             })
             return await self.async_step_context_sensors()
 
+        mmwave_default: list[str] = []
+        pir_default: list[str] = []
+        if self._area_id:
+            mmwave_default = _area_entities(
+                self.hass, self._area_id, ["binary_sensor"], ["occupancy"]
+            )
+            pir_default = _area_entities(
+                self.hass, self._area_id, ["binary_sensor"], ["motion", "occupancy"]
+            )
+
         return self.async_show_form(
             step_id="presence_sensors",
             data_schema=vol.Schema({
-                vol.Optional(CONF_MMWAVE_SENSORS, default=[]): selector.EntitySelector(
-                    selector.EntitySelectorConfig(
-                        domain=["binary_sensor"],
-                        multiple=True,
-                    )
+                vol.Optional(CONF_MMWAVE_SENSORS, default=mmwave_default): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain=["binary_sensor"], multiple=True)
                 ),
-                vol.Optional(CONF_PIR_SENSORS, default=[]): selector.EntitySelector(
+                vol.Optional(CONF_PIR_SENSORS, default=pir_default): selector.EntitySelector(
                     selector.EntitySelectorConfig(
                         domain=["binary_sensor"],
                         device_class=["motion", "occupancy"],
@@ -110,51 +165,51 @@ class SoftPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             })
             return await self.async_step_thresholds()
 
+        doors: list[str] = []
+        windows: list[str] = []
+        locks: list[str] = []
+        media: list[str] = []
+        lights: list[str] = []
+        switches: list[str] = []
+        workstation: list[str] = []
+
+        if self._area_id:
+            doors = _area_entities(self.hass, self._area_id, ["binary_sensor"], ["door"])
+            windows = _area_entities(self.hass, self._area_id, ["binary_sensor"], ["window"])
+            locks = _area_entities(self.hass, self._area_id, ["lock"])
+            media = _area_entities(self.hass, self._area_id, ["media_player"])
+            lights = _area_entities(self.hass, self._area_id, ["light"])
+            switches = _area_entities(self.hass, self._area_id, ["switch"])
+            workstation = _area_entities(self.hass, self._area_id, ["sensor"], ["power"])
+
         return self.async_show_form(
             step_id="context_sensors",
             data_schema=vol.Schema({
-                vol.Optional(CONF_DOOR_SENSORS, default=[]): selector.EntitySelector(
+                vol.Optional(CONF_DOOR_SENSORS, default=doors): selector.EntitySelector(
                     selector.EntitySelectorConfig(
-                        domain=["binary_sensor"],
-                        device_class=["door"],
-                        multiple=True,
+                        domain=["binary_sensor"], device_class=["door"], multiple=True
                     )
                 ),
-                vol.Optional(CONF_WINDOW_SENSORS, default=[]): selector.EntitySelector(
+                vol.Optional(CONF_WINDOW_SENSORS, default=windows): selector.EntitySelector(
                     selector.EntitySelectorConfig(
-                        domain=["binary_sensor"],
-                        device_class=["window"],
-                        multiple=True,
+                        domain=["binary_sensor"], device_class=["window"], multiple=True
                     )
                 ),
-                vol.Optional(CONF_LOCK_ENTITIES, default=[]): selector.EntitySelector(
-                    selector.EntitySelectorConfig(
-                        domain=["lock"],
-                        multiple=True,
-                    )
+                vol.Optional(CONF_LOCK_ENTITIES, default=locks): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain=["lock"], multiple=True)
                 ),
-                vol.Optional(CONF_MEDIA_PLAYERS, default=[]): selector.EntitySelector(
-                    selector.EntitySelectorConfig(
-                        domain=["media_player"],
-                        multiple=True,
-                    )
+                vol.Optional(CONF_MEDIA_PLAYERS, default=media): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain=["media_player"], multiple=True)
                 ),
-                vol.Optional(CONF_LIGHT_ENTITIES, default=[]): selector.EntitySelector(
-                    selector.EntitySelectorConfig(
-                        domain=["light"],
-                        multiple=True,
-                    )
+                vol.Optional(CONF_LIGHT_ENTITIES, default=lights): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain=["light"], multiple=True)
                 ),
-                vol.Optional(CONF_SWITCH_ENTITIES, default=[]): selector.EntitySelector(
-                    selector.EntitySelectorConfig(
-                        domain=["switch"],
-                        multiple=True,
-                    )
+                vol.Optional(CONF_SWITCH_ENTITIES, default=switches): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain=["switch"], multiple=True)
                 ),
-                vol.Optional(CONF_WORKSTATION_SENSORS, default=[]): selector.EntitySelector(
+                vol.Optional(CONF_WORKSTATION_SENSORS, default=workstation): selector.EntitySelector(
                     selector.EntitySelectorConfig(
-                        domain=["binary_sensor", "sensor"],
-                        multiple=True,
+                        domain=["binary_sensor", "sensor"], multiple=True
                     )
                 ),
             }),
@@ -219,7 +274,7 @@ class SoftPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
     # ------------------------------------------------------------------
-    # Options flow (reconfigure existing entry)
+    # Options flow
     # ------------------------------------------------------------------
 
     @staticmethod
@@ -233,6 +288,7 @@ class SoftPresenceOptionsFlow(config_entries.OptionsFlow):
     def __init__(self, config_entry) -> None:
         self.config_entry = config_entry
         self._data: dict = {}
+        self._area_id: str | None = None
 
     # ------------------------------------------------------------------
     # Step 1: Room basics
@@ -242,7 +298,12 @@ class SoftPresenceOptionsFlow(config_entries.OptionsFlow):
         data = self.config_entry.data
         if user_input is not None:
             self._data.update(user_input)
+            # Re-resolve area whenever room name is changed
+            self._area_id = _find_area_id(self.hass, user_input[CONF_ROOM_NAME])
             return await self.async_step_edit_presence_sensors()
+
+        # Pre-resolve area for the current room name so subsequent steps can use it
+        self._area_id = _find_area_id(self.hass, data.get(CONF_ROOM_NAME, ""))
 
         return self.async_show_form(
             step_id="init",
@@ -267,14 +328,26 @@ class SoftPresenceOptionsFlow(config_entries.OptionsFlow):
             })
             return await self.async_step_edit_context_sensors()
 
+        # Use saved values; fall back to area suggestions only when field is empty
+        mmwave_saved = sensors.get(CONF_MMWAVE_SENSORS, [])
+        pir_saved = sensors.get(CONF_PIR_SENSORS, [])
+        if not mmwave_saved and self._area_id:
+            mmwave_saved = _area_entities(self.hass, self._area_id, ["binary_sensor"], ["occupancy"])
+        if not pir_saved and self._area_id:
+            pir_saved = _area_entities(self.hass, self._area_id, ["binary_sensor"], ["motion", "occupancy"])
+
         return self.async_show_form(
             step_id="edit_presence_sensors",
             data_schema=vol.Schema({
-                vol.Optional(CONF_MMWAVE_SENSORS, default=sensors.get(CONF_MMWAVE_SENSORS, [])): selector.EntitySelector(
+                vol.Optional(CONF_MMWAVE_SENSORS, default=mmwave_saved): selector.EntitySelector(
                     selector.EntitySelectorConfig(domain=["binary_sensor"], multiple=True)
                 ),
-                vol.Optional(CONF_PIR_SENSORS, default=sensors.get(CONF_PIR_SENSORS, [])): selector.EntitySelector(
-                    selector.EntitySelectorConfig(domain=["binary_sensor"], device_class=["motion", "occupancy"], multiple=True)
+                vol.Optional(CONF_PIR_SENSORS, default=pir_saved): selector.EntitySelector(
+                    selector.EntitySelectorConfig(
+                        domain=["binary_sensor"],
+                        device_class=["motion", "occupancy"],
+                        multiple=True,
+                    )
                 ),
             }),
         )
@@ -297,29 +370,37 @@ class SoftPresenceOptionsFlow(config_entries.OptionsFlow):
             })
             return await self.async_step_edit_thresholds()
 
-        # Merge legacy keys for pre-fill when upgrading from old config entries
+        def _saved_or_area(key: str, domains: list[str], device_classes: list[str] | None = None) -> list[str]:
+            saved = sensors.get(key, [])
+            if saved or not self._area_id:
+                return saved
+            return _area_entities(self.hass, self._area_id, domains, device_classes)
+
+        # Legacy workstation migration: merge old separate fields into new combined field
         legacy_ws = sensors.get(CONF_WORKSTATION_ENTITIES, []) + sensors.get(CONF_WORKSTATION_POWER_SENSORS, [])
         ws_default = sensors.get(CONF_WORKSTATION_SENSORS, legacy_ws)
+        if not ws_default and self._area_id:
+            ws_default = _area_entities(self.hass, self._area_id, ["sensor"], ["power"])
 
         return self.async_show_form(
             step_id="edit_context_sensors",
             data_schema=vol.Schema({
-                vol.Optional(CONF_DOOR_SENSORS, default=sensors.get(CONF_DOOR_SENSORS, [])): selector.EntitySelector(
+                vol.Optional(CONF_DOOR_SENSORS, default=_saved_or_area(CONF_DOOR_SENSORS, ["binary_sensor"], ["door"])): selector.EntitySelector(
                     selector.EntitySelectorConfig(domain=["binary_sensor"], device_class=["door"], multiple=True)
                 ),
-                vol.Optional(CONF_WINDOW_SENSORS, default=sensors.get(CONF_WINDOW_SENSORS, [])): selector.EntitySelector(
+                vol.Optional(CONF_WINDOW_SENSORS, default=_saved_or_area(CONF_WINDOW_SENSORS, ["binary_sensor"], ["window"])): selector.EntitySelector(
                     selector.EntitySelectorConfig(domain=["binary_sensor"], device_class=["window"], multiple=True)
                 ),
-                vol.Optional(CONF_LOCK_ENTITIES, default=sensors.get(CONF_LOCK_ENTITIES, [])): selector.EntitySelector(
+                vol.Optional(CONF_LOCK_ENTITIES, default=_saved_or_area(CONF_LOCK_ENTITIES, ["lock"])): selector.EntitySelector(
                     selector.EntitySelectorConfig(domain=["lock"], multiple=True)
                 ),
-                vol.Optional(CONF_MEDIA_PLAYERS, default=sensors.get(CONF_MEDIA_PLAYERS, [])): selector.EntitySelector(
+                vol.Optional(CONF_MEDIA_PLAYERS, default=_saved_or_area(CONF_MEDIA_PLAYERS, ["media_player"])): selector.EntitySelector(
                     selector.EntitySelectorConfig(domain=["media_player"], multiple=True)
                 ),
-                vol.Optional(CONF_LIGHT_ENTITIES, default=sensors.get(CONF_LIGHT_ENTITIES, [])): selector.EntitySelector(
+                vol.Optional(CONF_LIGHT_ENTITIES, default=_saved_or_area(CONF_LIGHT_ENTITIES, ["light"])): selector.EntitySelector(
                     selector.EntitySelectorConfig(domain=["light"], multiple=True)
                 ),
-                vol.Optional(CONF_SWITCH_ENTITIES, default=sensors.get(CONF_SWITCH_ENTITIES, [])): selector.EntitySelector(
+                vol.Optional(CONF_SWITCH_ENTITIES, default=_saved_or_area(CONF_SWITCH_ENTITIES, ["switch"])): selector.EntitySelector(
                     selector.EntitySelectorConfig(domain=["switch"], multiple=True)
                 ),
                 vol.Optional(CONF_WORKSTATION_SENSORS, default=ws_default): selector.EntitySelector(

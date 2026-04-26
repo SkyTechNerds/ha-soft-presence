@@ -6,7 +6,6 @@
         "description": "Grundeinstellungen für den Raum festlegen.",
         "data": {
           "room_name": "Raumname",
-          "room_type": "Raumtyp",
           "has_door": "Raum hat Tür(en)",
           "is_transit": "Durchgangsraum (Flur, Korridor)"
         }

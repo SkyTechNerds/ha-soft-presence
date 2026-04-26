@@ -17,7 +17,6 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from .const import (
     DOMAIN,
     CONF_ROOM_NAME,
-    CONF_ROOM_TYPE,
     CONF_HAS_DOOR,
     CONF_IS_TRANSIT,
     CONF_OCCUPIED_THRESHOLD,
@@ -88,7 +87,6 @@ You are a home presence detection system. Based on the sensor events below, \
 decide if the room is currently occupied. Be concise and output JSON only.
 
 Room: {room_name}
-Type: {room_type}
 Has door: {has_door}
 Is transit room: {is_transit}
 
@@ -414,7 +412,6 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         prompt = _LLM_PROMPT.format(
             room_name=self.config.get(CONF_ROOM_NAME, "room"),
-            room_type=self.config.get(CONF_ROOM_TYPE, "unknown"),
             has_door=self.config.get(CONF_HAS_DOOR, True),
             is_transit=self.config.get(CONF_IS_TRANSIT, False),
             events=events_text,

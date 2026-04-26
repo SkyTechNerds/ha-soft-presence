@@ -4,7 +4,6 @@ DOMAIN = "ha_soft_presence"
 
 # Config keys — room basics
 CONF_ROOM_NAME = "room_name"
-CONF_ROOM_TYPE = "room_type"
 CONF_HAS_DOOR = "has_door"
 CONF_IS_TRANSIT = "is_transit"
 
@@ -32,24 +31,6 @@ CONF_LLM_ENABLED = "llm_enabled"
 CONF_CONVERSATION_AGENT = "conversation_agent"
 CONF_LLM_UPDATE_INTERVAL = "llm_update_interval"
 
-# Room types
-ROOM_TYPE_OFFICE = "office"
-ROOM_TYPE_BEDROOM = "bedroom"
-ROOM_TYPE_LIVING = "living"
-ROOM_TYPE_BATHROOM = "bathroom"
-ROOM_TYPE_KITCHEN = "kitchen"
-ROOM_TYPE_HALLWAY = "hallway"
-ROOM_TYPE_CUSTOM = "custom"
-
-ROOM_TYPES = [
-    ROOM_TYPE_OFFICE,
-    ROOM_TYPE_BEDROOM,
-    ROOM_TYPE_LIVING,
-    ROOM_TYPE_BATHROOM,
-    ROOM_TYPE_KITCHEN,
-    ROOM_TYPE_HALLWAY,
-    ROOM_TYPE_CUSTOM,
-]
 
 # State machine states
 SM_CLEAR = "clear"

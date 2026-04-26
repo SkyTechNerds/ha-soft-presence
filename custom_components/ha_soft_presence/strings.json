@@ -6,7 +6,6 @@
         "description": "Configure the basic properties of the room.",
         "data": {
           "room_name": "Room Name",
-          "room_type": "Room Type",
           "has_door": "Room has door(s)",
           "is_transit": "Is a transit room (hallway, corridor)"
         }

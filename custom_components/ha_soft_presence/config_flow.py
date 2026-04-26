@@ -8,7 +8,6 @@ from homeassistant.helpers import selector
 from .const import (
     DOMAIN,
     CONF_ROOM_NAME,
-    CONF_ROOM_TYPE,
     CONF_HAS_DOOR,
     CONF_IS_TRANSIT,
     CONF_OCCUPIED_THRESHOLD,
@@ -35,16 +34,6 @@ from .const import (
     DEFAULT_LLM_UPDATE_INTERVAL,
 )
 
-_ROOM_TYPE_OPTIONS = [
-    selector.SelectOptionDict(value="office",    label="Büro / Office"),
-    selector.SelectOptionDict(value="bedroom",   label="Schlafzimmer / Bedroom"),
-    selector.SelectOptionDict(value="living",    label="Wohnzimmer / Living Room"),
-    selector.SelectOptionDict(value="bathroom",  label="Bad / Bathroom"),
-    selector.SelectOptionDict(value="kitchen",   label="Küche / Kitchen"),
-    selector.SelectOptionDict(value="hallway",   label="Flur / Hallway"),
-    selector.SelectOptionDict(value="custom",    label="Benutzerdefiniert / Custom"),
-]
-
 
 
 class SoftPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -68,9 +57,6 @@ class SoftPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=vol.Schema({
                 vol.Required(CONF_ROOM_NAME): str,
-                vol.Required(CONF_ROOM_TYPE, default="living"): selector.SelectSelector(
-                    selector.SelectSelectorConfig(options=_ROOM_TYPE_OPTIONS)
-                ),
                 vol.Required(CONF_HAS_DOOR, default=True): selector.BooleanSelector(),
                 vol.Required(CONF_IS_TRANSIT, default=False): selector.BooleanSelector(),
             }),

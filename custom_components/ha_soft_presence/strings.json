@@ -50,15 +50,42 @@
   "options": {
     "step": {
       "init": {
-        "title": "Edit Room Settings",
+        "title": "Room Basics",
+        "data": {
+          "room_name": "Room Name",
+          "has_door": "Room has door(s)",
+          "is_transit": "Is a transit room"
+        }
+      },
+      "edit_presence_sensors": {
+        "title": "Presence Sensors",
+        "data": {
+          "mmwave_sensors": "mmWave / Radar Sensors",
+          "pir_sensors": "PIR / Motion Sensors"
+        }
+      },
+      "edit_context_sensors": {
+        "title": "Context Sensors",
+        "data": {
+          "door_sensors": "Door Contacts",
+          "window_sensors": "Window Contacts",
+          "lock_entities": "Smart Locks",
+          "media_players": "Media Players",
+          "light_entities": "Light Entities",
+          "switch_entities": "Switch Entities",
+          "workstation_entities": "Workstation / PC",
+          "workstation_power_sensors": "Workstation Power (W)"
+        }
+      },
+      "edit_thresholds": {
+        "title": "Thresholds & LLM",
         "data": {
           "occupied_threshold": "Occupied Threshold",
           "clear_threshold": "Clear Threshold",
           "no_presence_timeout": "No-Presence Timeout (s)",
           "min_hold_time": "Minimum Hold Time (s)",
           "llm_enabled": "Enable LLM Advisory",
-          "llm_provider": "LLM Provider",
-          "llm_api_key": "LLM API Key"
+          "llm_update_interval": "LLM Update Interval (s)"
         }
       }
     }

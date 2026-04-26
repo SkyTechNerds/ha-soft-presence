@@ -230,16 +230,115 @@ class SoftPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class SoftPresenceOptionsFlow(config_entries.OptionsFlow):
-    """Allow editing thresholds and LLM settings after setup."""
+    """Full reconfiguration after setup — sensors, thresholds, LLM."""
 
     def __init__(self, config_entry) -> None:
         self.config_entry = config_entry
+        self._data: dict = {}
+
+    # ------------------------------------------------------------------
+    # Step 1: Room basics
+    # ------------------------------------------------------------------
 
     async def async_step_init(self, user_input=None):
         data = self.config_entry.data
+        if user_input is not None:
+            self._data.update(user_input)
+            return await self.async_step_edit_presence_sensors()
 
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema({
+                vol.Required(CONF_ROOM_NAME, default=data.get(CONF_ROOM_NAME, "")): str,
+                vol.Required(CONF_HAS_DOOR, default=data.get(CONF_HAS_DOOR, True)): selector.BooleanSelector(),
+                vol.Required(CONF_IS_TRANSIT, default=data.get(CONF_IS_TRANSIT, False)): selector.BooleanSelector(),
+            }),
+        )
+
+    # ------------------------------------------------------------------
+    # Step 2: Presence sensors
+    # ------------------------------------------------------------------
+
+    async def async_step_edit_presence_sensors(self, user_input=None):
+        sensors = self.config_entry.data.get("sensors", {})
+        if user_input is not None:
+            self._data.setdefault("sensors", {})
+            self._data["sensors"].update({
+                CONF_MMWAVE_SENSORS: user_input.get(CONF_MMWAVE_SENSORS, []),
+                CONF_PIR_SENSORS: user_input.get(CONF_PIR_SENSORS, []),
+            })
+            return await self.async_step_edit_context_sensors()
+
+        return self.async_show_form(
+            step_id="edit_presence_sensors",
+            data_schema=vol.Schema({
+                vol.Optional(CONF_MMWAVE_SENSORS, default=sensors.get(CONF_MMWAVE_SENSORS, [])): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain=["binary_sensor"], multiple=True)
+                ),
+                vol.Optional(CONF_PIR_SENSORS, default=sensors.get(CONF_PIR_SENSORS, [])): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain=["binary_sensor"], device_class=["motion", "occupancy"], multiple=True)
+                ),
+            }),
+        )
+
+    # ------------------------------------------------------------------
+    # Step 3: Context sensors
+    # ------------------------------------------------------------------
+
+    async def async_step_edit_context_sensors(self, user_input=None):
+        sensors = self.config_entry.data.get("sensors", {})
+        if user_input is not None:
+            self._data["sensors"].update({
+                CONF_DOOR_SENSORS: user_input.get(CONF_DOOR_SENSORS, []),
+                CONF_WINDOW_SENSORS: user_input.get(CONF_WINDOW_SENSORS, []),
+                CONF_LOCK_ENTITIES: user_input.get(CONF_LOCK_ENTITIES, []),
+                CONF_MEDIA_PLAYERS: user_input.get(CONF_MEDIA_PLAYERS, []),
+                CONF_LIGHT_ENTITIES: user_input.get(CONF_LIGHT_ENTITIES, []),
+                CONF_SWITCH_ENTITIES: user_input.get(CONF_SWITCH_ENTITIES, []),
+                CONF_WORKSTATION_ENTITIES: user_input.get(CONF_WORKSTATION_ENTITIES, []),
+                CONF_WORKSTATION_POWER_SENSORS: user_input.get(CONF_WORKSTATION_POWER_SENSORS, []),
+            })
+            return await self.async_step_edit_thresholds()
+
+        return self.async_show_form(
+            step_id="edit_context_sensors",
+            data_schema=vol.Schema({
+                vol.Optional(CONF_DOOR_SENSORS, default=sensors.get(CONF_DOOR_SENSORS, [])): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain=["binary_sensor"], device_class=["door"], multiple=True)
+                ),
+                vol.Optional(CONF_WINDOW_SENSORS, default=sensors.get(CONF_WINDOW_SENSORS, [])): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain=["binary_sensor"], device_class=["window"], multiple=True)
+                ),
+                vol.Optional(CONF_LOCK_ENTITIES, default=sensors.get(CONF_LOCK_ENTITIES, [])): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain=["lock"], multiple=True)
+                ),
+                vol.Optional(CONF_MEDIA_PLAYERS, default=sensors.get(CONF_MEDIA_PLAYERS, [])): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain=["media_player"], multiple=True)
+                ),
+                vol.Optional(CONF_LIGHT_ENTITIES, default=sensors.get(CONF_LIGHT_ENTITIES, [])): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain=["light"], multiple=True)
+                ),
+                vol.Optional(CONF_SWITCH_ENTITIES, default=sensors.get(CONF_SWITCH_ENTITIES, [])): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain=["switch"], multiple=True)
+                ),
+                vol.Optional(CONF_WORKSTATION_ENTITIES, default=sensors.get(CONF_WORKSTATION_ENTITIES, [])): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain=["binary_sensor"], multiple=True)
+                ),
+                vol.Optional(CONF_WORKSTATION_POWER_SENSORS, default=sensors.get(CONF_WORKSTATION_POWER_SENSORS, [])): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain=["sensor"], device_class=["power"], multiple=True)
+                ),
+            }),
+        )
+
+    # ------------------------------------------------------------------
+    # Step 4: Thresholds + LLM
+    # ------------------------------------------------------------------
+
+    async def async_step_edit_thresholds(self, user_input=None):
+        data = self.config_entry.data
         if user_input is not None:
             updated = dict(data)
+            updated.update(self._data)
             updated.update({
                 CONF_OCCUPIED_THRESHOLD: int(user_input[CONF_OCCUPIED_THRESHOLD]),
                 CONF_CLEAR_THRESHOLD: int(user_input[CONF_CLEAR_THRESHOLD]),
@@ -253,43 +352,25 @@ class SoftPresenceOptionsFlow(config_entries.OptionsFlow):
             return self.async_create_entry(title="", data={})
 
         return self.async_show_form(
-            step_id="init",
+            step_id="edit_thresholds",
             data_schema=vol.Schema({
-                vol.Required(
-                    CONF_OCCUPIED_THRESHOLD,
-                    default=data.get(CONF_OCCUPIED_THRESHOLD, DEFAULT_OCCUPIED_THRESHOLD)
-                ): selector.NumberSelector(
+                vol.Required(CONF_OCCUPIED_THRESHOLD, default=data.get(CONF_OCCUPIED_THRESHOLD, DEFAULT_OCCUPIED_THRESHOLD)): selector.NumberSelector(
                     selector.NumberSelectorConfig(min=1, max=100, step=1, mode="slider")
                 ),
-                vol.Required(
-                    CONF_CLEAR_THRESHOLD,
-                    default=data.get(CONF_CLEAR_THRESHOLD, DEFAULT_CLEAR_THRESHOLD)
-                ): selector.NumberSelector(
+                vol.Required(CONF_CLEAR_THRESHOLD, default=data.get(CONF_CLEAR_THRESHOLD, DEFAULT_CLEAR_THRESHOLD)): selector.NumberSelector(
                     selector.NumberSelectorConfig(min=0, max=99, step=1, mode="slider")
                 ),
-                vol.Required(
-                    CONF_NO_PRESENCE_TIMEOUT,
-                    default=data.get(CONF_NO_PRESENCE_TIMEOUT, DEFAULT_NO_PRESENCE_TIMEOUT)
-                ): selector.NumberSelector(
+                vol.Required(CONF_NO_PRESENCE_TIMEOUT, default=data.get(CONF_NO_PRESENCE_TIMEOUT, DEFAULT_NO_PRESENCE_TIMEOUT)): selector.NumberSelector(
                     selector.NumberSelectorConfig(min=30, max=3600, step=30, unit_of_measurement="s", mode="box")
                 ),
-                vol.Required(
-                    CONF_MIN_HOLD_TIME,
-                    default=data.get(CONF_MIN_HOLD_TIME, DEFAULT_MIN_HOLD_TIME)
-                ): selector.NumberSelector(
+                vol.Required(CONF_MIN_HOLD_TIME, default=data.get(CONF_MIN_HOLD_TIME, DEFAULT_MIN_HOLD_TIME)): selector.NumberSelector(
                     selector.NumberSelectorConfig(min=0, max=600, step=10, unit_of_measurement="s", mode="box")
                 ),
-                vol.Optional(
-                    CONF_LLM_ENABLED,
-                    default=data.get(CONF_LLM_ENABLED, False)
-                ): selector.BooleanSelector(),
+                vol.Optional(CONF_LLM_ENABLED, default=data.get(CONF_LLM_ENABLED, False)): selector.BooleanSelector(),
                 vol.Optional(CONF_CONVERSATION_AGENT): selector.EntitySelector(
                     selector.EntitySelectorConfig(domain=["conversation"])
                 ),
-                vol.Optional(
-                    CONF_LLM_UPDATE_INTERVAL,
-                    default=data.get(CONF_LLM_UPDATE_INTERVAL, DEFAULT_LLM_UPDATE_INTERVAL)
-                ): selector.NumberSelector(
+                vol.Optional(CONF_LLM_UPDATE_INTERVAL, default=data.get(CONF_LLM_UPDATE_INTERVAL, DEFAULT_LLM_UPDATE_INTERVAL)): selector.NumberSelector(
                     selector.NumberSelectorConfig(min=60, max=3600, step=60, unit_of_measurement="s", mode="box")
                 ),
             }),

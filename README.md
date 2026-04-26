@@ -21,7 +21,7 @@ Instead of relying on a single sensor, HA Soft Presence combines multiple signal
 - **Area auto-fill**: entity selectors pre-filled from matching HA area on setup
 - **Config UI**: full multi-step setup in Home Assistant UI — YAML configuration is not supported
 - **Options flow**: full reconfiguration after setup without deleting the integration
-- **Multi-language**: English and German
+- **Multi-language**: English, German, French, Spanish, Italian, Dutch, Polish, Portuguese, Swedish, Russian, Bulgarian
 
 ---
 

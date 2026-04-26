@@ -1,0 +1,143 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Настройка комнаты",
+        "description": "Основные свойства комнаты.",
+        "data": {
+          "room_name": "Название комнаты",
+          "has_door": "В комнате есть дверь (двери)",
+          "is_transit": "Транзитная комната (коридор, прихожая)"
+        }
+      },
+      "presence_sensors": {
+        "title": "Датчики присутствия",
+        "description": "Датчики mmWave обнаруживают неподвижных людей и настоятельно предпочтительнее PIR.",
+        "data": {
+          "mmwave_sensors": "Датчики mmWave / Радар",
+          "pir_sensors": "Датчики PIR / Движения"
+        }
+      },
+      "context_sensors": {
+        "title": "Контекстные датчики",
+        "description": "Вспомогательные сигналы — ни один не является обязательным.",
+        "data": {
+          "door_sensors": "Датчики двери",
+          "window_sensors": "Датчики окна",
+          "lock_entities": "Умные замки",
+          "media_players": "Медиаплееры (ТВ, колонки, …)",
+          "light_entities": "Устройства освещения",
+          "switch_entities": "Устройства выключателей",
+          "workstation_sensors": "Рабочая станция / ПК (бинарный датчик или датчик мощности)"
+        }
+      },
+      "thresholds": {
+        "title": "Пороги и режим сна",
+        "description": "Гистерезис между порогами «занято» и «свободно» предотвращает мерцание. Режим сна повышает порог «свободно», когда выбранные объекты активны.",
+        "data": {
+          "occupied_threshold": "Порог занятости (оценка ≥ → занято)",
+          "clear_threshold": "Порог свободности (оценка ≤ → запуск таймера)",
+          "no_presence_timeout": "Таймаут отсутствия присутствия (с)",
+          "min_hold_time": "Минимальное время удержания (с)",
+          "sleep_mode_entities": "Объекты режима сна (один активен → сниженная чувствительность)",
+          "sleep_clear_threshold": "Порог свободности в режиме сна"
+        }
+      },
+      "llm": {
+        "title": "ИИ-поддержка",
+        "description": "Опциональный ИИ-анализ через агента разговора HA (Gemini, Ollama, OpenAI, …). По умолчанию отключено.",
+        "data": {
+          "llm_enabled": "Включить ИИ-поддержку",
+          "conversation_agent": "Агент разговора",
+          "llm_update_interval": "Минимальный интервал между вызовами ИИ (с)"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Основные данные",
+        "data": {
+          "room_name": "Название комнаты",
+          "has_door": "В комнате есть дверь (двери)",
+          "is_transit": "Транзитная комната"
+        }
+      },
+      "edit_presence_sensors": {
+        "title": "Датчики присутствия",
+        "data": {
+          "mmwave_sensors": "Датчики mmWave / Радар",
+          "pir_sensors": "Датчики PIR / Движения"
+        }
+      },
+      "edit_context_sensors": {
+        "title": "Контекстные датчики",
+        "data": {
+          "door_sensors": "Датчики двери",
+          "window_sensors": "Датчики окна",
+          "lock_entities": "Умные замки",
+          "media_players": "Медиаплееры",
+          "light_entities": "Устройства освещения",
+          "switch_entities": "Устройства выключателей",
+          "workstation_sensors": "Рабочая станция / ПК"
+        }
+      },
+      "edit_thresholds": {
+        "title": "Пороги и режим сна",
+        "data": {
+          "occupied_threshold": "Порог занятости",
+          "clear_threshold": "Порог свободности",
+          "no_presence_timeout": "Таймаут отсутствия присутствия (с)",
+          "min_hold_time": "Минимальное время удержания (с)",
+          "sleep_mode_entities": "Объекты режима сна",
+          "sleep_clear_threshold": "Порог свободности в режиме сна"
+        }
+      },
+      "edit_llm": {
+        "title": "ИИ-поддержка",
+        "data": {
+          "llm_enabled": "Включить ИИ-поддержку",
+          "conversation_agent": "Агент разговора",
+          "llm_update_interval": "Минимальный интервал между вызовами ИИ (с)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "presence_soft": {
+        "name": "Присутствие"
+      },
+      "presence_llm": {
+        "name": "Присутствие (ИИ)"
+      }
+    },
+    "sensor": {
+      "presence_score": {
+        "name": "Оценка присутствия"
+      },
+      "presence_confidence": {
+        "name": "Уверенность"
+      },
+      "presence_reason": {
+        "name": "Причина присутствия"
+      },
+      "presence_llm_score": {
+        "name": "Оценка присутствия (ИИ)"
+      },
+      "presence_llm_confidence": {
+        "name": "Уверенность (ИИ)",
+        "state": {
+          "pending": "Ожидание оценки"
+        }
+      },
+      "presence_llm_reason": {
+        "name": "Причина присутствия (ИИ)",
+        "state": {
+          "pending": "Ожидание оценки"
+        }
+      }
+    }
+  }
+}

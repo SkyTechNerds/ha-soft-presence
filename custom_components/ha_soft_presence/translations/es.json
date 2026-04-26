@@ -1,0 +1,143 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configurar habitación",
+        "description": "Propiedades básicas de la habitación.",
+        "data": {
+          "room_name": "Nombre de la habitación",
+          "has_door": "La habitación tiene puerta(s)",
+          "is_transit": "Es una habitación de tránsito (pasillo, corredor)"
+        }
+      },
+      "presence_sensors": {
+        "title": "Sensores de presencia",
+        "description": "Los sensores mmWave detectan personas estáticas y son muy preferibles a los PIR.",
+        "data": {
+          "mmwave_sensors": "Sensores mmWave / Radar",
+          "pir_sensors": "Sensores PIR / Movimiento"
+        }
+      },
+      "context_sensors": {
+        "title": "Sensores de contexto",
+        "description": "Señales de apoyo — ninguna es obligatoria.",
+        "data": {
+          "door_sensors": "Contactos de puerta",
+          "window_sensors": "Contactos de ventana",
+          "lock_entities": "Cerraduras inteligentes",
+          "media_players": "Reproductores multimedia (TV, altavoces, …)",
+          "light_entities": "Entidades de luz",
+          "switch_entities": "Entidades de interruptor",
+          "workstation_sensors": "Estación de trabajo / PC (sensor binario o de potencia)"
+        }
+      },
+      "thresholds": {
+        "title": "Umbrales y modo sueño",
+        "description": "La histéresis entre los umbrales de ocupado y libre evita parpadeos. El modo sueño eleva el umbral libre cuando las entidades seleccionadas están activas.",
+        "data": {
+          "occupied_threshold": "Umbral de ocupado (puntuación ≥ → ocupado)",
+          "clear_threshold": "Umbral de libre (puntuación ≤ → iniciar tiempo de espera)",
+          "no_presence_timeout": "Tiempo de espera sin presencia (s)",
+          "min_hold_time": "Tiempo mínimo de retención (s)",
+          "sleep_mode_entities": "Entidades modo sueño (cualquiera activa → sensibilidad reducida)",
+          "sleep_clear_threshold": "Umbral libre en modo sueño"
+        }
+      },
+      "llm": {
+        "title": "Asistencia IA",
+        "description": "Análisis IA opcional a través de tu agente de conversación HA (Gemini, Ollama, OpenAI, …). Desactivado por defecto.",
+        "data": {
+          "llm_enabled": "Activar asistencia IA",
+          "conversation_agent": "Agente de conversación",
+          "llm_update_interval": "Intervalo mínimo entre llamadas IA (s)"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Datos básicos",
+        "data": {
+          "room_name": "Nombre de la habitación",
+          "has_door": "La habitación tiene puerta(s)",
+          "is_transit": "Habitación de tránsito"
+        }
+      },
+      "edit_presence_sensors": {
+        "title": "Sensores de presencia",
+        "data": {
+          "mmwave_sensors": "Sensores mmWave / Radar",
+          "pir_sensors": "Sensores PIR / Movimiento"
+        }
+      },
+      "edit_context_sensors": {
+        "title": "Sensores de contexto",
+        "data": {
+          "door_sensors": "Contactos de puerta",
+          "window_sensors": "Contactos de ventana",
+          "lock_entities": "Cerraduras inteligentes",
+          "media_players": "Reproductores multimedia",
+          "light_entities": "Entidades de luz",
+          "switch_entities": "Entidades de interruptor",
+          "workstation_sensors": "Estación de trabajo / PC"
+        }
+      },
+      "edit_thresholds": {
+        "title": "Umbrales y modo sueño",
+        "data": {
+          "occupied_threshold": "Umbral de ocupado",
+          "clear_threshold": "Umbral de libre",
+          "no_presence_timeout": "Tiempo de espera sin presencia (s)",
+          "min_hold_time": "Tiempo mínimo de retención (s)",
+          "sleep_mode_entities": "Entidades modo sueño",
+          "sleep_clear_threshold": "Umbral libre en modo sueño"
+        }
+      },
+      "edit_llm": {
+        "title": "Asistencia IA",
+        "data": {
+          "llm_enabled": "Activar asistencia IA",
+          "conversation_agent": "Agente de conversación",
+          "llm_update_interval": "Intervalo mínimo entre llamadas IA (s)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "presence_soft": {
+        "name": "Presencia"
+      },
+      "presence_llm": {
+        "name": "Presencia (IA)"
+      }
+    },
+    "sensor": {
+      "presence_score": {
+        "name": "Puntuación de presencia"
+      },
+      "presence_confidence": {
+        "name": "Confianza"
+      },
+      "presence_reason": {
+        "name": "Razón de presencia"
+      },
+      "presence_llm_score": {
+        "name": "Puntuación de presencia (IA)"
+      },
+      "presence_llm_confidence": {
+        "name": "Confianza (IA)",
+        "state": {
+          "pending": "Esperando evaluación"
+        }
+      },
+      "presence_llm_reason": {
+        "name": "Razón de presencia (IA)",
+        "state": {
+          "pending": "Esperando evaluación"
+        }
+      }
+    }
+  }
+}

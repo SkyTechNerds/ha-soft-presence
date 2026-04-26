@@ -1,0 +1,143 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Konfigurera rum",
+        "description": "Grundläggande egenskaper för rummet.",
+        "data": {
+          "room_name": "Rumsnamn",
+          "has_door": "Rummet har dörr(ar)",
+          "is_transit": "Transitrum (hall, korridor)"
+        }
+      },
+      "presence_sensors": {
+        "title": "Närvaro­sensorer",
+        "description": "mmWave-sensorer detekterar stillasittande personer och föredras starkt framför PIR.",
+        "data": {
+          "mmwave_sensors": "mmWave / Radarsensorer",
+          "pir_sensors": "PIR / Rörelsesensorer"
+        }
+      },
+      "context_sensors": {
+        "title": "Kontextsensorer",
+        "description": "Stödsignaler — ingen är obligatorisk.",
+        "data": {
+          "door_sensors": "Dörrkontakter",
+          "window_sensors": "Fönsterkontakter",
+          "lock_entities": "Smarta lås",
+          "media_players": "Mediaspelare (TV, högtalare, …)",
+          "light_entities": "Ljusenheter",
+          "switch_entities": "Strömbrytarenheter",
+          "workstation_sensors": "Arbetsstation / PC (binär sensor eller effektsensor)"
+        }
+      },
+      "thresholds": {
+        "title": "Trösklar & Sovläge",
+        "description": "Hysteres mellan belagd- och fri-trösklarna förhindrar flimmer. Sovläget höjer fri-tröskeln när valda enheter är aktiva.",
+        "data": {
+          "occupied_threshold": "Belagd-tröskel (poäng ≥ → belagd)",
+          "clear_threshold": "Fri-tröskel (poäng ≤ → starta tidsgräns)",
+          "no_presence_timeout": "Tidsgräns utan närvaro (s)",
+          "min_hold_time": "Minsta hålltid (s)",
+          "sleep_mode_entities": "Sovlägesenheter (en aktiv → minskad känslighet)",
+          "sleep_clear_threshold": "Fri-tröskel i sovläge"
+        }
+      },
+      "llm": {
+        "title": "AI-stöd",
+        "description": "Valfri AI-analys via din HA-konversationsagent (Gemini, Ollama, OpenAI, …). Inaktiverat som standard.",
+        "data": {
+          "llm_enabled": "Aktivera AI-stöd",
+          "conversation_agent": "Konversationsagent",
+          "llm_update_interval": "Minsta intervall mellan AI-anrop (s)"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Rumsgrunder",
+        "data": {
+          "room_name": "Rumsnamn",
+          "has_door": "Rummet har dörr(ar)",
+          "is_transit": "Transitrum"
+        }
+      },
+      "edit_presence_sensors": {
+        "title": "Närvaro­sensorer",
+        "data": {
+          "mmwave_sensors": "mmWave / Radarsensorer",
+          "pir_sensors": "PIR / Rörelsesensorer"
+        }
+      },
+      "edit_context_sensors": {
+        "title": "Kontextsensorer",
+        "data": {
+          "door_sensors": "Dörrkontakter",
+          "window_sensors": "Fönsterkontakter",
+          "lock_entities": "Smarta lås",
+          "media_players": "Mediaspelare",
+          "light_entities": "Ljusenheter",
+          "switch_entities": "Strömbrytarenheter",
+          "workstation_sensors": "Arbetsstation / PC"
+        }
+      },
+      "edit_thresholds": {
+        "title": "Trösklar & Sovläge",
+        "data": {
+          "occupied_threshold": "Belagd-tröskel",
+          "clear_threshold": "Fri-tröskel",
+          "no_presence_timeout": "Tidsgräns utan närvaro (s)",
+          "min_hold_time": "Minsta hålltid (s)",
+          "sleep_mode_entities": "Sovlägesenheter",
+          "sleep_clear_threshold": "Fri-tröskel i sovläge"
+        }
+      },
+      "edit_llm": {
+        "title": "AI-stöd",
+        "data": {
+          "llm_enabled": "Aktivera AI-stöd",
+          "conversation_agent": "Konversationsagent",
+          "llm_update_interval": "Minsta intervall mellan AI-anrop (s)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "presence_soft": {
+        "name": "Närvaro"
+      },
+      "presence_llm": {
+        "name": "Närvaro (AI)"
+      }
+    },
+    "sensor": {
+      "presence_score": {
+        "name": "Närvaropoäng"
+      },
+      "presence_confidence": {
+        "name": "Tillförlitlighet"
+      },
+      "presence_reason": {
+        "name": "Närvaro­orsak"
+      },
+      "presence_llm_score": {
+        "name": "Närvaropoäng (AI)"
+      },
+      "presence_llm_confidence": {
+        "name": "Tillförlitlighet (AI)",
+        "state": {
+          "pending": "Väntar på utvärdering"
+        }
+      },
+      "presence_llm_reason": {
+        "name": "Närvaro­orsak (AI)",
+        "state": {
+          "pending": "Väntar på utvärdering"
+        }
+      }
+    }
+  }
+}

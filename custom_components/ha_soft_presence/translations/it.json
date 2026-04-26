@@ -1,0 +1,143 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configura stanza",
+        "description": "Proprietà di base della stanza.",
+        "data": {
+          "room_name": "Nome della stanza",
+          "has_door": "La stanza ha una o più porte",
+          "is_transit": "Stanza di transito (corridoio, ingresso)"
+        }
+      },
+      "presence_sensors": {
+        "title": "Sensori di presenza",
+        "description": "I sensori mmWave rilevano persone ferme e sono fortemente preferiti rispetto ai PIR.",
+        "data": {
+          "mmwave_sensors": "Sensori mmWave / Radar",
+          "pir_sensors": "Sensori PIR / Movimento"
+        }
+      },
+      "context_sensors": {
+        "title": "Sensori di contesto",
+        "description": "Segnali di supporto — nessuno è obbligatorio.",
+        "data": {
+          "door_sensors": "Contatti porta",
+          "window_sensors": "Contatti finestra",
+          "lock_entities": "Serrature smart",
+          "media_players": "Lettori multimediali (TV, altoparlanti, …)",
+          "light_entities": "Entità luce",
+          "switch_entities": "Entità interruttore",
+          "workstation_sensors": "Workstation / PC (sensore binario o di potenza)"
+        }
+      },
+      "thresholds": {
+        "title": "Soglie e modalità sonno",
+        "description": "L'isteresi tra le soglie occupato e libero evita sfarfallii. La modalità sonno alza la soglia libero quando le entità selezionate sono attive.",
+        "data": {
+          "occupied_threshold": "Soglia occupato (punteggio ≥ → occupato)",
+          "clear_threshold": "Soglia libero (punteggio ≤ → avvia timeout)",
+          "no_presence_timeout": "Timeout assenza (s)",
+          "min_hold_time": "Tempo minimo di mantenimento (s)",
+          "sleep_mode_entities": "Entità modalità sonno (una attiva → sensibilità ridotta)",
+          "sleep_clear_threshold": "Soglia libero in modalità sonno"
+        }
+      },
+      "llm": {
+        "title": "Assistenza IA",
+        "description": "Analisi IA opzionale tramite il tuo agente di conversazione HA (Gemini, Ollama, OpenAI, …). Disabilitato per impostazione predefinita.",
+        "data": {
+          "llm_enabled": "Abilita assistenza IA",
+          "conversation_agent": "Agente di conversazione",
+          "llm_update_interval": "Intervallo minimo tra chiamate IA (s)"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Informazioni base",
+        "data": {
+          "room_name": "Nome della stanza",
+          "has_door": "La stanza ha una o più porte",
+          "is_transit": "Stanza di transito"
+        }
+      },
+      "edit_presence_sensors": {
+        "title": "Sensori di presenza",
+        "data": {
+          "mmwave_sensors": "Sensori mmWave / Radar",
+          "pir_sensors": "Sensori PIR / Movimento"
+        }
+      },
+      "edit_context_sensors": {
+        "title": "Sensori di contesto",
+        "data": {
+          "door_sensors": "Contatti porta",
+          "window_sensors": "Contatti finestra",
+          "lock_entities": "Serrature smart",
+          "media_players": "Lettori multimediali",
+          "light_entities": "Entità luce",
+          "switch_entities": "Entità interruttore",
+          "workstation_sensors": "Workstation / PC"
+        }
+      },
+      "edit_thresholds": {
+        "title": "Soglie e modalità sonno",
+        "data": {
+          "occupied_threshold": "Soglia occupato",
+          "clear_threshold": "Soglia libero",
+          "no_presence_timeout": "Timeout assenza (s)",
+          "min_hold_time": "Tempo minimo di mantenimento (s)",
+          "sleep_mode_entities": "Entità modalità sonno",
+          "sleep_clear_threshold": "Soglia libero in modalità sonno"
+        }
+      },
+      "edit_llm": {
+        "title": "Assistenza IA",
+        "data": {
+          "llm_enabled": "Abilita assistenza IA",
+          "conversation_agent": "Agente di conversazione",
+          "llm_update_interval": "Intervallo minimo tra chiamate IA (s)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "presence_soft": {
+        "name": "Presenza"
+      },
+      "presence_llm": {
+        "name": "Presenza (IA)"
+      }
+    },
+    "sensor": {
+      "presence_score": {
+        "name": "Punteggio presenza"
+      },
+      "presence_confidence": {
+        "name": "Confidenza"
+      },
+      "presence_reason": {
+        "name": "Motivo presenza"
+      },
+      "presence_llm_score": {
+        "name": "Punteggio presenza (IA)"
+      },
+      "presence_llm_confidence": {
+        "name": "Confidenza (IA)",
+        "state": {
+          "pending": "In attesa di valutazione"
+        }
+      },
+      "presence_llm_reason": {
+        "name": "Motivo presenza (IA)",
+        "state": {
+          "pending": "In attesa di valutazione"
+        }
+      }
+    }
+  }
+}

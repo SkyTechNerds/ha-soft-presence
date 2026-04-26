@@ -1,0 +1,143 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Konfiguracja pokoju",
+        "description": "Podstawowe właściwości pokoju.",
+        "data": {
+          "room_name": "Nazwa pokoju",
+          "has_door": "Pokój ma drzwi",
+          "is_transit": "Pokój tranzytowy (korytarz, przedpokój)"
+        }
+      },
+      "presence_sensors": {
+        "title": "Czujniki obecności",
+        "description": "Czujniki mmWave wykrywają nieruchome osoby i są zdecydowanie preferowane od PIR.",
+        "data": {
+          "mmwave_sensors": "Czujniki mmWave / Radar",
+          "pir_sensors": "Czujniki PIR / Ruchu"
+        }
+      },
+      "context_sensors": {
+        "title": "Czujniki kontekstowe",
+        "description": "Sygnały pomocnicze — żaden nie jest wymagany.",
+        "data": {
+          "door_sensors": "Kontakty drzwiowe",
+          "window_sensors": "Kontakty okienne",
+          "lock_entities": "Inteligentne zamki",
+          "media_players": "Odtwarzacze multimediów (TV, głośniki, …)",
+          "light_entities": "Encje świateł",
+          "switch_entities": "Encje przełączników",
+          "workstation_sensors": "Stacja robocza / PC (czujnik binarny lub czujnik mocy)"
+        }
+      },
+      "thresholds": {
+        "title": "Progi & Tryb snu",
+        "description": "Histereza między progami zajętości i wolności zapobiega migotaniu. Tryb snu podnosi próg wolności, gdy wybrane encje są aktywne.",
+        "data": {
+          "occupied_threshold": "Próg zajętości (wynik ≥ → zajęty)",
+          "clear_threshold": "Próg wolności (wynik ≤ → start limitu czasu)",
+          "no_presence_timeout": "Limit czasu braku obecności (s)",
+          "min_hold_time": "Minimalny czas utrzymania (s)",
+          "sleep_mode_entities": "Encje trybu snu (jedna aktywna → zmniejszona czułość)",
+          "sleep_clear_threshold": "Próg wolności w trybie snu"
+        }
+      },
+      "llm": {
+        "title": "Wsparcie AI",
+        "description": "Opcjonalna analiza AI przez agenta konwersacji HA (Gemini, Ollama, OpenAI, …). Domyślnie wyłączone.",
+        "data": {
+          "llm_enabled": "Włącz wsparcie AI",
+          "conversation_agent": "Agent konwersacji",
+          "llm_update_interval": "Minimalny interwał między wywołaniami AI (s)"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Podstawy pokoju",
+        "data": {
+          "room_name": "Nazwa pokoju",
+          "has_door": "Pokój ma drzwi",
+          "is_transit": "Pokój tranzytowy"
+        }
+      },
+      "edit_presence_sensors": {
+        "title": "Czujniki obecności",
+        "data": {
+          "mmwave_sensors": "Czujniki mmWave / Radar",
+          "pir_sensors": "Czujniki PIR / Ruchu"
+        }
+      },
+      "edit_context_sensors": {
+        "title": "Czujniki kontekstowe",
+        "data": {
+          "door_sensors": "Kontakty drzwiowe",
+          "window_sensors": "Kontakty okienne",
+          "lock_entities": "Inteligentne zamki",
+          "media_players": "Odtwarzacze multimediów",
+          "light_entities": "Encje świateł",
+          "switch_entities": "Encje przełączników",
+          "workstation_sensors": "Stacja robocza / PC"
+        }
+      },
+      "edit_thresholds": {
+        "title": "Progi & Tryb snu",
+        "data": {
+          "occupied_threshold": "Próg zajętości",
+          "clear_threshold": "Próg wolności",
+          "no_presence_timeout": "Limit czasu braku obecności (s)",
+          "min_hold_time": "Minimalny czas utrzymania (s)",
+          "sleep_mode_entities": "Encje trybu snu",
+          "sleep_clear_threshold": "Próg wolności w trybie snu"
+        }
+      },
+      "edit_llm": {
+        "title": "Wsparcie AI",
+        "data": {
+          "llm_enabled": "Włącz wsparcie AI",
+          "conversation_agent": "Agent konwersacji",
+          "llm_update_interval": "Minimalny interwał między wywołaniami AI (s)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "presence_soft": {
+        "name": "Obecność"
+      },
+      "presence_llm": {
+        "name": "Obecność (AI)"
+      }
+    },
+    "sensor": {
+      "presence_score": {
+        "name": "Wynik obecności"
+      },
+      "presence_confidence": {
+        "name": "Pewność"
+      },
+      "presence_reason": {
+        "name": "Powód obecności"
+      },
+      "presence_llm_score": {
+        "name": "Wynik obecności (AI)"
+      },
+      "presence_llm_confidence": {
+        "name": "Pewność (AI)",
+        "state": {
+          "pending": "Oczekiwanie na ocenę"
+        }
+      },
+      "presence_llm_reason": {
+        "name": "Powód obecności (AI)",
+        "state": {
+          "pending": "Oczekiwanie na ocenę"
+        }
+      }
+    }
+  }
+}

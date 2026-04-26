@@ -1,0 +1,143 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Настройка на стаята",
+        "description": "Основни свойства на стаята.",
+        "data": {
+          "room_name": "Име на стаята",
+          "has_door": "Стаята има врата(и)",
+          "is_transit": "Транзитна стая (коридор, антре)"
+        }
+      },
+      "presence_sensors": {
+        "title": "Сензори за присъствие",
+        "description": "mmWave сензорите засичат неподвижни хора и са за предпочитане пред PIR.",
+        "data": {
+          "mmwave_sensors": "mmWave / Радарни сензори",
+          "pir_sensors": "PIR / Сензори за движение"
+        }
+      },
+      "context_sensors": {
+        "title": "Контекстни сензори",
+        "description": "Допълнителни сигнали — нито един не е задължителен.",
+        "data": {
+          "door_sensors": "Контакти за врата",
+          "window_sensors": "Контакти за прозорец",
+          "lock_entities": "Умни брави",
+          "media_players": "Медия плейъри (ТВ, тонколони, …)",
+          "light_entities": "Осветителни обекти",
+          "switch_entities": "Превключващи обекти",
+          "workstation_sensors": "Работна станция / PC (двоичен сензор или сензор за мощност)"
+        }
+      },
+      "thresholds": {
+        "title": "Прагове и режим на сън",
+        "description": "Хистерезисът между праговете за заето и свободно предотвратява трептене. Режимът на сън повишава прага за свободно, когато избраните обекти са активни.",
+        "data": {
+          "occupied_threshold": "Праг за заето (резултат ≥ → заето)",
+          "clear_threshold": "Праг за свободно (резултат ≤ → стартиране на таймер)",
+          "no_presence_timeout": "Изчакване без присъствие (с)",
+          "min_hold_time": "Минимално време на задържане (с)",
+          "sleep_mode_entities": "Обекти за режим на сън (един активен → намалена чувствителност)",
+          "sleep_clear_threshold": "Праг за свободно в режим на сън"
+        }
+      },
+      "llm": {
+        "title": "ИИ поддръжка",
+        "description": "Незадължителен ИИ анализ чрез вашия HA разговорен агент (Gemini, Ollama, OpenAI, …). Изключено по подразбиране.",
+        "data": {
+          "llm_enabled": "Активиране на ИИ поддръжка",
+          "conversation_agent": "Разговорен агент",
+          "llm_update_interval": "Минимален интервал между ИИ заявки (с)"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Основна информация",
+        "data": {
+          "room_name": "Име на стаята",
+          "has_door": "Стаята има врата(и)",
+          "is_transit": "Транзитна стая"
+        }
+      },
+      "edit_presence_sensors": {
+        "title": "Сензори за присъствие",
+        "data": {
+          "mmwave_sensors": "mmWave / Радарни сензори",
+          "pir_sensors": "PIR / Сензори за движение"
+        }
+      },
+      "edit_context_sensors": {
+        "title": "Контекстни сензори",
+        "data": {
+          "door_sensors": "Контакти за врата",
+          "window_sensors": "Контакти за прозорец",
+          "lock_entities": "Умни брави",
+          "media_players": "Медия плейъри",
+          "light_entities": "Осветителни обекти",
+          "switch_entities": "Превключващи обекти",
+          "workstation_sensors": "Работна станция / PC"
+        }
+      },
+      "edit_thresholds": {
+        "title": "Прагове и режим на сън",
+        "data": {
+          "occupied_threshold": "Праг за заето",
+          "clear_threshold": "Праг за свободно",
+          "no_presence_timeout": "Изчакване без присъствие (с)",
+          "min_hold_time": "Минимално време на задържане (с)",
+          "sleep_mode_entities": "Обекти за режим на сън",
+          "sleep_clear_threshold": "Праг за свободно в режим на сън"
+        }
+      },
+      "edit_llm": {
+        "title": "ИИ поддръжка",
+        "data": {
+          "llm_enabled": "Активиране на ИИ поддръжка",
+          "conversation_agent": "Разговорен агент",
+          "llm_update_interval": "Минимален интервал между ИИ заявки (с)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "presence_soft": {
+        "name": "Присъствие"
+      },
+      "presence_llm": {
+        "name": "Присъствие (ИИ)"
+      }
+    },
+    "sensor": {
+      "presence_score": {
+        "name": "Резултат за присъствие"
+      },
+      "presence_confidence": {
+        "name": "Увереност"
+      },
+      "presence_reason": {
+        "name": "Причина за присъствие"
+      },
+      "presence_llm_score": {
+        "name": "Резултат за присъствие (ИИ)"
+      },
+      "presence_llm_confidence": {
+        "name": "Увереност (ИИ)",
+        "state": {
+          "pending": "Изчакване на оценка"
+        }
+      },
+      "presence_llm_reason": {
+        "name": "Причина за присъствие (ИИ)",
+        "state": {
+          "pending": "Изчакване на оценка"
+        }
+      }
+    }
+  }
+}

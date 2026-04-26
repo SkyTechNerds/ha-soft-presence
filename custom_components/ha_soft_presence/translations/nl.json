@@ -1,0 +1,143 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Kamer instellen",
+        "description": "Basisinstellingen voor de kamer.",
+        "data": {
+          "room_name": "Kamernaam",
+          "has_door": "Kamer heeft deur(en)",
+          "is_transit": "Doorgangsruimte (hal, gang)"
+        }
+      },
+      "presence_sensors": {
+        "title": "Aanwezigheidssensoren",
+        "description": "mmWave-sensoren detecteren ook stilzittende personen en hebben sterk de voorkeur boven PIR.",
+        "data": {
+          "mmwave_sensors": "mmWave / Radarsensoren",
+          "pir_sensors": "PIR / Bewegingssensoren"
+        }
+      },
+      "context_sensors": {
+        "title": "Contextsensoren",
+        "description": "Ondersteunende signalen — geen enkele is verplicht.",
+        "data": {
+          "door_sensors": "Deurcontacten",
+          "window_sensors": "Raamcontacten",
+          "lock_entities": "Slimme sloten",
+          "media_players": "Mediaspelers (TV, luidsprekers, …)",
+          "light_entities": "Lichtentiteiten",
+          "switch_entities": "Schakelaarentiteiten",
+          "workstation_sensors": "Werkstation / PC (binaire sensor of vermogenssensor)"
+        }
+      },
+      "thresholds": {
+        "title": "Drempelwaarden & Slaapstand",
+        "description": "Hysterese tussen de bezet- en vrijdrempel voorkomt flikkeren. Slaapstand verhoogt de vrijdrempel wanneer geselecteerde entiteiten actief zijn.",
+        "data": {
+          "occupied_threshold": "Bezet-drempel (score ≥ → bezet)",
+          "clear_threshold": "Vrij-drempel (score ≤ → timeout starten)",
+          "no_presence_timeout": "Time-out geen aanwezigheid (s)",
+          "min_hold_time": "Minimale houdtijd (s)",
+          "sleep_mode_entities": "Slaapstand-entiteiten (één actief → verminderde gevoeligheid)",
+          "sleep_clear_threshold": "Vrij-drempel in slaapstand"
+        }
+      },
+      "llm": {
+        "title": "AI-ondersteuning",
+        "description": "Optionele AI-analyse via je HA-gespreksagent (Gemini, Ollama, OpenAI, …). Standaard uitgeschakeld.",
+        "data": {
+          "llm_enabled": "AI-ondersteuning inschakelen",
+          "conversation_agent": "Gespreksagent",
+          "llm_update_interval": "Minimaal interval tussen AI-aanroepen (s)"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Kamerbasics",
+        "data": {
+          "room_name": "Kamernaam",
+          "has_door": "Kamer heeft deur(en)",
+          "is_transit": "Doorgangsruimte"
+        }
+      },
+      "edit_presence_sensors": {
+        "title": "Aanwezigheidssensoren",
+        "data": {
+          "mmwave_sensors": "mmWave / Radarsensoren",
+          "pir_sensors": "PIR / Bewegingssensoren"
+        }
+      },
+      "edit_context_sensors": {
+        "title": "Contextsensoren",
+        "data": {
+          "door_sensors": "Deurcontacten",
+          "window_sensors": "Raamcontacten",
+          "lock_entities": "Slimme sloten",
+          "media_players": "Mediaspelers",
+          "light_entities": "Lichtentiteiten",
+          "switch_entities": "Schakelaarentiteiten",
+          "workstation_sensors": "Werkstation / PC"
+        }
+      },
+      "edit_thresholds": {
+        "title": "Drempelwaarden & Slaapstand",
+        "data": {
+          "occupied_threshold": "Bezet-drempel",
+          "clear_threshold": "Vrij-drempel",
+          "no_presence_timeout": "Time-out geen aanwezigheid (s)",
+          "min_hold_time": "Minimale houdtijd (s)",
+          "sleep_mode_entities": "Slaapstand-entiteiten",
+          "sleep_clear_threshold": "Vrij-drempel in slaapstand"
+        }
+      },
+      "edit_llm": {
+        "title": "AI-ondersteuning",
+        "data": {
+          "llm_enabled": "AI-ondersteuning inschakelen",
+          "conversation_agent": "Gespreksagent",
+          "llm_update_interval": "Minimaal interval tussen AI-aanroepen (s)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "presence_soft": {
+        "name": "Aanwezigheid"
+      },
+      "presence_llm": {
+        "name": "Aanwezigheid (AI)"
+      }
+    },
+    "sensor": {
+      "presence_score": {
+        "name": "Aanwezigheidsscore"
+      },
+      "presence_confidence": {
+        "name": "Betrouwbaarheid"
+      },
+      "presence_reason": {
+        "name": "Aanwezigheidsreden"
+      },
+      "presence_llm_score": {
+        "name": "Aanwezigheidsscore (AI)"
+      },
+      "presence_llm_confidence": {
+        "name": "Betrouwbaarheid (AI)",
+        "state": {
+          "pending": "Wachten op evaluatie"
+        }
+      },
+      "presence_llm_reason": {
+        "name": "Aanwezigheidsreden (AI)",
+        "state": {
+          "pending": "Wachten op evaluatie"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,143 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configurar cômodo",
+        "description": "Propriedades básicas do cômodo.",
+        "data": {
+          "room_name": "Nome do cômodo",
+          "has_door": "O cômodo tem porta(s)",
+          "is_transit": "Cômodo de trânsito (corredor, hall)"
+        }
+      },
+      "presence_sensors": {
+        "title": "Sensores de presença",
+        "description": "Os sensores mmWave detectam pessoas paradas e são fortemente preferidos em relação ao PIR.",
+        "data": {
+          "mmwave_sensors": "Sensores mmWave / Radar",
+          "pir_sensors": "Sensores PIR / Movimento"
+        }
+      },
+      "context_sensors": {
+        "title": "Sensores de contexto",
+        "description": "Sinais de apoio — nenhum é obrigatório.",
+        "data": {
+          "door_sensors": "Contatos de porta",
+          "window_sensors": "Contatos de janela",
+          "lock_entities": "Fechaduras inteligentes",
+          "media_players": "Reprodutores de mídia (TV, caixas de som, …)",
+          "light_entities": "Entidades de luz",
+          "switch_entities": "Entidades de interruptor",
+          "workstation_sensors": "Estação de trabalho / PC (sensor binário ou de potência)"
+        }
+      },
+      "thresholds": {
+        "title": "Limiares & Modo sono",
+        "description": "A histerese entre os limiares ocupado e livre evita oscilações. O modo sono eleva o limiar livre quando as entidades selecionadas estão ativas.",
+        "data": {
+          "occupied_threshold": "Limiar de ocupado (pontuação ≥ → ocupado)",
+          "clear_threshold": "Limiar de livre (pontuação ≤ → iniciar tempo limite)",
+          "no_presence_timeout": "Tempo limite sem presença (s)",
+          "min_hold_time": "Tempo mínimo de retenção (s)",
+          "sleep_mode_entities": "Entidades modo sono (qualquer ativa → sensibilidade reduzida)",
+          "sleep_clear_threshold": "Limiar livre no modo sono"
+        }
+      },
+      "llm": {
+        "title": "Assistência IA",
+        "description": "Análise IA opcional via agente de conversação do HA (Gemini, Ollama, OpenAI, …). Desativado por padrão.",
+        "data": {
+          "llm_enabled": "Ativar assistência IA",
+          "conversation_agent": "Agente de conversação",
+          "llm_update_interval": "Intervalo mínimo entre chamadas IA (s)"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Informações básicas",
+        "data": {
+          "room_name": "Nome do cômodo",
+          "has_door": "O cômodo tem porta(s)",
+          "is_transit": "Cômodo de trânsito"
+        }
+      },
+      "edit_presence_sensors": {
+        "title": "Sensores de presença",
+        "data": {
+          "mmwave_sensors": "Sensores mmWave / Radar",
+          "pir_sensors": "Sensores PIR / Movimento"
+        }
+      },
+      "edit_context_sensors": {
+        "title": "Sensores de contexto",
+        "data": {
+          "door_sensors": "Contatos de porta",
+          "window_sensors": "Contatos de janela",
+          "lock_entities": "Fechaduras inteligentes",
+          "media_players": "Reprodutores de mídia",
+          "light_entities": "Entidades de luz",
+          "switch_entities": "Entidades de interruptor",
+          "workstation_sensors": "Estação de trabalho / PC"
+        }
+      },
+      "edit_thresholds": {
+        "title": "Limiares & Modo sono",
+        "data": {
+          "occupied_threshold": "Limiar de ocupado",
+          "clear_threshold": "Limiar de livre",
+          "no_presence_timeout": "Tempo limite sem presença (s)",
+          "min_hold_time": "Tempo mínimo de retenção (s)",
+          "sleep_mode_entities": "Entidades modo sono",
+          "sleep_clear_threshold": "Limiar livre no modo sono"
+        }
+      },
+      "edit_llm": {
+        "title": "Assistência IA",
+        "data": {
+          "llm_enabled": "Ativar assistência IA",
+          "conversation_agent": "Agente de conversação",
+          "llm_update_interval": "Intervalo mínimo entre chamadas IA (s)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "presence_soft": {
+        "name": "Presença"
+      },
+      "presence_llm": {
+        "name": "Presença (IA)"
+      }
+    },
+    "sensor": {
+      "presence_score": {
+        "name": "Pontuação de presença"
+      },
+      "presence_confidence": {
+        "name": "Confiança"
+      },
+      "presence_reason": {
+        "name": "Motivo de presença"
+      },
+      "presence_llm_score": {
+        "name": "Pontuação de presença (IA)"
+      },
+      "presence_llm_confidence": {
+        "name": "Confiança (IA)",
+        "state": {
+          "pending": "Aguardando avaliação"
+        }
+      },
+      "presence_llm_reason": {
+        "name": "Motivo de presença (IA)",
+        "state": {
+          "pending": "Aguardando avaliação"
+        }
+      }
+    }
+  }
+}

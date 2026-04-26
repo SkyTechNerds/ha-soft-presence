@@ -1,0 +1,143 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configuration de la pièce",
+        "description": "Propriétés de base de la pièce.",
+        "data": {
+          "room_name": "Nom de la pièce",
+          "has_door": "La pièce a une ou plusieurs portes",
+          "is_transit": "Pièce de transit (couloir, corridor)"
+        }
+      },
+      "presence_sensors": {
+        "title": "Capteurs de présence",
+        "description": "Les capteurs mmWave détectent les personnes immobiles et sont fortement recommandés par rapport aux capteurs PIR.",
+        "data": {
+          "mmwave_sensors": "Capteurs mmWave / Radar",
+          "pir_sensors": "Capteurs PIR / Mouvement"
+        }
+      },
+      "context_sensors": {
+        "title": "Capteurs contextuels",
+        "description": "Signaux d'appui — aucun n'est obligatoire.",
+        "data": {
+          "door_sensors": "Contacts de porte",
+          "window_sensors": "Contacts de fenêtre",
+          "lock_entities": "Serrures connectées",
+          "media_players": "Lecteurs multimédia (TV, enceintes, …)",
+          "light_entities": "Entités lumières",
+          "switch_entities": "Entités interrupteurs",
+          "workstation_sensors": "Station de travail / PC (capteur binaire ou de puissance)"
+        }
+      },
+      "thresholds": {
+        "title": "Seuils & Mode veille",
+        "description": "L'hystérésis entre les seuils occupé et libre évite les oscillations. Le mode veille augmente le seuil libre quand les entités sélectionnées sont actives.",
+        "data": {
+          "occupied_threshold": "Seuil occupé (score ≥ → occupé)",
+          "clear_threshold": "Seuil libre (score ≤ → démarrer le délai)",
+          "no_presence_timeout": "Délai d'absence (s)",
+          "min_hold_time": "Durée minimale de maintien (s)",
+          "sleep_mode_entities": "Entités mode veille (une active → sensibilité réduite)",
+          "sleep_clear_threshold": "Seuil libre en mode veille"
+        }
+      },
+      "llm": {
+        "title": "Assistance IA",
+        "description": "Analyse IA optionnelle via votre agent de conversation HA (Gemini, Ollama, OpenAI, …). Désactivé par défaut.",
+        "data": {
+          "llm_enabled": "Activer l'assistance IA",
+          "conversation_agent": "Agent de conversation",
+          "llm_update_interval": "Intervalle minimum entre les appels IA (s)"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Informations de base",
+        "data": {
+          "room_name": "Nom de la pièce",
+          "has_door": "La pièce a une ou plusieurs portes",
+          "is_transit": "Pièce de transit"
+        }
+      },
+      "edit_presence_sensors": {
+        "title": "Capteurs de présence",
+        "data": {
+          "mmwave_sensors": "Capteurs mmWave / Radar",
+          "pir_sensors": "Capteurs PIR / Mouvement"
+        }
+      },
+      "edit_context_sensors": {
+        "title": "Capteurs contextuels",
+        "data": {
+          "door_sensors": "Contacts de porte",
+          "window_sensors": "Contacts de fenêtre",
+          "lock_entities": "Serrures connectées",
+          "media_players": "Lecteurs multimédia",
+          "light_entities": "Entités lumières",
+          "switch_entities": "Entités interrupteurs",
+          "workstation_sensors": "Station de travail / PC"
+        }
+      },
+      "edit_thresholds": {
+        "title": "Seuils & Mode veille",
+        "data": {
+          "occupied_threshold": "Seuil occupé",
+          "clear_threshold": "Seuil libre",
+          "no_presence_timeout": "Délai d'absence (s)",
+          "min_hold_time": "Durée minimale de maintien (s)",
+          "sleep_mode_entities": "Entités mode veille",
+          "sleep_clear_threshold": "Seuil libre en mode veille"
+        }
+      },
+      "edit_llm": {
+        "title": "Assistance IA",
+        "data": {
+          "llm_enabled": "Activer l'assistance IA",
+          "conversation_agent": "Agent de conversation",
+          "llm_update_interval": "Intervalle minimum entre les appels IA (s)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "presence_soft": {
+        "name": "Présence"
+      },
+      "presence_llm": {
+        "name": "Présence (IA)"
+      }
+    },
+    "sensor": {
+      "presence_score": {
+        "name": "Score de présence"
+      },
+      "presence_confidence": {
+        "name": "Confiance"
+      },
+      "presence_reason": {
+        "name": "Raison de présence"
+      },
+      "presence_llm_score": {
+        "name": "Score de présence (IA)"
+      },
+      "presence_llm_confidence": {
+        "name": "Confiance (IA)",
+        "state": {
+          "pending": "En attente d'évaluation"
+        }
+      },
+      "presence_llm_reason": {
+        "name": "Raison de présence (IA)",
+        "state": {
+          "pending": "En attente d'évaluation"
+        }
+      }
+    }
+  }
+}

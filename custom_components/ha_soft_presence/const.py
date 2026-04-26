@@ -28,6 +28,10 @@ CONF_ESPRESENSE_SENSORS = "espresense_sensors"
 CONF_WORKSTATION_ENTITIES = "workstation_entities"
 CONF_WORKSTATION_POWER_SENSORS = "workstation_power_sensors"
 
+# Config keys — sleep mode
+CONF_SLEEP_MODE_ENTITIES = "sleep_mode_entities"
+CONF_SLEEP_CLEAR_THRESHOLD = "sleep_clear_threshold"
+
 # Config keys — LLM
 CONF_LLM_ENABLED = "llm_enabled"
 CONF_CONVERSATION_AGENT = "conversation_agent"
@@ -74,6 +78,7 @@ DEFAULT_CLEAR_THRESHOLD = 20
 DEFAULT_NO_PRESENCE_TIMEOUT = 300   # 5 min
 DEFAULT_MIN_HOLD_TIME = 60          # 1 min
 DEFAULT_POLL_INTERVAL = 5           # seconds
+DEFAULT_SLEEP_CLEAR_THRESHOLD = 5   # very hard to go clear during sleep mode
 
 # Confidence levels
 CONFIDENCE_HIGH = "high"

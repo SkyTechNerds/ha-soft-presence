@@ -33,13 +33,15 @@
         }
       },
       "thresholds": {
-        "title": "Thresholds",
-        "description": "Hysteresis between occupied and clear threshold prevents flickering.",
+        "title": "Thresholds & Sleep Mode",
+        "description": "Hysteresis between occupied and clear threshold prevents flickering. Sleep mode raises the clear threshold when selected entities are on — making it harder to mark the room as clear.",
         "data": {
           "occupied_threshold": "Occupied Threshold (score ≥ → occupied)",
           "clear_threshold": "Clear Threshold (score ≤ → start timeout)",
           "no_presence_timeout": "No-Presence Timeout (s)",
-          "min_hold_time": "Minimum Hold Time (s)"
+          "min_hold_time": "Minimum Hold Time (s)",
+          "sleep_mode_entities": "Sleep Mode Entities (any on → reduced sensitivity)",
+          "sleep_clear_threshold": "Sleep Mode Clear Threshold"
         }
       },
       "llm": {
@@ -84,12 +86,14 @@
         }
       },
       "edit_thresholds": {
-        "title": "Thresholds",
+        "title": "Thresholds & Sleep Mode",
         "data": {
           "occupied_threshold": "Occupied Threshold",
           "clear_threshold": "Clear Threshold",
           "no_presence_timeout": "No-Presence Timeout (s)",
-          "min_hold_time": "Minimum Hold Time (s)"
+          "min_hold_time": "Minimum Hold Time (s)",
+          "sleep_mode_entities": "Sleep Mode Entities",
+          "sleep_clear_threshold": "Sleep Mode Clear Threshold"
         }
       },
       "edit_llm": {

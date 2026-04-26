@@ -35,6 +35,8 @@ from .const import (
     CONF_ESPRESENSE_SENSORS,
     CONF_WORKSTATION_ENTITIES,
     CONF_WORKSTATION_POWER_SENSORS,
+    CONF_SLEEP_MODE_ENTITIES,
+    CONF_SLEEP_CLEAR_THRESHOLD,
     CONF_LLM_ENABLED,
     CONF_CONVERSATION_AGENT,
     CONF_LLM_UPDATE_INTERVAL,
@@ -66,6 +68,7 @@ from .const import (
     DEFAULT_MIN_HOLD_TIME,
     DEFAULT_POLL_INTERVAL,
     DEFAULT_LLM_UPDATE_INTERVAL,
+    DEFAULT_SLEEP_CLEAR_THRESHOLD,
     CONFIDENCE_HIGH,
     CONFIDENCE_MEDIUM,
     CONFIDENCE_LOW,
@@ -196,6 +199,8 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             CONF_WORKSTATION_SENSORS, CONF_WORKSTATION_ENTITIES, CONF_WORKSTATION_POWER_SENSORS,
         ):
             ids.extend(sensors.get(key, []))
+        # Sleep mode entities live at config top level, not in sensors dict
+        ids.extend(self.config.get(CONF_SLEEP_MODE_ENTITIES, []))
         return ids
 
     @callback
@@ -378,9 +383,19 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     # State machine
     # ------------------------------------------------------------------
 
+    def _sleep_mode_active(self) -> bool:
+        """Return True if any configured sleep mode entity is on."""
+        for eid in self.config.get(CONF_SLEEP_MODE_ENTITIES, []):
+            st = self.hass.states.get(eid)
+            if st and st.state == "on":
+                return True
+        return False
+
     def _run_state_machine(self) -> None:
         occupied_threshold = int(self.config.get(CONF_OCCUPIED_THRESHOLD, DEFAULT_OCCUPIED_THRESHOLD))
         clear_threshold = int(self.config.get(CONF_CLEAR_THRESHOLD, DEFAULT_CLEAR_THRESHOLD))
+        if self._sleep_mode_active():
+            clear_threshold = int(self.config.get(CONF_SLEEP_CLEAR_THRESHOLD, DEFAULT_SLEEP_CLEAR_THRESHOLD))
         timeout = float(self.config.get(CONF_NO_PRESENCE_TIMEOUT, DEFAULT_NO_PRESENCE_TIMEOUT))
         min_hold = float(self.config.get(CONF_MIN_HOLD_TIME, DEFAULT_MIN_HOLD_TIME))
         now = time.time()
@@ -555,6 +570,7 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "timeout_remaining": timeout_remaining,
             "room_name": self.config.get(CONF_ROOM_NAME, ""),
             "manual_override": self._manual_override,
+            "sleep_mode_active": self._sleep_mode_active(),
             # LLM advisory
             "llm_enabled": bool(self.config.get(CONF_LLM_ENABLED)),
             "llm": self._llm_data,

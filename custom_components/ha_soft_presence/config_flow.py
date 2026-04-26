@@ -27,6 +27,8 @@ from .const import (
     CONF_ESPRESENSE_SENSORS,
     CONF_WORKSTATION_ENTITIES,
     CONF_WORKSTATION_POWER_SENSORS,
+    CONF_SLEEP_MODE_ENTITIES,
+    CONF_SLEEP_CLEAR_THRESHOLD,
     CONF_LLM_ENABLED,
     CONF_CONVERSATION_AGENT,
     CONF_LLM_UPDATE_INTERVAL,
@@ -34,6 +36,7 @@ from .const import (
     DEFAULT_CLEAR_THRESHOLD,
     DEFAULT_NO_PRESENCE_TIMEOUT,
     DEFAULT_MIN_HOLD_TIME,
+    DEFAULT_SLEEP_CLEAR_THRESHOLD,
     DEFAULT_LLM_UPDATE_INTERVAL,
 )
 
@@ -231,6 +234,8 @@ class SoftPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_CLEAR_THRESHOLD: int(user_input[CONF_CLEAR_THRESHOLD]),
                 CONF_NO_PRESENCE_TIMEOUT: int(user_input[CONF_NO_PRESENCE_TIMEOUT]),
                 CONF_MIN_HOLD_TIME: int(user_input[CONF_MIN_HOLD_TIME]),
+                CONF_SLEEP_MODE_ENTITIES: user_input.get(CONF_SLEEP_MODE_ENTITIES, []),
+                CONF_SLEEP_CLEAR_THRESHOLD: int(user_input[CONF_SLEEP_CLEAR_THRESHOLD]),
             })
             return await self.async_step_llm()
 
@@ -248,6 +253,15 @@ class SoftPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 ),
                 vol.Required(CONF_MIN_HOLD_TIME, default=DEFAULT_MIN_HOLD_TIME): selector.NumberSelector(
                     selector.NumberSelectorConfig(min=0, max=600, step=10, unit_of_measurement="s", mode="box")
+                ),
+                vol.Optional(CONF_SLEEP_MODE_ENTITIES, default=[]): selector.EntitySelector(
+                    selector.EntitySelectorConfig(
+                        domain=["input_boolean", "binary_sensor", "group", "switch"],
+                        multiple=True,
+                    )
+                ),
+                vol.Required(CONF_SLEEP_CLEAR_THRESHOLD, default=DEFAULT_SLEEP_CLEAR_THRESHOLD): selector.NumberSelector(
+                    selector.NumberSelectorConfig(min=0, max=99, step=1, mode="slider")
                 ),
             }),
         )
@@ -430,6 +444,8 @@ class SoftPresenceOptionsFlow(config_entries.OptionsFlow):
                 CONF_CLEAR_THRESHOLD: int(user_input[CONF_CLEAR_THRESHOLD]),
                 CONF_NO_PRESENCE_TIMEOUT: int(user_input[CONF_NO_PRESENCE_TIMEOUT]),
                 CONF_MIN_HOLD_TIME: int(user_input[CONF_MIN_HOLD_TIME]),
+                CONF_SLEEP_MODE_ENTITIES: user_input.get(CONF_SLEEP_MODE_ENTITIES, []),
+                CONF_SLEEP_CLEAR_THRESHOLD: int(user_input[CONF_SLEEP_CLEAR_THRESHOLD]),
             })
             return await self.async_step_edit_llm()
 
@@ -447,6 +463,15 @@ class SoftPresenceOptionsFlow(config_entries.OptionsFlow):
                 ),
                 vol.Required(CONF_MIN_HOLD_TIME, default=data.get(CONF_MIN_HOLD_TIME, DEFAULT_MIN_HOLD_TIME)): selector.NumberSelector(
                     selector.NumberSelectorConfig(min=0, max=600, step=10, unit_of_measurement="s", mode="box")
+                ),
+                vol.Optional(CONF_SLEEP_MODE_ENTITIES, default=data.get(CONF_SLEEP_MODE_ENTITIES, [])): selector.EntitySelector(
+                    selector.EntitySelectorConfig(
+                        domain=["input_boolean", "binary_sensor", "group", "switch"],
+                        multiple=True,
+                    )
+                ),
+                vol.Required(CONF_SLEEP_CLEAR_THRESHOLD, default=data.get(CONF_SLEEP_CLEAR_THRESHOLD, DEFAULT_SLEEP_CLEAR_THRESHOLD)): selector.NumberSelector(
+                    selector.NumberSelectorConfig(min=0, max=99, step=1, mode="slider")
                 ),
             }),
         )

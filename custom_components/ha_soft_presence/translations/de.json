@@ -33,13 +33,15 @@
         }
       },
       "thresholds": {
-        "title": "Schwellwerte",
-        "description": "Die Hysterese zwischen Belegt- und Frei-Schwelle verhindert Flackern.",
+        "title": "Schwellwerte & Schlafmodus",
+        "description": "Die Hysterese zwischen Belegt- und Frei-Schwelle verhindert Flackern. Der Schlafmodus erhöht die Frei-Schwelle wenn die gewählten Entities aktiv sind — der Raum geht dann schwerer auf Frei.",
         "data": {
           "occupied_threshold": "Belegt-Schwelle (Score ≥ → belegt)",
           "clear_threshold": "Frei-Schwelle (Score ≤ → Timeout starten)",
           "no_presence_timeout": "Keine-Anwesenheit-Timeout (s)",
-          "min_hold_time": "Mindesthaltedauer (s)"
+          "min_hold_time": "Mindesthaltedauer (s)",
+          "sleep_mode_entities": "Schlafmodus-Entities (eine davon an → reduzierte Sensitivität)",
+          "sleep_clear_threshold": "Frei-Schwelle im Schlafmodus"
         }
       },
       "llm": {
@@ -84,12 +86,14 @@
         }
       },
       "edit_thresholds": {
-        "title": "Schwellwerte",
+        "title": "Schwellwerte & Schlafmodus",
         "data": {
           "occupied_threshold": "Belegt-Schwelle",
           "clear_threshold": "Frei-Schwelle",
           "no_presence_timeout": "Keine-Anwesenheit-Timeout (s)",
-          "min_hold_time": "Mindesthaltedauer (s)"
+          "min_hold_time": "Mindesthaltedauer (s)",
+          "sleep_mode_entities": "Schlafmodus-Entities",
+          "sleep_clear_threshold": "Frei-Schwelle im Schlafmodus"
         }
       },
       "edit_llm": {

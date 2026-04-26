@@ -247,22 +247,22 @@ AI entities show **"Waiting for evaluation"** until the first response arrives.
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| 📶 ESPresense / BLE | planned | One sensor per tracked device (phone/watch); state = current room name string |
-| 📷 Camera / Frigate support | planned | Frigate person-detection binary sensors; own score weight distinct from PIR |
-| 🧠 Camera snapshot + Vision AI | planned | Send camera snapshot to vision-capable AI; opt-in, privacy-first |
-| 🏘️ Room-level aggregation | planned | "Anyone home on floor 1?" aggregating multiple rooms |
-| 🔧 HA Quality Scale — `iot_class` | planned | Set `local_polling` correctly in manifest |
-| 🔧 HA Quality Scale — `diagnostics.py` | planned | Coordinator data dump for easier debugging in HA |
-| 🔧 HA Quality Scale — Tests | planned | `pytest-homeassistant-custom-component` test suite |
-| 🔧 HA Quality Scale — Repairs / Issues | planned | Surface config errors as actionable HA repair issues |
-| 🔧 HA Quality Scale — Entity unique_id | planned | Stricter unique_id naming per HA guidelines |
-| 🌙 Sleep mode | ✅ done | Configurable entities raise clear threshold when active |
-| 📡 HA Events | ✅ done | `ha_soft_presence_state_changed` on every transition |
-| 🛠️ Service calls | ✅ done | `force_occupied`, `force_clear`, `reset_override` |
-| 📍 Area auto-fill | ✅ done | Entity selectors pre-filled from matching HA area |
-| 🤖 AI initial evaluation | ✅ done | AI runs once on startup |
-| 🌍 Multi-language (11 languages) | ✅ done | EN, DE, FR, ES, IT, NL, PL, PT, SV, RU, BG |
-| ⚙️ Options flow | ✅ done | Full reconfiguration without deleting the integration |
+| ESPresense / BLE | planned | One sensor per tracked device (phone/watch); state = current room name string |
+| Camera / Frigate support | planned | Frigate person-detection binary sensors; own score weight distinct from PIR |
+| Camera snapshot + Vision AI | planned | Send camera snapshot to vision-capable AI; opt-in, privacy-first |
+| Room-level aggregation | planned | "Anyone home on floor 1?" aggregating multiple rooms |
+| HA Quality Scale — `iot_class` | planned | Set `local_polling` correctly in manifest |
+| HA Quality Scale — `diagnostics.py` | planned | Coordinator data dump for easier debugging in HA |
+| HA Quality Scale — Tests | planned | `pytest-homeassistant-custom-component` test suite |
+| HA Quality Scale — Repairs / Issues | planned | Surface config errors as actionable HA repair issues |
+| HA Quality Scale — Entity unique_id | planned | Stricter unique_id naming per HA guidelines |
+| Sleep mode | ✅ done | Configurable entities raise clear threshold when active |
+| HA Events | ✅ done | `ha_soft_presence_state_changed` on every transition |
+| Service calls | ✅ done | `force_occupied`, `force_clear`, `reset_override` |
+| Area auto-fill | ✅ done | Entity selectors pre-filled from matching HA area |
+| AI initial evaluation | ✅ done | AI runs once on startup |
+| Multi-language (11 languages) | ✅ done | EN, DE, FR, ES, IT, NL, PL, PT, SV, RU, BG |
+| Options flow | ✅ done | Full reconfiguration without deleting the integration |
 
 ---
 

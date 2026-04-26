@@ -19,7 +19,7 @@ Instead of relying on a single sensor, HA Soft Presence combines multiple signal
 - **Service calls**: `force_occupied`, `force_clear`, `reset_override` per room
 - **Optional LLM advisory** (via HA AI / Gemini / Ollama / OpenAI) — off by default, no data sent externally
 - **Area auto-fill**: entity selectors pre-filled from matching HA area on setup
-- **Config UI**: full multi-step setup in Home Assistant UI, no YAML required
+- **Config UI**: full multi-step setup in Home Assistant UI — YAML configuration is not supported
 - **Options flow**: full reconfiguration after setup without deleting the integration
 - **Multi-language**: English and German
 

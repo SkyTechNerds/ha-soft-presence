@@ -22,9 +22,10 @@ CONF_LOCK_ENTITIES = "lock_entities"
 CONF_MEDIA_PLAYERS = "media_players"
 CONF_LIGHT_ENTITIES = "light_entities"
 CONF_SWITCH_ENTITIES = "switch_entities"
+CONF_WORKSTATION_SENSORS = "workstation_sensors"
+# Legacy keys — kept for backward compat with existing config entries
 CONF_WORKSTATION_ENTITIES = "workstation_entities"
 CONF_WORKSTATION_POWER_SENSORS = "workstation_power_sensors"
-CONF_CAMERA_ENTITIES = "camera_entities"
 
 # Config keys — LLM
 CONF_LLM_ENABLED = "llm_enabled"

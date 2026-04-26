@@ -56,7 +56,7 @@ class _BaseSensor(CoordinatorEntity[SoftPresenceCoordinator], SensorEntity):
     def device_info(self) -> dict:
         return {
             "identifiers": {(DOMAIN, self._entry.entry_id)},
-            "name": self._entry.data.get(CONF_ROOM_NAME, "Soft Presence Room"),
+            "name": f"{self._entry.data.get(CONF_ROOM_NAME, 'Room')} Soft Presence",
             "manufacturer": "HA Soft Presence",
             "model": "Virtual Presence Sensor",
             "entry_type": "service",

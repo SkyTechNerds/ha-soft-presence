@@ -28,8 +28,7 @@
           "media_players": "Mediaplayer (TV, Lautsprecher, …)",
           "light_entities": "Licht-Entitäten",
           "switch_entities": "Schalter-Entitäten",
-          "workstation_entities": "PC / Workstation (Binärsensor)",
-          "workstation_power_sensors": "PC-Leistungsaufnahme (W)"
+          "workstation_sensors": "PC / Workstation (Binärsensor oder Leistungssensor)"
         }
       },
       "thresholds": {
@@ -79,8 +78,7 @@
           "media_players": "Mediaplayer",
           "light_entities": "Licht-Entitäten",
           "switch_entities": "Schalter-Entitäten",
-          "workstation_entities": "PC / Workstation",
-          "workstation_power_sensors": "PC-Leistungsaufnahme (W)"
+          "workstation_sensors": "PC / Workstation"
         }
       },
       "edit_thresholds": {

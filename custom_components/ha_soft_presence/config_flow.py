@@ -22,8 +22,7 @@ from .const import (
     CONF_MEDIA_PLAYERS,
     CONF_LIGHT_ENTITIES,
     CONF_SWITCH_ENTITIES,
-    CONF_WORKSTATION_ENTITIES,
-    CONF_WORKSTATION_POWER_SENSORS,
+    CONF_WORKSTATION_SENSORS,
     CONF_LLM_ENABLED,
     CONF_CONVERSATION_AGENT,
     CONF_LLM_UPDATE_INTERVAL,
@@ -107,8 +106,7 @@ class SoftPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_MEDIA_PLAYERS: user_input.get(CONF_MEDIA_PLAYERS, []),
                 CONF_LIGHT_ENTITIES: user_input.get(CONF_LIGHT_ENTITIES, []),
                 CONF_SWITCH_ENTITIES: user_input.get(CONF_SWITCH_ENTITIES, []),
-                CONF_WORKSTATION_ENTITIES: user_input.get(CONF_WORKSTATION_ENTITIES, []),
-                CONF_WORKSTATION_POWER_SENSORS: user_input.get(CONF_WORKSTATION_POWER_SENSORS, []),
+                CONF_WORKSTATION_SENSORS: user_input.get(CONF_WORKSTATION_SENSORS, []),
             })
             return await self.async_step_thresholds()
 
@@ -153,16 +151,9 @@ class SoftPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         multiple=True,
                     )
                 ),
-                vol.Optional(CONF_WORKSTATION_ENTITIES, default=[]): selector.EntitySelector(
+                vol.Optional(CONF_WORKSTATION_SENSORS, default=[]): selector.EntitySelector(
                     selector.EntitySelectorConfig(
-                        domain=["binary_sensor"],
-                        multiple=True,
-                    )
-                ),
-                vol.Optional(CONF_WORKSTATION_POWER_SENSORS, default=[]): selector.EntitySelector(
-                    selector.EntitySelectorConfig(
-                        domain=["sensor"],
-                        device_class=["power"],
+                        domain=["binary_sensor", "sensor"],
                         multiple=True,
                     )
                 ),
@@ -302,10 +293,13 @@ class SoftPresenceOptionsFlow(config_entries.OptionsFlow):
                 CONF_MEDIA_PLAYERS: user_input.get(CONF_MEDIA_PLAYERS, []),
                 CONF_LIGHT_ENTITIES: user_input.get(CONF_LIGHT_ENTITIES, []),
                 CONF_SWITCH_ENTITIES: user_input.get(CONF_SWITCH_ENTITIES, []),
-                CONF_WORKSTATION_ENTITIES: user_input.get(CONF_WORKSTATION_ENTITIES, []),
-                CONF_WORKSTATION_POWER_SENSORS: user_input.get(CONF_WORKSTATION_POWER_SENSORS, []),
+                CONF_WORKSTATION_SENSORS: user_input.get(CONF_WORKSTATION_SENSORS, []),
             })
             return await self.async_step_edit_thresholds()
+
+        # Merge legacy keys for pre-fill when upgrading from old config entries
+        legacy_ws = sensors.get(CONF_WORKSTATION_ENTITIES, []) + sensors.get(CONF_WORKSTATION_POWER_SENSORS, [])
+        ws_default = sensors.get(CONF_WORKSTATION_SENSORS, legacy_ws)
 
         return self.async_show_form(
             step_id="edit_context_sensors",
@@ -328,11 +322,8 @@ class SoftPresenceOptionsFlow(config_entries.OptionsFlow):
                 vol.Optional(CONF_SWITCH_ENTITIES, default=sensors.get(CONF_SWITCH_ENTITIES, [])): selector.EntitySelector(
                     selector.EntitySelectorConfig(domain=["switch"], multiple=True)
                 ),
-                vol.Optional(CONF_WORKSTATION_ENTITIES, default=sensors.get(CONF_WORKSTATION_ENTITIES, [])): selector.EntitySelector(
-                    selector.EntitySelectorConfig(domain=["binary_sensor"], multiple=True)
-                ),
-                vol.Optional(CONF_WORKSTATION_POWER_SENSORS, default=sensors.get(CONF_WORKSTATION_POWER_SENSORS, [])): selector.EntitySelector(
-                    selector.EntitySelectorConfig(domain=["sensor"], device_class=["power"], multiple=True)
+                vol.Optional(CONF_WORKSTATION_SENSORS, default=ws_default): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain=["binary_sensor", "sensor"], multiple=True)
                 ),
             }),
         )

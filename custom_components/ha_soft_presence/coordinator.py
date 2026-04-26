@@ -31,6 +31,7 @@ from .const import (
     CONF_MEDIA_PLAYERS,
     CONF_LIGHT_ENTITIES,
     CONF_SWITCH_ENTITIES,
+    CONF_WORKSTATION_SENSORS,
     CONF_WORKSTATION_ENTITIES,
     CONF_WORKSTATION_POWER_SENSORS,
     CONF_LLM_ENABLED,
@@ -183,7 +184,7 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             CONF_MMWAVE_SENSORS, CONF_PIR_SENSORS, CONF_DOOR_SENSORS,
             CONF_WINDOW_SENSORS, CONF_LOCK_ENTITIES, CONF_MEDIA_PLAYERS,
             CONF_LIGHT_ENTITIES, CONF_SWITCH_ENTITIES,
-            CONF_WORKSTATION_ENTITIES, CONF_WORKSTATION_POWER_SENSORS,
+            CONF_WORKSTATION_SENSORS, CONF_WORKSTATION_ENTITIES, CONF_WORKSTATION_POWER_SENSORS,
         ):
             ids.extend(sensors.get(key, []))
         return ids
@@ -217,7 +218,10 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._record_event(f"media_{state}", now)
         elif entity_id in sensors.get(CONF_LIGHT_ENTITIES, []) + sensors.get(CONF_SWITCH_ENTITIES, []):
             self._record_event(f"light_{'on' if state == 'on' else 'off'}", now)
-        elif entity_id in sensors.get(CONF_WORKSTATION_ENTITIES, []):
+        elif entity_id in (
+            sensors.get(CONF_WORKSTATION_SENSORS, [])
+            + sensors.get(CONF_WORKSTATION_ENTITIES, [])
+        ):
             self._record_event(f"workstation_{'on' if state == 'on' else 'off'}", now)
 
         self.hass.async_create_task(self.async_request_refresh())
@@ -295,23 +299,31 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     sources.append("media_paused")
                     break
 
-        for eid in sensors.get(CONF_WORKSTATION_ENTITIES, []):
+        ws_active = False
+        # Combined field (new) + legacy separate fields (backward compat)
+        ws_entities = (
+            sensors.get(CONF_WORKSTATION_SENSORS, [])
+            + sensors.get(CONF_WORKSTATION_ENTITIES, [])
+            + sensors.get(CONF_WORKSTATION_POWER_SENSORS, [])
+        )
+        for eid in ws_entities:
             st = self.hass.states.get(eid)
-            if st and st.state == "on":
-                score += WEIGHT_WORKSTATION_ACTIVE
-                sources.append("workstation")
+            if not st:
+                continue
+            domain = eid.split(".")[0]
+            if domain == "binary_sensor" and st.state == "on":
+                ws_active = True
                 break
-
-        for eid in sensors.get(CONF_WORKSTATION_POWER_SENSORS, []):
-            st = self.hass.states.get(eid)
-            if st:
+            elif domain == "sensor":
                 try:
                     if float(st.state) > WORKSTATION_POWER_THRESHOLD_W:
-                        score += WEIGHT_WORKSTATION_ACTIVE
-                        sources.append("workstation_power")
+                        ws_active = True
                         break
                 except (ValueError, TypeError):
                     pass
+        if ws_active:
+            score += WEIGHT_WORKSTATION_ACTIVE
+            sources.append("workstation")
 
         lights = sensors.get(CONF_LIGHT_ENTITIES, []) + sensors.get(CONF_SWITCH_ENTITIES, [])
         for eid in lights:

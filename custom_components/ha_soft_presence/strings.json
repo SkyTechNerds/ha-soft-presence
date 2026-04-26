@@ -28,8 +28,7 @@
           "media_players": "Media Players (TV, Speaker, …)",
           "light_entities": "Light Entities",
           "switch_entities": "Switch Entities",
-          "workstation_entities": "Workstation / PC (binary sensor)",
-          "workstation_power_sensors": "Workstation Power Consumption (W)"
+          "workstation_sensors": "Workstation / PC (binary sensor or power sensor)"
         }
       },
       "thresholds": {
@@ -79,8 +78,7 @@
           "media_players": "Media Players",
           "light_entities": "Light Entities",
           "switch_entities": "Switch Entities",
-          "workstation_entities": "Workstation / PC",
-          "workstation_power_sensors": "Workstation Power (W)"
+          "workstation_sensors": "Workstation / PC"
         }
       },
       "edit_thresholds": {

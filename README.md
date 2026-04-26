@@ -9,7 +9,7 @@ Instead of relying on a single sensor, HA Soft Presence combines multiple signal
 ## Features
 
 - **Up to 10 entities per room**: binary occupancy + score + confidence + reason, plus 4 optional LLM advisory entities
-- **Sensor fusion**: mmWave, PIR, BLE/ESPresense, media player, workstation, lights, door contacts, locks
+- **Sensor fusion**: mmWave, PIR, media player, workstation, lights, door contacts, locks
 - **6-state machine**: `clear → possible_entry → occupied → likely_occupied → possible_exit → clear_pending → clear`
 - **Hysteresis**: separate occupied/clear thresholds — no flickering
 - **Sleep mode**: configurable entities (e.g. `group.sleepmode_all`) raise the clear threshold — room stays occupied longer during sleep
@@ -69,7 +69,6 @@ sleep_mode_active: false
 | Signal | Weight | Notes |
 |--------|-------:|-------|
 | mmWave active | +80 | Strongest signal — detects still persons |
-| BLE device in room | +50 | ESPresense distance < 4 m (phone/watch tracked) |
 | PIR active | +35 | Real-time motion |
 | PIR recent (decay) | up to +15 | Fades over 5 min after PIR goes off |
 | Workstation active | +35 | Binary sensor or power > 10 W |
@@ -141,7 +140,6 @@ Repeat to add more rooms.
 |----------|---------------|
 | mmWave | DFRobot SEN0395, FP2, LD2410, EP1, Everything Presence One |
 | PIR | Any `binary_sensor` with device class `motion` or `occupancy` |
-| ESPresense | `sensor.espe_{room}_{device}` — distance in meters, "away" when not detected |
 | Door contacts | `binary_sensor` with device class `door` |
 | Window contacts | `binary_sensor` with device class `window` |
 | Locks | Any `lock` entity |
@@ -242,7 +240,7 @@ LLM entities show **"Waiting for evaluation"** until the first response arrives.
 | Camera / Frigate support | planned | Dedicated sensor slot for Frigate person-detection binary sensors; own score weight distinct from PIR |
 | Camera snapshot + Vision LLM | planned | Send camera snapshot to vision-capable LLM; opt-in, privacy-first |
 | Room-level aggregation | planned | "Anyone home on floor 1?" aggregating multiple rooms |
-| ESPresense / BLE | ✅ done | Distance-based BLE tracking, weight +50 |
+| ESPresense / BLE | planned | One sensor per tracked device (phone/watch); state = current room name string — match against room slug to score presence |
 | Sleep mode | ✅ done | Configurable entities raise clear threshold when active |
 | HA Events | ✅ done | `ha_soft_presence_state_changed` on every transition |
 | Service calls | ✅ done | `force_occupied`, `force_clear`, `reset_override` |

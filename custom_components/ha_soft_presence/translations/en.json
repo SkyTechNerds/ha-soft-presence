@@ -12,11 +12,10 @@
       },
       "presence_sensors": {
         "title": "Presence Sensors",
-        "description": "mmWave sensors detect still persons and are strongly preferred over PIR. ESPresense tracks BLE devices (phones/watches) by room distance.",
+        "description": "mmWave sensors detect still persons and are strongly preferred over PIR.",
         "data": {
           "mmwave_sensors": "mmWave / Radar Sensors",
-          "pir_sensors": "PIR / Motion Sensors",
-          "espresense_sensors": "ESPresense / BLE Distance Sensors"
+          "pir_sensors": "PIR / Motion Sensors"
         }
       },
       "context_sensors": {
@@ -69,8 +68,7 @@
         "title": "Presence Sensors",
         "data": {
           "mmwave_sensors": "mmWave / Radar Sensors",
-          "pir_sensors": "PIR / Motion Sensors",
-          "espresense_sensors": "ESPresense / BLE Distance Sensors"
+          "pir_sensors": "PIR / Motion Sensors"
         }
       },
       "edit_context_sensors": {

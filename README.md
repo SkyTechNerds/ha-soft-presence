@@ -8,7 +8,7 @@ Instead of relying on a single sensor, HA Soft Presence combines multiple signal
 
 ## Features
 
-- **Up to 10 entities per room**: binary occupancy + score + confidence + reason, plus 4 optional LLM advisory entities
+- **8 entities created per room**: binary occupancy + score + confidence + reason, plus 4 optional LLM advisory entities — unlimited input sensors per room
 - **Sensor fusion**: mmWave, PIR, media player, workstation, lights, door contacts, locks
 - **6-state machine**: `clear → possible_entry → occupied → likely_occupied → possible_exit → clear_pending → clear`
 - **Hysteresis**: separate occupied/clear thresholds — no flickering

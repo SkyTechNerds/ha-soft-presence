@@ -244,9 +244,10 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         if self.config.get(CONF_LLM_ENABLED) and self.config.get(CONF_CONVERSATION_AGENT):
             interval = int(self.config.get(CONF_LLM_UPDATE_INTERVAL, DEFAULT_LLM_UPDATE_INTERVAL))
+            never_called = self._llm_last_called == 0.0
             new_events = len(self._event_log) > self._llm_last_event_count
             time_elapsed = (time.time() - self._llm_last_called) >= interval
-            if new_events and time_elapsed:
+            if (new_events or never_called) and time_elapsed:
                 try:
                     await self._async_call_llm()
                 except Exception as err:

@@ -62,6 +62,7 @@ class SoftPresenceBinarySensor(CoordinatorEntity[SoftPresenceCoordinator], Binar
             "last_positive_signal": d.get("last_positive"),
             "timeout_remaining": d.get("timeout_remaining"),
             "room_name": d.get("room_name"),
+            "manual_override": d.get("manual_override"),
         }
 
     @property

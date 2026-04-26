@@ -32,6 +32,7 @@ from .const import (
     CONF_LIGHT_ENTITIES,
     CONF_SWITCH_ENTITIES,
     CONF_WORKSTATION_SENSORS,
+    CONF_ESPRESENSE_SENSORS,
     CONF_WORKSTATION_ENTITIES,
     CONF_WORKSTATION_POWER_SENSORS,
     CONF_LLM_ENABLED,
@@ -47,6 +48,7 @@ from .const import (
     WEIGHT_MMWAVE,
     WEIGHT_PIR_ACTIVE,
     WEIGHT_PIR_RECENT,
+    WEIGHT_ESPRESENSE,
     WEIGHT_MEDIA_PLAYING,
     WEIGHT_MEDIA_PAUSED,
     WEIGHT_WORKSTATION_ACTIVE,
@@ -57,6 +59,7 @@ from .const import (
     DECAY_DOOR,
     DECAY_LOCK,
     WORKSTATION_POWER_THRESHOLD_W,
+    ESPRESENSE_DISTANCE_THRESHOLD_M,
     DEFAULT_OCCUPIED_THRESHOLD,
     DEFAULT_CLEAR_THRESHOLD,
     DEFAULT_NO_PRESENCE_TIMEOUT,
@@ -74,10 +77,10 @@ _SOURCE_LABELS: dict[str, str] = {
     "mmwave": "mmWave active",
     "pir": "PIR motion",
     "pir_recent": "Recent PIR motion",
+    "ble_home": "BLE device in room",
     "media_playing": "Media playing",
     "media_paused": "Media paused",
     "workstation": "Workstation active",
-    "workstation_power": "Workstation power draw",
     "light_manual": "Light on",
     "door_recent": "Door recently opened",
     "lock_recent": "Lock recently used",
@@ -137,8 +140,14 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         # LLM state
         self._llm_last_called: float = 0.0
-        self._llm_last_event_count: int = 0  # track new events since last LLM call
+        self._llm_last_event_count: int = 0
         self._llm_data: dict[str, Any] = {}
+
+        # Event firing — track previous occupied state
+        self._was_occupied: bool | None = None
+
+        # Manual override: "occupied" | "clear" | None
+        self._manual_override: str | None = None
 
         self._unsubs: list = []
 
@@ -181,9 +190,9 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         sensors = self.config.get("sensors", {})
         ids: list[str] = []
         for key in (
-            CONF_MMWAVE_SENSORS, CONF_PIR_SENSORS, CONF_DOOR_SENSORS,
-            CONF_WINDOW_SENSORS, CONF_LOCK_ENTITIES, CONF_MEDIA_PLAYERS,
-            CONF_LIGHT_ENTITIES, CONF_SWITCH_ENTITIES,
+            CONF_MMWAVE_SENSORS, CONF_PIR_SENSORS, CONF_ESPRESENSE_SENSORS,
+            CONF_DOOR_SENSORS, CONF_WINDOW_SENSORS, CONF_LOCK_ENTITIES,
+            CONF_MEDIA_PLAYERS, CONF_LIGHT_ENTITIES, CONF_SWITCH_ENTITIES,
             CONF_WORKSTATION_SENSORS, CONF_WORKSTATION_ENTITIES, CONF_WORKSTATION_POWER_SENSORS,
         ):
             ids.extend(sensors.get(key, []))
@@ -218,6 +227,8 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._record_event(f"media_{state}", now)
         elif entity_id in sensors.get(CONF_LIGHT_ENTITIES, []) + sensors.get(CONF_SWITCH_ENTITIES, []):
             self._record_event(f"light_{'on' if state == 'on' else 'off'}", now)
+        elif entity_id in sensors.get(CONF_ESPRESENSE_SENSORS, []):
+            self._record_event(f"ble_{'home' if state not in ('away', 'unavailable', 'unknown') else 'away'}", now)
         elif entity_id in (
             sensors.get(CONF_WORKSTATION_SENSORS, [])
             + sensors.get(CONF_WORKSTATION_ENTITIES, [])
@@ -287,6 +298,17 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 if c > 0:
                     score += c
                     sources.append("pir_recent")
+
+        for eid in sensors.get(CONF_ESPRESENSE_SENSORS, []):
+            st = self.hass.states.get(eid)
+            if st and st.state not in ("away", "unavailable", "unknown"):
+                try:
+                    if float(st.state) <= ESPRESENSE_DISTANCE_THRESHOLD_M:
+                        score += WEIGHT_ESPRESENSE
+                        sources.append("ble_home")
+                        break
+                except (ValueError, TypeError):
+                    pass
 
         for eid in sensors.get(CONF_MEDIA_PLAYERS, []):
             st = self.hass.states.get(eid)
@@ -476,8 +498,19 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     # Data output
     # ------------------------------------------------------------------
 
+    def set_override(self, state: str | None) -> None:
+        """Set manual override: 'occupied', 'clear', or None to reset."""
+        self._manual_override = state
+        _LOGGER.info("[%s] Manual override set to: %s", self.config.get(CONF_ROOM_NAME), state)
+
     def _build_data(self) -> dict[str, Any]:
         occupied = self._sm_state in SM_OCCUPIED_STATES
+
+        # Apply manual override
+        if self._manual_override == "occupied":
+            occupied = True
+        elif self._manual_override == "clear":
+            occupied = False
 
         if self._score >= 70 and len(self._active_sources) >= 2:
             confidence = CONFIDENCE_HIGH
@@ -495,6 +528,21 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             elapsed = time.time() - self._clear_pending_start
             timeout_remaining = max(0, int(self._clear_pending_timeout - elapsed))
 
+        # Fire HA event when occupied state changes
+        if self._was_occupied is not None and occupied != self._was_occupied:
+            self.hass.bus.async_fire(f"{DOMAIN}_state_changed", {
+                "room_name": self.config.get(CONF_ROOM_NAME, ""),
+                "room_slug": self.room_slug,
+                "entry_id": self.entry.entry_id,
+                "occupied": occupied,
+                "score": self._score,
+                "confidence": confidence,
+                "reason": self._reason,
+                "state_machine": self._sm_state,
+                "manual_override": self._manual_override,
+            })
+        self._was_occupied = occupied
+
         return {
             # Rule engine
             "occupied": occupied,
@@ -506,6 +554,7 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "last_positive": last_positive,
             "timeout_remaining": timeout_remaining,
             "room_name": self.config.get(CONF_ROOM_NAME, ""),
+            "manual_override": self._manual_override,
             # LLM advisory
             "llm_enabled": bool(self.config.get(CONF_LLM_ENABLED)),
             "llm": self._llm_data,

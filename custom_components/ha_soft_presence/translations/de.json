@@ -12,10 +12,11 @@
       },
       "presence_sensors": {
         "title": "Anwesenheitssensoren",
-        "description": "mmWave-Sensoren erkennen auch still sitzende Personen und sind bevorzugt zu wählen.",
+        "description": "mmWave-Sensoren erkennen auch still sitzende Personen und sind bevorzugt zu wählen. ESPresense verfolgt BLE-Geräte (Handy/Uhr) anhand der Raumdistanz.",
         "data": {
           "mmwave_sensors": "mmWave / Radar-Sensoren",
-          "pir_sensors": "PIR / Bewegungssensoren"
+          "pir_sensors": "PIR / Bewegungssensoren",
+          "espresense_sensors": "ESPresense / BLE-Distanzsensoren"
         }
       },
       "context_sensors": {
@@ -66,7 +67,8 @@
         "title": "Anwesenheitssensoren",
         "data": {
           "mmwave_sensors": "mmWave / Radar-Sensoren",
-          "pir_sensors": "PIR / Bewegungssensoren"
+          "pir_sensors": "PIR / Bewegungssensoren",
+          "espresense_sensors": "ESPresense / BLE-Distanzsensoren"
         }
       },
       "edit_context_sensors": {

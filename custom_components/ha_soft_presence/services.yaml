@@ -1,0 +1,38 @@
+force_occupied:
+  name: Force Occupied
+  description: Manually override a room to occupied — ignores sensor signals until reset.
+  fields:
+    entity_id:
+      name: Presence Sensor
+      description: The binary presence sensor of the room to override (e.g. binary_sensor.wohnzimmer_presence_soft).
+      required: true
+      selector:
+        entity:
+          domain: binary_sensor
+          integration: ha_soft_presence
+
+force_clear:
+  name: Force Clear
+  description: Manually override a room to clear — ignores sensor signals until reset.
+  fields:
+    entity_id:
+      name: Presence Sensor
+      description: The binary presence sensor of the room to override.
+      required: true
+      selector:
+        entity:
+          domain: binary_sensor
+          integration: ha_soft_presence
+
+reset_override:
+  name: Reset Override
+  description: Remove manual override — room returns to automatic sensor-based detection.
+  fields:
+    entity_id:
+      name: Presence Sensor
+      description: The binary presence sensor of the room to reset.
+      required: true
+      selector:
+        entity:
+          domain: binary_sensor
+          integration: ha_soft_presence

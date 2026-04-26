@@ -24,6 +24,7 @@ from .const import (
     CONF_LIGHT_ENTITIES,
     CONF_SWITCH_ENTITIES,
     CONF_WORKSTATION_SENSORS,
+    CONF_ESPRESENSE_SENSORS,
     CONF_WORKSTATION_ENTITIES,
     CONF_WORKSTATION_POWER_SENSORS,
     CONF_LLM_ENABLED,
@@ -119,6 +120,7 @@ class SoftPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._data["sensors"].update({
                 CONF_MMWAVE_SENSORS: user_input.get(CONF_MMWAVE_SENSORS, []),
                 CONF_PIR_SENSORS: user_input.get(CONF_PIR_SENSORS, []),
+                CONF_ESPRESENSE_SENSORS: user_input.get(CONF_ESPRESENSE_SENSORS, []),
             })
             return await self.async_step_context_sensors()
 
@@ -144,6 +146,9 @@ class SoftPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         device_class=["motion", "occupancy"],
                         multiple=True,
                     )
+                ),
+                vol.Optional(CONF_ESPRESENSE_SENSORS, default=[]): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain=["sensor"], multiple=True)
                 ),
             }),
         )
@@ -325,6 +330,7 @@ class SoftPresenceOptionsFlow(config_entries.OptionsFlow):
             self._data["sensors"].update({
                 CONF_MMWAVE_SENSORS: user_input.get(CONF_MMWAVE_SENSORS, []),
                 CONF_PIR_SENSORS: user_input.get(CONF_PIR_SENSORS, []),
+                CONF_ESPRESENSE_SENSORS: user_input.get(CONF_ESPRESENSE_SENSORS, []),
             })
             return await self.async_step_edit_context_sensors()
 
@@ -348,6 +354,9 @@ class SoftPresenceOptionsFlow(config_entries.OptionsFlow):
                         device_class=["motion", "occupancy"],
                         multiple=True,
                     )
+                ),
+                vol.Optional(CONF_ESPRESENSE_SENSORS, default=sensors.get(CONF_ESPRESENSE_SENSORS, [])): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain=["sensor"], multiple=True)
                 ),
             }),
         )

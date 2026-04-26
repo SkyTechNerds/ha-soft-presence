@@ -182,9 +182,9 @@ class LLMConfidenceSensor(_BaseSensor):
         )
 
     @property
-    def native_value(self) -> str | None:
+    def native_value(self) -> str:
         llm = self.coordinator.data.get("llm", {}) if self.coordinator.data else {}
-        return llm.get("confidence")
+        return llm.get("confidence") or "pending"
 
 
 class LLMReasonSensor(_BaseSensor):
@@ -199,9 +199,9 @@ class LLMReasonSensor(_BaseSensor):
         )
 
     @property
-    def native_value(self) -> str | None:
+    def native_value(self) -> str:
         llm = self.coordinator.data.get("llm", {}) if self.coordinator.data else {}
-        return llm.get("reason")
+        return llm.get("reason") or "pending"
 
     @property
     def extra_state_attributes(self) -> dict:

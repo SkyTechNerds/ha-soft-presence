@@ -123,10 +123,16 @@
         "name": "Anwesenheits-Score (KI)"
       },
       "presence_llm_confidence": {
-        "name": "Anwesenheits-Konfidenz (KI)"
+        "name": "Anwesenheits-Konfidenz (KI)",
+        "state": {
+          "pending": "Ausstehend"
+        }
       },
       "presence_llm_reason": {
-        "name": "Anwesenheits-Begründung (KI)"
+        "name": "Anwesenheits-Begründung (KI)",
+        "state": {
+          "pending": "Ausstehend"
+        }
       }
     }
   }

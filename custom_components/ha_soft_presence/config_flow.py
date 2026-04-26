@@ -269,10 +269,7 @@ class SoftPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     selector.NumberSelectorConfig(min=0, max=600, step=10, unit_of_measurement="s", mode="box")
                 ),
                 vol.Optional(CONF_SLEEP_MODE_ENTITIES, default=[]): selector.EntitySelector(
-                    selector.EntitySelectorConfig(
-                        domain=["input_boolean", "binary_sensor", "group", "switch"],
-                        multiple=True,
-                    )
+                    selector.EntitySelectorConfig(multiple=True)
                 ),
                 vol.Required(CONF_SLEEP_CLEAR_THRESHOLD, default=DEFAULT_SLEEP_CLEAR_THRESHOLD): selector.NumberSelector(
                     selector.NumberSelectorConfig(min=0, max=99, step=1, mode="slider")
@@ -479,10 +476,7 @@ class SoftPresenceOptionsFlow(config_entries.OptionsFlow):
                     selector.NumberSelectorConfig(min=0, max=600, step=10, unit_of_measurement="s", mode="box")
                 ),
                 vol.Optional(CONF_SLEEP_MODE_ENTITIES, default=data.get(CONF_SLEEP_MODE_ENTITIES, [])): selector.EntitySelector(
-                    selector.EntitySelectorConfig(
-                        domain=["input_boolean", "binary_sensor", "group", "switch"],
-                        multiple=True,
-                    )
+                    selector.EntitySelectorConfig(multiple=True)
                 ),
                 vol.Required(CONF_SLEEP_CLEAR_THRESHOLD, default=data.get(CONF_SLEEP_CLEAR_THRESHOLD, DEFAULT_SLEEP_CLEAR_THRESHOLD)): selector.NumberSelector(
                     selector.NumberSelectorConfig(min=0, max=99, step=1, mode="slider")

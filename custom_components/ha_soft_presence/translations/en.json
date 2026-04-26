@@ -120,7 +120,7 @@
         "name": "Presence Score"
       },
       "presence_confidence": {
-        "name": "Presence Confidence"
+        "name": "Confidence"
       },
       "presence_reason": {
         "name": "Presence Reason"
@@ -129,7 +129,7 @@
         "name": "Presence Score (AI)"
       },
       "presence_llm_confidence": {
-        "name": "Presence Confidence (AI)",
+        "name": "Confidence (AI)",
         "state": {
           "pending": "Waiting for evaluation"
         }

@@ -120,7 +120,7 @@
         "name": "Anwesenheits-Score"
       },
       "presence_confidence": {
-        "name": "Anwesenheits-Konfidenz"
+        "name": "Konfidenz"
       },
       "presence_reason": {
         "name": "Anwesenheits-Begründung"
@@ -129,7 +129,7 @@
         "name": "Anwesenheits-Score (KI)"
       },
       "presence_llm_confidence": {
-        "name": "Anwesenheits-Konfidenz (KI)",
+        "name": "Konfidenz (KI)",
         "state": {
           "pending": "Ausstehend"
         }

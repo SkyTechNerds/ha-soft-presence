@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Raum einrichten",
-        "description": "Grundeinstellungen für den Raum festlegen.",
+        "description": "Grundeinstellungen für den Raum.",
         "data": {
           "room_name": "Raumname",
           "has_door": "Raum hat Tür(en)",
@@ -20,7 +20,7 @@
       },
       "context_sensors": {
         "title": "Kontextsensoren",
-        "description": "Unterstützende Signale — keins davon ist Pflicht.",
+        "description": "Unterstützende Signale — keins ist Pflicht.",
         "data": {
           "door_sensors": "Türkontakte",
           "window_sensors": "Fensterkontakte",
@@ -33,16 +33,22 @@
         }
       },
       "thresholds": {
-        "title": "Schwellwerte & LLM",
-        "description": "Empfindlichkeit einstellen. LLM-Unterstützung ist standardmäßig deaktiviert.",
+        "title": "Schwellwerte",
+        "description": "Die Hysterese zwischen Belegt- und Frei-Schwelle verhindert Flackern.",
         "data": {
           "occupied_threshold": "Belegt-Schwelle (Score ≥ → belegt)",
           "clear_threshold": "Frei-Schwelle (Score ≤ → Timeout starten)",
-          "no_presence_timeout": "Keine-Anwesenheit-Timeout (Sekunden)",
-          "min_hold_time": "Mindesthaltedauer (Sekunden)",
-          "llm_enabled": "LLM-Unterstützung aktivieren",
-          "llm_provider": "LLM-Anbieter",
-          "llm_api_key": "API-Schlüssel (falls erforderlich)"
+          "no_presence_timeout": "Keine-Anwesenheit-Timeout (s)",
+          "min_hold_time": "Mindesthaltedauer (s)"
+        }
+      },
+      "llm": {
+        "title": "KI-Unterstützung",
+        "description": "Optionale KI-Analyse über den konfigurierten HA-Konversationsagenten (Gemini, Ollama, OpenAI, …). Standardmäßig deaktiviert. Wird nur bei neuen Sensor-Events aufgerufen.",
+        "data": {
+          "llm_enabled": "KI-Unterstützung aktivieren",
+          "conversation_agent": "Konversationsagent",
+          "llm_update_interval": "Mindestabstand zwischen KI-Anfragen (s)"
         }
       }
     }
@@ -50,16 +56,79 @@
   "options": {
     "step": {
       "init": {
-        "title": "Raumeinstellungen bearbeiten",
+        "title": "Raumgrundlagen",
+        "data": {
+          "room_name": "Raumname",
+          "has_door": "Raum hat Tür(en)",
+          "is_transit": "Durchgangsraum"
+        }
+      },
+      "edit_presence_sensors": {
+        "title": "Anwesenheitssensoren",
+        "data": {
+          "mmwave_sensors": "mmWave / Radar-Sensoren",
+          "pir_sensors": "PIR / Bewegungssensoren"
+        }
+      },
+      "edit_context_sensors": {
+        "title": "Kontextsensoren",
+        "data": {
+          "door_sensors": "Türkontakte",
+          "window_sensors": "Fensterkontakte",
+          "lock_entities": "Smart Locks",
+          "media_players": "Mediaplayer",
+          "light_entities": "Licht-Entitäten",
+          "switch_entities": "Schalter-Entitäten",
+          "workstation_entities": "PC / Workstation",
+          "workstation_power_sensors": "PC-Leistungsaufnahme (W)"
+        }
+      },
+      "edit_thresholds": {
+        "title": "Schwellwerte",
         "data": {
           "occupied_threshold": "Belegt-Schwelle",
           "clear_threshold": "Frei-Schwelle",
           "no_presence_timeout": "Keine-Anwesenheit-Timeout (s)",
-          "min_hold_time": "Mindesthaltedauer (s)",
-          "llm_enabled": "LLM-Unterstützung aktivieren",
-          "llm_provider": "LLM-Anbieter",
-          "llm_api_key": "API-Schlüssel"
+          "min_hold_time": "Mindesthaltedauer (s)"
         }
+      },
+      "edit_llm": {
+        "title": "KI-Unterstützung",
+        "data": {
+          "llm_enabled": "KI-Unterstützung aktivieren",
+          "conversation_agent": "Konversationsagent",
+          "llm_update_interval": "Mindestabstand zwischen KI-Anfragen (s)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "presence_soft": {
+        "name": "Anwesenheit"
+      },
+      "presence_llm": {
+        "name": "Anwesenheit (KI)"
+      }
+    },
+    "sensor": {
+      "presence_score": {
+        "name": "Anwesenheits-Score"
+      },
+      "presence_confidence": {
+        "name": "Anwesenheits-Konfidenz"
+      },
+      "presence_reason": {
+        "name": "Anwesenheits-Begründung"
+      },
+      "presence_llm_score": {
+        "name": "Anwesenheits-Score (KI)"
+      },
+      "presence_llm_confidence": {
+        "name": "Anwesenheits-Konfidenz (KI)"
+      },
+      "presence_llm_reason": {
+        "name": "Anwesenheits-Begründung (KI)"
       }
     }
   }

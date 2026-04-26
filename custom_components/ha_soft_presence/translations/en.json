@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Room Setup",
-        "description": "Configure the basic properties of the room.",
+        "description": "Basic room properties.",
         "data": {
           "room_name": "Room Name",
           "has_door": "Room has door(s)",
@@ -12,7 +12,7 @@
       },
       "presence_sensors": {
         "title": "Presence Sensors",
-        "description": "Select mmWave and PIR sensors. mmWave detects still persons and is strongly preferred.",
+        "description": "mmWave sensors detect still persons and are strongly preferred over PIR.",
         "data": {
           "mmwave_sensors": "mmWave / Radar Sensors",
           "pir_sensors": "PIR / Motion Sensors"
@@ -20,7 +20,7 @@
       },
       "context_sensors": {
         "title": "Context Sensors",
-        "description": "Supporting signals — none required.",
+        "description": "Supporting signals — none are required.",
         "data": {
           "door_sensors": "Door Contacts",
           "window_sensors": "Window Contacts",
@@ -33,16 +33,22 @@
         }
       },
       "thresholds": {
-        "title": "Thresholds & LLM",
-        "description": "Tune detection sensitivity and optionally enable LLM advisory (off by default).",
+        "title": "Thresholds",
+        "description": "Hysteresis between occupied and clear threshold prevents flickering.",
         "data": {
           "occupied_threshold": "Occupied Threshold (score ≥ → occupied)",
           "clear_threshold": "Clear Threshold (score ≤ → start timeout)",
-          "no_presence_timeout": "No-Presence Timeout (seconds)",
-          "min_hold_time": "Minimum Hold Time (seconds)",
+          "no_presence_timeout": "No-Presence Timeout (s)",
+          "min_hold_time": "Minimum Hold Time (s)"
+        }
+      },
+      "llm": {
+        "title": "LLM Advisory",
+        "description": "Optional AI analysis via your HA conversation agent (Gemini, Ollama, OpenAI, …). Disabled by default. Only called when new sensor events are detected.",
+        "data": {
           "llm_enabled": "Enable LLM Advisory",
-          "llm_provider": "LLM Provider",
-          "llm_api_key": "API Key (if required)"
+          "conversation_agent": "Conversation Agent",
+          "llm_update_interval": "Minimum interval between LLM calls (s)"
         }
       }
     }
@@ -50,16 +56,79 @@
   "options": {
     "step": {
       "init": {
-        "title": "Edit Room Settings",
+        "title": "Room Basics",
+        "data": {
+          "room_name": "Room Name",
+          "has_door": "Room has door(s)",
+          "is_transit": "Is a transit room"
+        }
+      },
+      "edit_presence_sensors": {
+        "title": "Presence Sensors",
+        "data": {
+          "mmwave_sensors": "mmWave / Radar Sensors",
+          "pir_sensors": "PIR / Motion Sensors"
+        }
+      },
+      "edit_context_sensors": {
+        "title": "Context Sensors",
+        "data": {
+          "door_sensors": "Door Contacts",
+          "window_sensors": "Window Contacts",
+          "lock_entities": "Smart Locks",
+          "media_players": "Media Players",
+          "light_entities": "Light Entities",
+          "switch_entities": "Switch Entities",
+          "workstation_entities": "Workstation / PC",
+          "workstation_power_sensors": "Workstation Power (W)"
+        }
+      },
+      "edit_thresholds": {
+        "title": "Thresholds",
         "data": {
           "occupied_threshold": "Occupied Threshold",
           "clear_threshold": "Clear Threshold",
           "no_presence_timeout": "No-Presence Timeout (s)",
-          "min_hold_time": "Minimum Hold Time (s)",
-          "llm_enabled": "Enable LLM Advisory",
-          "llm_provider": "LLM Provider",
-          "llm_api_key": "API Key"
+          "min_hold_time": "Minimum Hold Time (s)"
         }
+      },
+      "edit_llm": {
+        "title": "LLM Advisory",
+        "data": {
+          "llm_enabled": "Enable LLM Advisory",
+          "conversation_agent": "Conversation Agent",
+          "llm_update_interval": "Minimum interval between LLM calls (s)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "presence_soft": {
+        "name": "Presence"
+      },
+      "presence_llm": {
+        "name": "Presence (AI)"
+      }
+    },
+    "sensor": {
+      "presence_score": {
+        "name": "Presence Score"
+      },
+      "presence_confidence": {
+        "name": "Presence Confidence"
+      },
+      "presence_reason": {
+        "name": "Presence Reason"
+      },
+      "presence_llm_score": {
+        "name": "Presence Score (AI)"
+      },
+      "presence_llm_confidence": {
+        "name": "Presence Confidence (AI)"
+      },
+      "presence_llm_reason": {
+        "name": "Presence Reason (AI)"
       }
     }
   }

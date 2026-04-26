@@ -33,16 +33,22 @@
         }
       },
       "thresholds": {
-        "title": "Thresholds & LLM",
-        "description": "Score thresholds control sensitivity. LLM support is optional and disabled by default.",
+        "title": "Thresholds",
+        "description": "Score thresholds control sensitivity. Hysteresis between occupied and clear threshold prevents flickering.",
         "data": {
           "occupied_threshold": "Occupied Threshold (score ≥ → occupied)",
           "clear_threshold": "Clear Threshold (score ≤ → start timeout)",
           "no_presence_timeout": "No-Presence Timeout (s)",
-          "min_hold_time": "Minimum Hold Time (s)",
-          "llm_enabled": "Enable LLM Advisory (optional)",
-          "llm_provider": "LLM Provider",
-          "llm_api_key": "LLM API Key (if required)"
+          "min_hold_time": "Minimum Hold Time (s)"
+        }
+      },
+      "llm": {
+        "title": "LLM Advisory",
+        "description": "Optional AI analysis using your configured HA conversation agent (Gemini, Ollama, OpenAI, …). Disabled by default. Only activates when new sensor events are detected.",
+        "data": {
+          "llm_enabled": "Enable LLM Advisory",
+          "conversation_agent": "Conversation Agent",
+          "llm_update_interval": "Minimum interval between LLM calls (s)"
         }
       }
     }
@@ -78,14 +84,20 @@
         }
       },
       "edit_thresholds": {
-        "title": "Thresholds & LLM",
+        "title": "Thresholds",
         "data": {
           "occupied_threshold": "Occupied Threshold",
           "clear_threshold": "Clear Threshold",
           "no_presence_timeout": "No-Presence Timeout (s)",
-          "min_hold_time": "Minimum Hold Time (s)",
+          "min_hold_time": "Minimum Hold Time (s)"
+        }
+      },
+      "edit_llm": {
+        "title": "LLM Advisory",
+        "data": {
           "llm_enabled": "Enable LLM Advisory",
-          "llm_update_interval": "LLM Update Interval (s)"
+          "conversation_agent": "Conversation Agent",
+          "llm_update_interval": "Minimum interval between LLM calls (s)"
         }
       }
     }

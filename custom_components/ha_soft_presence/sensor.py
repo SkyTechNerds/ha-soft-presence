@@ -43,14 +43,13 @@ class _BaseSensor(CoordinatorEntity[SoftPresenceCoordinator], SensorEntity):
         coordinator: SoftPresenceCoordinator,
         entry: ConfigEntry,
         room_slug: str,
-        name: str,
         uid_suffix: str,
         entity_suffix: str,
     ) -> None:
         super().__init__(coordinator)
         self._entry = entry
-        self._attr_name = name
         self._attr_unique_id = f"{entry.entry_id}_{uid_suffix}"
+        self._attr_translation_key = uid_suffix
         self.entity_id = f"sensor.{room_slug}_{entity_suffix}"
 
     @property
@@ -74,7 +73,7 @@ class PresenceScoreSensor(_BaseSensor):
     def __init__(self, coordinator, entry, room_slug):
         super().__init__(
             coordinator, entry, room_slug,
-            "Presence Score", "presence_score", "presence_score"
+            "presence_score", "presence_score"
         )
 
     @property
@@ -103,7 +102,7 @@ class PresenceConfidenceSensor(_BaseSensor):
     def __init__(self, coordinator, entry, room_slug):
         super().__init__(
             coordinator, entry, room_slug,
-            "Presence Confidence", "presence_confidence", "presence_confidence"
+            "presence_confidence", "presence_confidence"
         )
 
     @property
@@ -121,7 +120,7 @@ class PresenceReasonSensor(_BaseSensor):
     def __init__(self, coordinator, entry, room_slug):
         super().__init__(
             coordinator, entry, room_slug,
-            "Presence Reason", "presence_reason", "presence_reason"
+            "presence_reason", "presence_reason"
         )
 
     @property
@@ -155,7 +154,7 @@ class LLMScoreSensor(_BaseSensor):
     def __init__(self, coordinator, entry, room_slug):
         super().__init__(
             coordinator, entry, room_slug,
-            "Presence Score (LLM)", "presence_llm_score", "presence_llm_score"
+            "presence_llm_score", "presence_llm_score"
         )
 
     @property
@@ -179,7 +178,7 @@ class LLMConfidenceSensor(_BaseSensor):
     def __init__(self, coordinator, entry, room_slug):
         super().__init__(
             coordinator, entry, room_slug,
-            "Presence Confidence (LLM)", "presence_llm_confidence", "presence_llm_confidence"
+            "presence_llm_confidence", "presence_llm_confidence"
         )
 
     @property
@@ -196,7 +195,7 @@ class LLMReasonSensor(_BaseSensor):
     def __init__(self, coordinator, entry, room_slug):
         super().__init__(
             coordinator, entry, room_slug,
-            "Presence Reason (LLM)", "presence_llm_reason", "presence_llm_reason"
+            "presence_llm_reason", "presence_llm_reason"
         )
 
     @property

@@ -39,7 +39,7 @@ class SoftPresenceBinarySensor(CoordinatorEntity[SoftPresenceCoordinator], Binar
         room_slug = slugify(entry.data.get(CONF_ROOM_NAME, "room"))
 
         self._attr_unique_id = f"{entry.entry_id}_presence_soft"
-        self._attr_name = "Presence"
+        self._attr_translation_key = "presence_soft"
         self.entity_id = f"binary_sensor.{room_slug}_presence_soft"
 
     @property
@@ -87,7 +87,7 @@ class LLMPresenceBinarySensor(CoordinatorEntity[SoftPresenceCoordinator], Binary
         room_slug = slugify(entry.data.get(CONF_ROOM_NAME, "room"))
 
         self._attr_unique_id = f"{entry.entry_id}_presence_llm"
-        self._attr_name = "Presence (LLM)"
+        self._attr_translation_key = "presence_llm"
         self.entity_id = f"binary_sensor.{room_slug}_presence_llm"
 
     @property

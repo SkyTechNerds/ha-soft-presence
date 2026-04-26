@@ -170,7 +170,7 @@ class SoftPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
     # ------------------------------------------------------------------
-    # Step 4: Thresholds + LLM
+    # Step 4: Thresholds
     # ------------------------------------------------------------------
 
     async def async_step_thresholds(self, user_input=None):
@@ -180,14 +180,8 @@ class SoftPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_CLEAR_THRESHOLD: int(user_input[CONF_CLEAR_THRESHOLD]),
                 CONF_NO_PRESENCE_TIMEOUT: int(user_input[CONF_NO_PRESENCE_TIMEOUT]),
                 CONF_MIN_HOLD_TIME: int(user_input[CONF_MIN_HOLD_TIME]),
-                CONF_LLM_ENABLED: user_input.get(CONF_LLM_ENABLED, False),
-                CONF_LLM_PROVIDER: user_input.get(CONF_LLM_PROVIDER, "ha_conversation"),
-                CONF_LLM_API_KEY: user_input.get(CONF_LLM_API_KEY, ""),
             })
-            return self.async_create_entry(
-                title=self._data[CONF_ROOM_NAME],
-                data=self._data,
-            )
+            return await self.async_step_llm()
 
         return self.async_show_form(
             step_id="thresholds",
@@ -199,17 +193,30 @@ class SoftPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     selector.NumberSelectorConfig(min=0, max=99, step=1, mode="slider")
                 ),
                 vol.Required(CONF_NO_PRESENCE_TIMEOUT, default=DEFAULT_NO_PRESENCE_TIMEOUT): selector.NumberSelector(
-                    selector.NumberSelectorConfig(
-                        min=30, max=3600, step=30,
-                        unit_of_measurement="s", mode="box"
-                    )
+                    selector.NumberSelectorConfig(min=30, max=3600, step=30, unit_of_measurement="s", mode="box")
                 ),
                 vol.Required(CONF_MIN_HOLD_TIME, default=DEFAULT_MIN_HOLD_TIME): selector.NumberSelector(
-                    selector.NumberSelectorConfig(
-                        min=0, max=600, step=10,
-                        unit_of_measurement="s", mode="box"
-                    )
+                    selector.NumberSelectorConfig(min=0, max=600, step=10, unit_of_measurement="s", mode="box")
                 ),
+            }),
+        )
+
+    # ------------------------------------------------------------------
+    # Step 5: LLM
+    # ------------------------------------------------------------------
+
+    async def async_step_llm(self, user_input=None):
+        if user_input is not None:
+            self._data.update({
+                CONF_LLM_ENABLED: user_input.get(CONF_LLM_ENABLED, False),
+                CONF_CONVERSATION_AGENT: user_input.get(CONF_CONVERSATION_AGENT),
+                CONF_LLM_UPDATE_INTERVAL: int(user_input.get(CONF_LLM_UPDATE_INTERVAL, DEFAULT_LLM_UPDATE_INTERVAL)),
+            })
+            return self.async_create_entry(title=self._data[CONF_ROOM_NAME], data=self._data)
+
+        return self.async_show_form(
+            step_id="llm",
+            data_schema=vol.Schema({
                 vol.Optional(CONF_LLM_ENABLED, default=False): selector.BooleanSelector(),
                 vol.Optional(CONF_CONVERSATION_AGENT): selector.EntitySelector(
                     selector.EntitySelectorConfig(domain=["conversation"])
@@ -331,25 +338,19 @@ class SoftPresenceOptionsFlow(config_entries.OptionsFlow):
         )
 
     # ------------------------------------------------------------------
-    # Step 4: Thresholds + LLM
+    # Step 4: Thresholds
     # ------------------------------------------------------------------
 
     async def async_step_edit_thresholds(self, user_input=None):
         data = self.config_entry.data
         if user_input is not None:
-            updated = dict(data)
-            updated.update(self._data)
-            updated.update({
+            self._data.update({
                 CONF_OCCUPIED_THRESHOLD: int(user_input[CONF_OCCUPIED_THRESHOLD]),
                 CONF_CLEAR_THRESHOLD: int(user_input[CONF_CLEAR_THRESHOLD]),
                 CONF_NO_PRESENCE_TIMEOUT: int(user_input[CONF_NO_PRESENCE_TIMEOUT]),
                 CONF_MIN_HOLD_TIME: int(user_input[CONF_MIN_HOLD_TIME]),
-                CONF_LLM_ENABLED: user_input.get(CONF_LLM_ENABLED, False),
-                CONF_CONVERSATION_AGENT: user_input.get(CONF_CONVERSATION_AGENT),
-                CONF_LLM_UPDATE_INTERVAL: int(user_input.get(CONF_LLM_UPDATE_INTERVAL, DEFAULT_LLM_UPDATE_INTERVAL)),
             })
-            self.hass.config_entries.async_update_entry(self.config_entry, data=updated)
-            return self.async_create_entry(title="", data={})
+            return await self.async_step_edit_llm()
 
         return self.async_show_form(
             step_id="edit_thresholds",
@@ -366,6 +367,29 @@ class SoftPresenceOptionsFlow(config_entries.OptionsFlow):
                 vol.Required(CONF_MIN_HOLD_TIME, default=data.get(CONF_MIN_HOLD_TIME, DEFAULT_MIN_HOLD_TIME)): selector.NumberSelector(
                     selector.NumberSelectorConfig(min=0, max=600, step=10, unit_of_measurement="s", mode="box")
                 ),
+            }),
+        )
+
+    # ------------------------------------------------------------------
+    # Step 5: LLM
+    # ------------------------------------------------------------------
+
+    async def async_step_edit_llm(self, user_input=None):
+        data = self.config_entry.data
+        if user_input is not None:
+            updated = dict(data)
+            updated.update(self._data)
+            updated.update({
+                CONF_LLM_ENABLED: user_input.get(CONF_LLM_ENABLED, False),
+                CONF_CONVERSATION_AGENT: user_input.get(CONF_CONVERSATION_AGENT),
+                CONF_LLM_UPDATE_INTERVAL: int(user_input.get(CONF_LLM_UPDATE_INTERVAL, DEFAULT_LLM_UPDATE_INTERVAL)),
+            })
+            self.hass.config_entries.async_update_entry(self.config_entry, data=updated)
+            return self.async_create_entry(title="", data={})
+
+        return self.async_show_form(
+            step_id="edit_llm",
+            data_schema=vol.Schema({
                 vol.Optional(CONF_LLM_ENABLED, default=data.get(CONF_LLM_ENABLED, False)): selector.BooleanSelector(),
                 vol.Optional(CONF_CONVERSATION_AGENT): selector.EntitySelector(
                     selector.EntitySelectorConfig(domain=["conversation"])

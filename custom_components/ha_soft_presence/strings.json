@@ -12,10 +12,11 @@
       },
       "presence_sensors": {
         "title": "Presence Sensors",
-        "description": "Select mmWave and PIR sensors for this room. mmWave sensors are strongly preferred — they detect still persons.",
+        "description": "mmWave sensors detect still persons and are strongly preferred over PIR. ESPresense tracks BLE devices (phones/watches) by room distance.",
         "data": {
           "mmwave_sensors": "mmWave / Radar Sensors",
-          "pir_sensors": "PIR / Motion Sensors"
+          "pir_sensors": "PIR / Motion Sensors",
+          "espresense_sensors": "ESPresense / BLE Distance Sensors"
         }
       },
       "context_sensors": {
@@ -32,13 +33,15 @@
         }
       },
       "thresholds": {
-        "title": "Thresholds",
-        "description": "Score thresholds control sensitivity. Hysteresis between occupied and clear threshold prevents flickering.",
+        "title": "Thresholds & Sleep Mode",
+        "description": "Hysteresis between occupied and clear threshold prevents flickering. Sleep mode raises the clear threshold when selected entities are on — making it harder to mark the room as clear.",
         "data": {
           "occupied_threshold": "Occupied Threshold (score ≥ → occupied)",
           "clear_threshold": "Clear Threshold (score ≤ → start timeout)",
           "no_presence_timeout": "No-Presence Timeout (s)",
-          "min_hold_time": "Minimum Hold Time (s)"
+          "min_hold_time": "Minimum Hold Time (s)",
+          "sleep_mode_entities": "Sleep Mode Entities (any on → reduced sensitivity)",
+          "sleep_clear_threshold": "Sleep Mode Clear Threshold"
         }
       },
       "llm": {
@@ -66,7 +69,8 @@
         "title": "Presence Sensors",
         "data": {
           "mmwave_sensors": "mmWave / Radar Sensors",
-          "pir_sensors": "PIR / Motion Sensors"
+          "pir_sensors": "PIR / Motion Sensors",
+          "espresense_sensors": "ESPresense / BLE Distance Sensors"
         }
       },
       "edit_context_sensors": {
@@ -82,12 +86,14 @@
         }
       },
       "edit_thresholds": {
-        "title": "Thresholds",
+        "title": "Thresholds & Sleep Mode",
         "data": {
           "occupied_threshold": "Occupied Threshold",
           "clear_threshold": "Clear Threshold",
           "no_presence_timeout": "No-Presence Timeout (s)",
-          "min_hold_time": "Minimum Hold Time (s)"
+          "min_hold_time": "Minimum Hold Time (s)",
+          "sleep_mode_entities": "Sleep Mode Entities",
+          "sleep_clear_threshold": "Sleep Mode Clear Threshold"
         }
       },
       "edit_llm": {

@@ -582,7 +582,48 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "room_name": self.config.get(CONF_ROOM_NAME, ""),
             "manual_override": self._manual_override,
             "sleep_mode_active": self._sleep_mode_active(),
+            # Sensor diagnostics — all configured sensors with current state
+            "sensors": self._build_sensor_diagnostics(),
             # LLM advisory
             "llm_enabled": bool(self.config.get(CONF_LLM_ENABLED)),
             "llm": self._llm_data,
+        }
+
+    def _build_sensor_diagnostics(self) -> dict:
+        """Return all configured sensors grouped by category with their current HA state."""
+        cfg_sensors = self.config.get("sensors", {})
+
+        def _states(entity_ids: list[str]) -> dict[str, str]:
+            result = {}
+            for eid in entity_ids:
+                st = self.hass.states.get(eid)
+                result[eid] = st.state if st else "unavailable"
+            return result
+
+        # Merge legacy workstation keys
+        ws_ids = (
+            cfg_sensors.get(CONF_WORKSTATION_SENSORS, [])
+            + cfg_sensors.get(CONF_WORKSTATION_ENTITIES, [])
+            + cfg_sensors.get(CONF_WORKSTATION_POWER_SENSORS, [])
+        )
+
+        categories = {
+            "mmwave":        cfg_sensors.get(CONF_MMWAVE_SENSORS, []),
+            "pir":           cfg_sensors.get(CONF_PIR_SENSORS, []),
+            "espresense":    cfg_sensors.get(CONF_ESPRESENSE_SENSORS, []),
+            "person_count":  cfg_sensors.get(CONF_PERSON_COUNT_SENSORS, []),
+            "door":          cfg_sensors.get(CONF_DOOR_SENSORS, []),
+            "window":        cfg_sensors.get(CONF_WINDOW_SENSORS, []),
+            "lock":          cfg_sensors.get(CONF_LOCK_ENTITIES, []),
+            "media":         cfg_sensors.get(CONF_MEDIA_PLAYERS, []),
+            "lights":        cfg_sensors.get(CONF_LIGHT_ENTITIES, []),
+            "switches":      cfg_sensors.get(CONF_SWITCH_ENTITIES, []),
+            "workstation":   list(dict.fromkeys(ws_ids)),  # deduplicate
+            "sleep_mode":    self.config.get(CONF_SLEEP_MODE_ENTITIES, []),
+        }
+
+        return {
+            cat: _states(ids)
+            for cat, ids in categories.items()
+            if ids  # omit empty categories
         }

@@ -33,6 +33,7 @@ from .const import (
     CONF_SWITCH_ENTITIES,
     CONF_WORKSTATION_SENSORS,
     CONF_ESPRESENSE_SENSORS,
+    CONF_PERSON_COUNT_SENSORS,
     CONF_WORKSTATION_ENTITIES,
     CONF_WORKSTATION_POWER_SENSORS,
     CONF_SLEEP_MODE_ENTITIES,
@@ -48,6 +49,7 @@ from .const import (
     SM_CLEAR_PENDING,
     SM_OCCUPIED_STATES,
     WEIGHT_MMWAVE,
+    WEIGHT_PERSON_COUNT,
     WEIGHT_PIR_ACTIVE,
     WEIGHT_PIR_RECENT,
     WEIGHT_ESPRESENSE,
@@ -80,6 +82,7 @@ _SOURCE_LABELS: dict[str, str] = {
     "pir": "PIR motion",
     "pir_recent": "Recent PIR motion",
     "ble_home": "BLE device in room",
+    "person_count": "Person detected (camera)",
     "media_playing": "Media playing",
     "media_paused": "Media paused",
     "workstation": "Workstation active",
@@ -197,6 +200,7 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         ids: list[str] = []
         for key in (
             CONF_MMWAVE_SENSORS, CONF_PIR_SENSORS, CONF_ESPRESENSE_SENSORS,
+            CONF_PERSON_COUNT_SENSORS,
             CONF_DOOR_SENSORS, CONF_WINDOW_SENSORS, CONF_LOCK_ENTITIES,
             CONF_MEDIA_PLAYERS, CONF_LIGHT_ENTITIES, CONF_SWITCH_ENTITIES,
             CONF_WORKSTATION_SENSORS, CONF_WORKSTATION_ENTITIES, CONF_WORKSTATION_POWER_SENSORS,
@@ -238,6 +242,12 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         elif entity_id in sensors.get(CONF_ESPRESENSE_SENSORS, []):
             in_room = state.lower() not in ("away", "unavailable", "unknown", "none", "")
             self._record_event(f"ble_{'home' if in_room else 'away'}", now)
+        elif entity_id in sensors.get(CONF_PERSON_COUNT_SENSORS, []):
+            try:
+                count = int(float(state))
+            except (ValueError, TypeError):
+                count = 0
+            self._record_event(f"person_count_{count}", now)
         elif entity_id in (
             sensors.get(CONF_WORKSTATION_SENSORS, [])
             + sensors.get(CONF_WORKSTATION_ENTITIES, [])
@@ -291,6 +301,19 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 score += WEIGHT_MMWAVE
                 sources.append("mmwave")
                 break
+
+        # Person-count sensors: numeric sensor (e.g. camera people counter)
+        # Any sensor with value > 0 counts as a strong presence signal (+80)
+        for eid in sensors.get(CONF_PERSON_COUNT_SENSORS, []):
+            st = self.hass.states.get(eid)
+            if st and st.state not in ("unavailable", "unknown", "none", ""):
+                try:
+                    if int(float(st.state)) > 0:
+                        score += WEIGHT_PERSON_COUNT
+                        sources.append("person_count")
+                        break
+                except (ValueError, TypeError):
+                    pass
 
         pir_active = False
         for eid in sensors.get(CONF_PIR_SENSORS, []):

@@ -24,6 +24,7 @@ CONF_LIGHT_ENTITIES = "light_entities"
 CONF_SWITCH_ENTITIES = "switch_entities"
 CONF_WORKSTATION_SENSORS = "workstation_sensors"
 CONF_ESPRESENSE_SENSORS = "espresense_sensors"
+CONF_PERSON_COUNT_SENSORS = "person_count_sensors"
 # Legacy keys — kept for backward compat with existing config entries
 CONF_WORKSTATION_ENTITIES = "workstation_entities"
 CONF_WORKSTATION_POWER_SENSORS = "workstation_power_sensors"
@@ -50,6 +51,7 @@ SM_OCCUPIED_STATES = {SM_OCCUPIED, SM_LIKELY_OCCUPIED, SM_CLEAR_PENDING}
 
 # Score weights
 WEIGHT_MMWAVE = 80
+WEIGHT_PERSON_COUNT = 80        # Camera / people-counter: 1+ persons detected
 WEIGHT_PIR_ACTIVE = 35
 WEIGHT_PIR_RECENT = 15      # PIR fired recently but now off
 WEIGHT_ESPRESENSE = 50      # BLE device currently in this room

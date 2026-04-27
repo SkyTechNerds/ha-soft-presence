@@ -25,6 +25,7 @@ from .const import (
     CONF_SWITCH_ENTITIES,
     CONF_WORKSTATION_SENSORS,
     CONF_ESPRESENSE_SENSORS,
+    CONF_PERSON_COUNT_SENSORS,
     CONF_WORKSTATION_ENTITIES,
     CONF_WORKSTATION_POWER_SENSORS,
     CONF_SLEEP_MODE_ENTITIES,
@@ -138,6 +139,7 @@ class SoftPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_MMWAVE_SENSORS: user_input.get(CONF_MMWAVE_SENSORS, []),
                 CONF_PIR_SENSORS: user_input.get(CONF_PIR_SENSORS, []),
                 CONF_ESPRESENSE_SENSORS: user_input.get(CONF_ESPRESENSE_SENSORS, []),
+                CONF_PERSON_COUNT_SENSORS: user_input.get(CONF_PERSON_COUNT_SENSORS, []),
             })
             return await self.async_step_context_sensors()
 
@@ -165,6 +167,9 @@ class SoftPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     )
                 ),
                 vol.Optional(CONF_ESPRESENSE_SENSORS, default=[]): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain=["sensor"], multiple=True)
+                ),
+                vol.Optional(CONF_PERSON_COUNT_SENSORS, default=[]): selector.EntitySelector(
                     selector.EntitySelectorConfig(domain=["sensor"], multiple=True)
                 ),
             }),
@@ -355,24 +360,18 @@ class SoftPresenceOptionsFlow(config_entries.OptionsFlow):
                 CONF_MMWAVE_SENSORS: user_input.get(CONF_MMWAVE_SENSORS, []),
                 CONF_PIR_SENSORS: user_input.get(CONF_PIR_SENSORS, []),
                 CONF_ESPRESENSE_SENSORS: user_input.get(CONF_ESPRESENSE_SENSORS, []),
+                CONF_PERSON_COUNT_SENSORS: user_input.get(CONF_PERSON_COUNT_SENSORS, []),
             })
             return await self.async_step_edit_context_sensors()
 
-        # Use saved values; fall back to area suggestions only when field is empty
-        mmwave_saved = sensors.get(CONF_MMWAVE_SENSORS, [])
-        pir_saved = sensors.get(CONF_PIR_SENSORS, [])
-        if not mmwave_saved and self._area_id:
-            mmwave_saved = _area_entities(self.hass, self._area_id, ["binary_sensor"], ["occupancy"])
-        if not pir_saved and self._area_id:
-            pir_saved = _area_entities(self.hass, self._area_id, ["binary_sensor"], ["motion", "occupancy"])
-
+        # Use saved values only — no area auto-fill when editing an existing room
         return self.async_show_form(
             step_id="edit_presence_sensors",
             data_schema=vol.Schema({
-                vol.Optional(CONF_MMWAVE_SENSORS, default=mmwave_saved): selector.EntitySelector(
+                vol.Optional(CONF_MMWAVE_SENSORS, default=sensors.get(CONF_MMWAVE_SENSORS, [])): selector.EntitySelector(
                     selector.EntitySelectorConfig(domain=["binary_sensor"], multiple=True)
                 ),
-                vol.Optional(CONF_PIR_SENSORS, default=pir_saved): selector.EntitySelector(
+                vol.Optional(CONF_PIR_SENSORS, default=sensors.get(CONF_PIR_SENSORS, [])): selector.EntitySelector(
                     selector.EntitySelectorConfig(
                         domain=["binary_sensor"],
                         device_class=["motion", "occupancy"],
@@ -380,6 +379,9 @@ class SoftPresenceOptionsFlow(config_entries.OptionsFlow):
                     )
                 ),
                 vol.Optional(CONF_ESPRESENSE_SENSORS, default=sensors.get(CONF_ESPRESENSE_SENSORS, [])): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain=["sensor"], multiple=True)
+                ),
+                vol.Optional(CONF_PERSON_COUNT_SENSORS, default=sensors.get(CONF_PERSON_COUNT_SENSORS, [])): selector.EntitySelector(
                     selector.EntitySelectorConfig(domain=["sensor"], multiple=True)
                 ),
             }),
@@ -403,37 +405,29 @@ class SoftPresenceOptionsFlow(config_entries.OptionsFlow):
             })
             return await self.async_step_edit_thresholds()
 
-        def _saved_or_area(key: str, domains: list[str], device_classes: list[str] | None = None) -> list[str]:
-            saved = sensors.get(key, [])
-            if saved or not self._area_id:
-                return saved
-            return _area_entities(self.hass, self._area_id, domains, device_classes)
-
         # Legacy workstation migration: merge old separate fields into new combined field
         legacy_ws = sensors.get(CONF_WORKSTATION_ENTITIES, []) + sensors.get(CONF_WORKSTATION_POWER_SENSORS, [])
         ws_default = sensors.get(CONF_WORKSTATION_SENSORS, legacy_ws)
-        if not ws_default and self._area_id:
-            ws_default = _area_entities(self.hass, self._area_id, ["sensor"], ["power"])
 
         return self.async_show_form(
             step_id="edit_context_sensors",
             data_schema=vol.Schema({
-                vol.Optional(CONF_DOOR_SENSORS, default=_saved_or_area(CONF_DOOR_SENSORS, ["binary_sensor"], ["door"])): selector.EntitySelector(
+                vol.Optional(CONF_DOOR_SENSORS, default=sensors.get(CONF_DOOR_SENSORS, [])): selector.EntitySelector(
                     selector.EntitySelectorConfig(domain=["binary_sensor"], device_class=["door"], multiple=True)
                 ),
-                vol.Optional(CONF_WINDOW_SENSORS, default=_saved_or_area(CONF_WINDOW_SENSORS, ["binary_sensor"], ["window"])): selector.EntitySelector(
+                vol.Optional(CONF_WINDOW_SENSORS, default=sensors.get(CONF_WINDOW_SENSORS, [])): selector.EntitySelector(
                     selector.EntitySelectorConfig(domain=["binary_sensor"], device_class=["window"], multiple=True)
                 ),
-                vol.Optional(CONF_LOCK_ENTITIES, default=_saved_or_area(CONF_LOCK_ENTITIES, ["lock"])): selector.EntitySelector(
+                vol.Optional(CONF_LOCK_ENTITIES, default=sensors.get(CONF_LOCK_ENTITIES, [])): selector.EntitySelector(
                     selector.EntitySelectorConfig(domain=["lock"], multiple=True)
                 ),
-                vol.Optional(CONF_MEDIA_PLAYERS, default=_saved_or_area(CONF_MEDIA_PLAYERS, ["media_player"])): selector.EntitySelector(
+                vol.Optional(CONF_MEDIA_PLAYERS, default=sensors.get(CONF_MEDIA_PLAYERS, [])): selector.EntitySelector(
                     selector.EntitySelectorConfig(domain=["media_player"], multiple=True)
                 ),
-                vol.Optional(CONF_LIGHT_ENTITIES, default=_saved_or_area(CONF_LIGHT_ENTITIES, ["light"])): selector.EntitySelector(
+                vol.Optional(CONF_LIGHT_ENTITIES, default=sensors.get(CONF_LIGHT_ENTITIES, [])): selector.EntitySelector(
                     selector.EntitySelectorConfig(domain=["light"], multiple=True)
                 ),
-                vol.Optional(CONF_SWITCH_ENTITIES, default=_saved_or_area(CONF_SWITCH_ENTITIES, ["switch"])): selector.EntitySelector(
+                vol.Optional(CONF_SWITCH_ENTITIES, default=sensors.get(CONF_SWITCH_ENTITIES, [])): selector.EntitySelector(
                     selector.EntitySelectorConfig(domain=["switch"], multiple=True)
                 ),
                 vol.Optional(CONF_WORKSTATION_SENSORS, default=ws_default): selector.EntitySelector(

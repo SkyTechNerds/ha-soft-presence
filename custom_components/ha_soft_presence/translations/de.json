@@ -16,7 +16,8 @@
         "data": {
           "mmwave_sensors": "mmWave / Radar-Sensoren",
           "pir_sensors": "PIR / Bewegungssensoren",
-          "espresense_sensors": "ESPresense / BLE-Sensoren"
+          "espresense_sensors": "ESPresense / BLE-Sensoren",
+          "person_count_sensors": "Personen-Zähler (Kamera / People-Counter, numerisch)"
         }
       },
       "context_sensors": {
@@ -70,7 +71,8 @@
         "data": {
           "mmwave_sensors": "mmWave / Radar-Sensoren",
           "pir_sensors": "PIR / Bewegungssensoren",
-          "espresense_sensors": "ESPresense / BLE-Sensoren"
+          "espresense_sensors": "ESPresense / BLE-Sensoren",
+          "person_count_sensors": "Personen-Zähler (Kamera / People-Counter, numerisch)"
         }
       },
       "edit_context_sensors": {

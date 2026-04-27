@@ -15,7 +15,8 @@
         "description": "Les capteurs mmWave détectent les personnes immobiles et sont fortement recommandés par rapport aux capteurs PIR.",
         "data": {
           "mmwave_sensors": "Capteurs mmWave / Radar",
-          "pir_sensors": "Capteurs PIR / Mouvement"
+          "pir_sensors": "Capteurs PIR / Mouvement",
+          "person_count_sensors": "Capteurs de comptage de personnes (caméra / compteur, numérique)"
         }
       },
       "context_sensors": {
@@ -68,7 +69,8 @@
         "title": "Capteurs de présence",
         "data": {
           "mmwave_sensors": "Capteurs mmWave / Radar",
-          "pir_sensors": "Capteurs PIR / Mouvement"
+          "pir_sensors": "Capteurs PIR / Mouvement",
+          "person_count_sensors": "Capteurs de comptage de personnes (caméra / compteur, numérique)"
         }
       },
       "edit_context_sensors": {

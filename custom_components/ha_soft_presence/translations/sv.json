@@ -15,7 +15,8 @@
         "description": "mmWave-sensorer detekterar stillasittande personer och föredras starkt framför PIR.",
         "data": {
           "mmwave_sensors": "mmWave / Radarsensorer",
-          "pir_sensors": "PIR / Rörelsesensorer"
+          "pir_sensors": "PIR / Rörelsesensorer",
+          "person_count_sensors": "Personräknare (kamera / personräknare, numerisk)"
         }
       },
       "context_sensors": {
@@ -68,7 +69,8 @@
         "title": "Närvaro­sensorer",
         "data": {
           "mmwave_sensors": "mmWave / Radarsensorer",
-          "pir_sensors": "PIR / Rörelsesensorer"
+          "pir_sensors": "PIR / Rörelsesensorer",
+          "person_count_sensors": "Personräknare (kamera / personräknare, numerisk)"
         }
       },
       "edit_context_sensors": {

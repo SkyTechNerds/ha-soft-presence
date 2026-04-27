@@ -15,7 +15,8 @@
         "description": "Датчики mmWave обнаруживают неподвижных людей и настоятельно предпочтительнее PIR.",
         "data": {
           "mmwave_sensors": "Датчики mmWave / Радар",
-          "pir_sensors": "Датчики PIR / Движения"
+          "pir_sensors": "Датчики PIR / Движения",
+          "person_count_sensors": "Датчики подсчёта людей (камера / счётчик, числовой)"
         }
       },
       "context_sensors": {
@@ -68,7 +69,8 @@
         "title": "Датчики присутствия",
         "data": {
           "mmwave_sensors": "Датчики mmWave / Радар",
-          "pir_sensors": "Датчики PIR / Движения"
+          "pir_sensors": "Датчики PIR / Движения",
+          "person_count_sensors": "Датчики подсчёта людей (камера / счётчик, числовой)"
         }
       },
       "edit_context_sensors": {

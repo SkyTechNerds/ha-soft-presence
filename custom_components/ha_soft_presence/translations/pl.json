@@ -15,7 +15,8 @@
         "description": "Czujniki mmWave wykrywają nieruchome osoby i są zdecydowanie preferowane od PIR.",
         "data": {
           "mmwave_sensors": "Czujniki mmWave / Radar",
-          "pir_sensors": "Czujniki PIR / Ruchu"
+          "pir_sensors": "Czujniki PIR / Ruchu",
+          "person_count_sensors": "Czujniki liczenia osób (kamera / licznik, numeryczny)"
         }
       },
       "context_sensors": {
@@ -68,7 +69,8 @@
         "title": "Czujniki obecności",
         "data": {
           "mmwave_sensors": "Czujniki mmWave / Radar",
-          "pir_sensors": "Czujniki PIR / Ruchu"
+          "pir_sensors": "Czujniki PIR / Ruchu",
+          "person_count_sensors": "Czujniki liczenia osób (kamera / licznik, numeryczny)"
         }
       },
       "edit_context_sensors": {

@@ -15,7 +15,8 @@
         "description": "mmWave сензорите засичат неподвижни хора и са за предпочитане пред PIR.",
         "data": {
           "mmwave_sensors": "mmWave / Радарни сензори",
-          "pir_sensors": "PIR / Сензори за движение"
+          "pir_sensors": "PIR / Сензори за движение",
+          "person_count_sensors": "Сензори за броене на хора (камера / брояч, числов)"
         }
       },
       "context_sensors": {
@@ -68,7 +69,8 @@
         "title": "Сензори за присъствие",
         "data": {
           "mmwave_sensors": "mmWave / Радарни сензори",
-          "pir_sensors": "PIR / Сензори за движение"
+          "pir_sensors": "PIR / Сензори за движение",
+          "person_count_sensors": "Сензори за броене на хора (камера / брояч, числов)"
         }
       },
       "edit_context_sensors": {

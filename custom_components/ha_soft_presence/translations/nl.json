@@ -15,7 +15,8 @@
         "description": "mmWave-sensoren detecteren ook stilzittende personen en hebben sterk de voorkeur boven PIR.",
         "data": {
           "mmwave_sensors": "mmWave / Radarsensoren",
-          "pir_sensors": "PIR / Bewegingssensoren"
+          "pir_sensors": "PIR / Bewegingssensoren",
+          "person_count_sensors": "Persoonstellers (camera / mensen-teller, numeriek)"
         }
       },
       "context_sensors": {
@@ -68,7 +69,8 @@
         "title": "Aanwezigheidssensoren",
         "data": {
           "mmwave_sensors": "mmWave / Radarsensoren",
-          "pir_sensors": "PIR / Bewegingssensoren"
+          "pir_sensors": "PIR / Bewegingssensoren",
+          "person_count_sensors": "Persoonstellers (camera / mensen-teller, numeriek)"
         }
       },
       "edit_context_sensors": {

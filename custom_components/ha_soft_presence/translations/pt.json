@@ -15,7 +15,8 @@
         "description": "Os sensores mmWave detectam pessoas paradas e são fortemente preferidos em relação ao PIR.",
         "data": {
           "mmwave_sensors": "Sensores mmWave / Radar",
-          "pir_sensors": "Sensores PIR / Movimento"
+          "pir_sensors": "Sensores PIR / Movimento",
+          "person_count_sensors": "Sensores de contagem de pessoas (câmera / contador, numérico)"
         }
       },
       "context_sensors": {
@@ -68,7 +69,8 @@
         "title": "Sensores de presença",
         "data": {
           "mmwave_sensors": "Sensores mmWave / Radar",
-          "pir_sensors": "Sensores PIR / Movimento"
+          "pir_sensors": "Sensores PIR / Movimento",
+          "person_count_sensors": "Sensores de contagem de pessoas (câmera / contador, numérico)"
         }
       },
       "edit_context_sensors": {

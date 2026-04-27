@@ -12,10 +12,11 @@
       },
       "presence_sensors": {
         "title": "Presence Sensors",
-        "description": "mmWave sensors detect still persons and are strongly preferred over PIR.",
+        "description": "mmWave sensors detect still persons and are strongly preferred over PIR. ESPresense sensors report the room name where a BLE device is currently detected.",
         "data": {
           "mmwave_sensors": "mmWave / Radar Sensors",
-          "pir_sensors": "PIR / Motion Sensors"
+          "pir_sensors": "PIR / Motion Sensors",
+          "espresense_sensors": "ESPresense / BLE Sensors"
         }
       },
       "context_sensors": {
@@ -68,7 +69,8 @@
         "title": "Presence Sensors",
         "data": {
           "mmwave_sensors": "mmWave / Radar Sensors",
-          "pir_sensors": "PIR / Motion Sensors"
+          "pir_sensors": "PIR / Motion Sensors",
+          "espresense_sensors": "ESPresense / BLE Sensors"
         }
       },
       "edit_context_sensors": {

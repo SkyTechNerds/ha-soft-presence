@@ -14,7 +14,7 @@ Instead of relying on a single sensor, HA Soft Presence combines multiple signal
 ## ✨ Features
 
 - 🏠 **8 entities per room** — binary occupancy, score, confidence, reason, plus 4 optional AI advisory entities
-- 🔀 **Sensor fusion** — mmWave, PIR, media player, workstation, lights, door contacts, locks
+- 🔀 **Sensor fusion** — mmWave, PIR, BLE/ESPresense, media player, workstation, lights, door contacts, locks
 - 🔄 **6-state machine** — `clear → possible_entry → occupied → clear_pending → clear`
 - 📊 **Hysteresis** — separate occupied/clear thresholds, no flickering
 - 🌙 **Sleep mode** — configurable entities raise the clear threshold at night
@@ -247,7 +247,7 @@ AI entities show **"Waiting for evaluation"** until the first response arrives.
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| ESPresense / BLE | planned | One sensor per tracked device (phone/watch); state = current room name string |
+| ESPresense / BLE | ✅ done | One sensor per tracked device; state = room name string, matched against room slug |
 | Camera / Frigate support | planned | Frigate person-detection binary sensors; own score weight distinct from PIR |
 | Camera snapshot + Vision AI | planned | Send camera snapshot to vision-capable AI; opt-in, privacy-first |
 | Room-level aggregation | planned | "Anyone home on floor 1?" aggregating multiple rooms |

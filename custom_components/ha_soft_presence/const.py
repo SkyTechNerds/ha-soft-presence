@@ -23,6 +23,7 @@ CONF_MEDIA_PLAYERS = "media_players"
 CONF_LIGHT_ENTITIES = "light_entities"
 CONF_SWITCH_ENTITIES = "switch_entities"
 CONF_WORKSTATION_SENSORS = "workstation_sensors"
+CONF_ESPRESENSE_SENSORS = "espresense_sensors"
 # Legacy keys — kept for backward compat with existing config entries
 CONF_WORKSTATION_ENTITIES = "workstation_entities"
 CONF_WORKSTATION_POWER_SENSORS = "workstation_power_sensors"
@@ -51,6 +52,7 @@ SM_OCCUPIED_STATES = {SM_OCCUPIED, SM_LIKELY_OCCUPIED, SM_CLEAR_PENDING}
 WEIGHT_MMWAVE = 80
 WEIGHT_PIR_ACTIVE = 35
 WEIGHT_PIR_RECENT = 15      # PIR fired recently but now off
+WEIGHT_ESPRESENSE = 50      # BLE device currently in this room
 WEIGHT_MEDIA_PLAYING = 30
 WEIGHT_MEDIA_PAUSED = 15
 WEIGHT_WORKSTATION_ACTIVE = 35

@@ -23,6 +23,7 @@ PLATFORMS = ["binary_sensor", "sensor"]
 SERVICE_FORCE_OCCUPIED = "force_occupied"
 SERVICE_FORCE_CLEAR = "force_clear"
 SERVICE_RESET_OVERRIDE = "reset_override"
+SERVICE_RELOAD_ALL = "reload_all"
 
 _SERVICE_SCHEMA = vol.Schema({
     vol.Required("entity_id"): cv.entity_id,
@@ -58,9 +59,15 @@ def _register_services(hass: HomeAssistant) -> None:
             coordinator.set_override(None)
             await coordinator.async_request_refresh()
 
+    async def _handle_reload_all(call: ServiceCall) -> None:
+        entries = hass.config_entries.async_entries(DOMAIN)
+        for e in entries:
+            await hass.config_entries.async_reload(e.entry_id)
+
     hass.services.async_register(DOMAIN, SERVICE_FORCE_OCCUPIED, _handle_force_occupied, schema=_SERVICE_SCHEMA)
     hass.services.async_register(DOMAIN, SERVICE_FORCE_CLEAR, _handle_force_clear, schema=_SERVICE_SCHEMA)
     hass.services.async_register(DOMAIN, SERVICE_RESET_OVERRIDE, _handle_reset_override, schema=_SERVICE_SCHEMA)
+    hass.services.async_register(DOMAIN, SERVICE_RELOAD_ALL, _handle_reload_all)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

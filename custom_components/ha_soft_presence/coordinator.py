@@ -137,6 +137,10 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._active_sources: list[str] = []
         self._reason: str = ""
 
+        # Frozen snapshot of the last moment the score crossed occupied_threshold
+        self._last_positive_reason: str = ""
+        self._last_positive_sources: list[str] = []
+
         # Event log for LLM (anonymised)
         self._event_log: list[dict[str, Any]] = []
 
@@ -405,6 +409,9 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 self._sm_state = SM_OCCUPIED
                 self._occupied_since = now
                 self._cancel_clear_pending()
+            # Always freeze the reason at the moment score crosses the threshold
+            self._last_positive_reason = self._reason
+            self._last_positive_sources = list(self._active_sources)
 
         elif self._score <= clear_threshold:
             if self._sm_state == SM_OCCUPIED:
@@ -573,6 +580,8 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "active_sources": self._active_sources,
             "state_machine": self._sm_state,
             "last_positive": last_positive,
+            "last_positive_reason": self._last_positive_reason,
+            "last_positive_sources": self._last_positive_sources,
             "timeout_remaining": timeout_remaining,
             "room_name": self.config.get(CONF_ROOM_NAME, ""),
             "manual_override": self._manual_override,

@@ -309,14 +309,13 @@ class SoftPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     def async_get_options_flow(config_entry):
-        return SoftPresenceOptionsFlow(config_entry)
+        return SoftPresenceOptionsFlow()
 
 
 class SoftPresenceOptionsFlow(config_entries.OptionsFlow):
     """Full reconfiguration after setup — sensors, thresholds, LLM."""
 
-    def __init__(self, config_entry) -> None:
-        self.config_entry = config_entry
+    def __init__(self) -> None:
         self._data: dict = {}
         self._area_id: str | None = None
 

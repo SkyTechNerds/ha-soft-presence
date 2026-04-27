@@ -91,22 +91,6 @@ _SOURCE_LABELS: dict[str, str] = {
     "lock_recent": "Lock recently used",
 }
 
-_LLM_PROMPT = """\
-You are a home presence detection system. Based on the sensor events below, \
-decide if the room is currently occupied. Be concise and output JSON only.
-
-Room: {room_name}
-Has door: {has_door}
-Is transit room: {is_transit}
-
-Recent sensor events (age_sec = seconds ago, 0 = just now):
-{events}
-
-Rule engine result: score={rule_score}/100, state={rule_state}
-
-Respond with this exact JSON and nothing else:
-{{"occupied": true, "score": 75, "confidence": "high", "reason": "brief explanation"}}
-"""
 
 _MAX_EVENT_LOG = 30
 
@@ -271,17 +255,6 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._run_state_machine()
         except Exception as err:
             _LOGGER.error("[%s] Score/state error: %s", self.config.get(CONF_ROOM_NAME), err)
-
-        if self.config.get(CONF_LLM_ENABLED) and self.config.get(CONF_CONVERSATION_AGENT):
-            interval = int(self.config.get(CONF_LLM_UPDATE_INTERVAL, DEFAULT_LLM_UPDATE_INTERVAL))
-            never_called = self._llm_last_called == 0.0
-            new_events = len(self._event_log) > self._llm_last_event_count
-            time_elapsed = (time.time() - self._llm_last_called) >= interval
-            if (new_events or never_called) and time_elapsed:
-                try:
-                    await self._async_call_llm()
-                except Exception as err:
-                    _LOGGER.warning("[%s] LLM call error: %s", self.config.get(CONF_ROOM_NAME), err)
 
         return self._build_data()
 
@@ -485,55 +458,52 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 await self.async_request_refresh()
 
     # ------------------------------------------------------------------
-    # LLM advisory
+    # LLM advisory — called by llm_batch.py, not directly
     # ------------------------------------------------------------------
 
-    async def _async_call_llm(self) -> None:
-        agent_id = self.config.get(CONF_CONVERSATION_AGENT)
-        if not agent_id:
-            return
+    def llm_enabled(self) -> bool:
+        """Return True if LLM is configured for this room."""
+        return bool(self.config.get(CONF_LLM_ENABLED) and self.config.get(CONF_CONVERSATION_AGENT))
 
-        self._llm_last_called = time.time()
-        self._llm_last_event_count = len(self._event_log)
-        now = self._llm_last_called
+    def llm_agent_id(self) -> str | None:
+        return self.config.get(CONF_CONVERSATION_AGENT)
 
+    def llm_update_interval(self) -> int:
+        return int(self.config.get(CONF_LLM_UPDATE_INTERVAL, DEFAULT_LLM_UPDATE_INTERVAL))
+
+    def needs_llm_update(self) -> bool:
+        """True if this room should be included in the next batch LLM call."""
+        if not self.llm_enabled():
+            return False
+        never_called = self._llm_last_called == 0.0
+        new_events = len(self._event_log) > self._llm_last_event_count
+        time_elapsed = (time.time() - self._llm_last_called) >= self.llm_update_interval()
+        return (never_called or new_events) and time_elapsed
+
+    def llm_snapshot(self) -> dict:
+        """Return anonymised room data for inclusion in a batch LLM prompt."""
+        now = time.time()
         events_text = "\n".join(
             f"  - {e['type']}: {int(now - e['ts'])}s ago"
             for e in self._event_log[-20:]
         ) or "  (no events recorded)"
+        return {
+            "room_name": self.config.get(CONF_ROOM_NAME, "room"),
+            "has_door": self.config.get(CONF_HAS_DOOR, True),
+            "is_transit": self.config.get(CONF_IS_TRANSIT, False),
+            "events_text": events_text,
+            "rule_score": self._score,
+            "rule_state": self._sm_state,
+        }
 
-        prompt = _LLM_PROMPT.format(
-            room_name=self.config.get(CONF_ROOM_NAME, "room"),
-            has_door=self.config.get(CONF_HAS_DOOR, True),
-            is_transit=self.config.get(CONF_IS_TRANSIT, False),
-            events=events_text,
-            rule_score=self._score,
-            rule_state=self._sm_state,
-        )
+    def mark_llm_called(self) -> None:
+        """Record that this room was included in a batch LLM call."""
+        self._llm_last_called = time.time()
+        self._llm_last_event_count = len(self._event_log)
 
+    def apply_llm_result(self, data: dict) -> None:
+        """Apply a parsed LLM result dict to this room's LLM state."""
         try:
-            from homeassistant.components.conversation import async_converse
-            from homeassistant.core import Context
-
-            result = await async_converse(
-                hass=self.hass,
-                text=prompt,
-                conversation_id=None,
-                context=Context(),
-                agent_id=agent_id,
-            )
-            speech = result.response.speech.get("plain", {}).get("speech", "")
-            self._parse_llm_response(speech)
-        except Exception as err:
-            _LOGGER.warning("[%s] LLM call failed: %s", self.config.get(CONF_ROOM_NAME), err)
-
-    def _parse_llm_response(self, text: str) -> None:
-        match = re.search(r"\{[^{}]+\}", text, re.DOTALL)
-        if not match:
-            _LOGGER.debug("No JSON found in LLM response: %.200s", text)
-            return
-        try:
-            data = json.loads(match.group())
             self._llm_data = {
                 "occupied": bool(data.get("occupied", False)),
                 "score": max(0, min(100, int(data.get("score", 0)))),
@@ -541,9 +511,9 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "reason": str(data.get("reason", "")),
                 "last_updated": datetime.now(tz=timezone.utc).isoformat(),
             }
-            _LOGGER.debug("[%s] LLM: %s", self.config.get(CONF_ROOM_NAME), self._llm_data)
-        except (json.JSONDecodeError, ValueError, TypeError) as err:
-            _LOGGER.warning("[%s] LLM parse error: %s — raw: %.200s", self.config.get(CONF_ROOM_NAME), err, text)
+            _LOGGER.debug("[%s] LLM result applied: %s", self.config.get(CONF_ROOM_NAME), self._llm_data)
+        except (ValueError, TypeError) as err:
+            _LOGGER.warning("[%s] LLM result parse error: %s", self.config.get(CONF_ROOM_NAME), err)
 
     # ------------------------------------------------------------------
     # Data output

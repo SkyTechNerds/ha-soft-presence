@@ -2,14 +2,19 @@
 from __future__ import annotations
 
 import logging
+from datetime import timedelta
 
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.event import async_track_time_interval
 
 from .const import DOMAIN
 from .coordinator import SoftPresenceCoordinator
+from .llm_batch import async_batch_llm_update
+
+_BATCH_LLM_INTERVAL = timedelta(seconds=60)  # check every 60 s; each room's own interval still applies
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -71,6 +76,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Register services once (idempotent)
     if not hass.services.has_service(DOMAIN, SERVICE_FORCE_OCCUPIED):
         _register_services(hass)
+
+    # Register batch LLM timer once (shared across all rooms)
+    if f"{DOMAIN}_llm_unsub" not in hass.data:
+        async def _llm_tick(_now=None) -> None:
+            await async_batch_llm_update(hass)
+
+        unsub = async_track_time_interval(hass, _llm_tick, _BATCH_LLM_INTERVAL)
+        hass.data[f"{DOMAIN}_llm_unsub"] = unsub
+        # Run once immediately on startup so entities don't wait 60 s
+        hass.async_create_task(_llm_tick())
 
     return True
 

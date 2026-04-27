@@ -67,7 +67,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    entry.async_on_unload(entry.add_update_listener(_async_reload_entry))
 
     # Register services once (idempotent)
     if not hass.services.has_service(DOMAIN, SERVICE_FORCE_OCCUPIED):
@@ -82,8 +81,3 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         coordinator: SoftPresenceCoordinator = hass.data[DOMAIN].pop(entry.entry_id)
         coordinator.async_teardown()
     return unload_ok
-
-
-async def _async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    await async_unload_entry(hass, entry)
-    await async_setup_entry(hass, entry)

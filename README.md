@@ -248,8 +248,11 @@ AI entities show **"Waiting for evaluation"** until the first response arrives.
 | Feature | Status | Notes |
 |---------|--------|-------|
 | ESPresense / BLE | ✅ done | One sensor per tracked device; state = room name string, matched against room slug |
+| Person-count sensors | ✅ done | Numeric camera / people-counter sensors; value > 0 → +80 score |
 | Camera / Frigate support | planned | Frigate person-detection binary sensors; own score weight distinct from PIR |
 | Camera snapshot + Vision AI | planned | Send camera snapshot to vision-capable AI; opt-in, privacy-first |
+| Batch AI evaluation | planned | Single LLM call for all rooms instead of one call per room — reduces API requests |
+| Direct HTTP AI provider | planned | Call MiniMax, Groq, or any OpenAI-compatible API directly without HA conversation agent |
 | Room-level aggregation | planned | "Anyone home on floor 1?" aggregating multiple rooms |
 | HA Quality Scale — `iot_class` | planned | Set `local_polling` correctly in manifest |
 | HA Quality Scale — `diagnostics.py` | planned | Coordinator data dump for easier debugging in HA |

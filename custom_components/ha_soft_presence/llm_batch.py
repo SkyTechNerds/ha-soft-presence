@@ -16,17 +16,23 @@ from .const import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 _BATCH_PROMPT_HEADER = """\
-You are a home presence detection system. Analyze the rooms below and decide \
-for each whether it is currently occupied. Be concise and output JSON only.
+You are a home presence detection system. For each room below, decide whether \
+it is currently occupied based on the sensor data provided.
+
+IMPORTANT: The rule engine score is computed from real hardware sensors \
+(mmWave radar, PIR motion, lights, media players, etc.) and is highly reliable. \
+Weight it heavily. "Currently active signals" shows sensors that are ON RIGHT NOW — \
+if any are listed, the room almost certainly has presence.
 
 ROOMS TO ANALYZE:
 """
 
 _BATCH_PROMPT_ROOM = """\
 [{idx}] Room: {room_name} | Has door: {has_door} | Transit room: {is_transit}
-Recent sensor events (seconds ago):
+Currently active signals: {active_sources}
+Rule engine: score={rule_score}/100, state={rule_state}, reason="{rule_reason}"
+Recent sensor events (for context):
 {events_text}
-Rule engine: score={rule_score}/100, state={rule_state}
 """
 
 _BATCH_PROMPT_FOOTER = """\

@@ -494,6 +494,9 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "events_text": events_text,
             "rule_score": self._score,
             "rule_state": self._sm_state,
+            # Current active signals — sensors that are on RIGHT NOW (not just historically)
+            "active_sources": ", ".join(self._active_sources) if self._active_sources else "none",
+            "rule_reason": self._reason or "No active signals",
         }
 
     def mark_llm_called(self) -> None:

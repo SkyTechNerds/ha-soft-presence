@@ -392,7 +392,11 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         elif self._score <= clear_threshold:
             if self._sm_state == SM_OCCUPIED:
-                held = (now - self._occupied_since) if self._occupied_since else 0
+                # _occupied_since can be None if we entered OCCUPIED via the
+                # hysteresis recovery path (CLEAR_PENDING → OCCUPIED) without
+                # a fresh signal — treat as min_hold already satisfied to avoid
+                # getting stuck forever.
+                held = (now - self._occupied_since) if self._occupied_since else min_hold
                 if held >= min_hold:
                     self._sm_state = SM_CLEAR_PENDING
                     self._schedule_clear(timeout)
@@ -404,6 +408,9 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             if self._sm_state == SM_CLEAR_PENDING:
                 self._cancel_clear_pending()
                 self._sm_state = SM_OCCUPIED
+                # Ensure _occupied_since is set so the next drop can compute held time
+                if self._occupied_since is None:
+                    self._occupied_since = now
             elif self._sm_state == SM_CLEAR:
                 self._sm_state = SM_POSSIBLE_ENTRY
 

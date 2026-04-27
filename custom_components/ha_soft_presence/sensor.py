@@ -158,9 +158,9 @@ class LLMScoreSensor(_BaseSensor):
         )
 
     @property
-    def native_value(self) -> int | None:
+    def native_value(self) -> int:
         llm = self.coordinator.data.get("llm", {}) if self.coordinator.data else {}
-        return llm.get("score")
+        return llm.get("score", 0)
 
     @property
     def extra_state_attributes(self) -> dict:

@@ -84,8 +84,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         unsub = async_track_time_interval(hass, _llm_tick, _BATCH_LLM_INTERVAL)
         hass.data[f"{DOMAIN}_llm_unsub"] = unsub
-        # Run once immediately on startup so entities don't wait 60 s
-        hass.async_create_task(_llm_tick())
+
+    # Always trigger an immediate LLM update after (re)loading an entry so
+    # LLM entities don't stay grey until the next 60 s tick.
+    hass.async_create_task(async_batch_llm_update(hass))
 
     return True
 

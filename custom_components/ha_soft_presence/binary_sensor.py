@@ -94,11 +94,9 @@ class LLMPresenceBinarySensor(CoordinatorEntity[SoftPresenceCoordinator], Binary
         self.entity_id = f"binary_sensor.{room_slug}_presence_llm"
 
     @property
-    def is_on(self) -> bool | None:
+    def is_on(self) -> bool:
         llm = self.coordinator.data.get("llm", {}) if self.coordinator.data else {}
-        if not llm:
-            return None  # unknown until first LLM response
-        return llm.get("occupied", False)
+        return bool(llm.get("occupied", False))
 
     @property
     def extra_state_attributes(self) -> dict:

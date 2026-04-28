@@ -5,7 +5,7 @@
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/SkyTechNerds/ha-soft-presence?style=flat-square&color=brightgreen)
 ![License](https://img.shields.io/github/license/SkyTechNerds/ha-soft-presence?style=flat-square)
 
-**Virtual presence sensors for Home Assistant** — inspired by the Aqara Presence Soft Sensor concept, but fully transparent, fully local, and fully configurable.
+**Virtual presence sensors for Home Assistant** — inspired by the [Aqara Presence Soft Sensor concept](https://www.youtube.com/watch?v=L85_hqJ6lUw), but fully transparent, fully local, and fully configurable.
 
 Instead of relying on a single sensor, HA Soft Presence combines multiple signals (mmWave, PIR, door contacts, media players, workstations, lights, …) using a weighted score engine and a 6-state machine to produce a stable, automation-ready occupancy decision per room.
 
@@ -95,10 +95,19 @@ active_sources:
   - media_playing
 state_machine: occupied
 last_positive_signal: "2026-04-24T22:33:00+00:00"
+last_positive_reason: "mmWave active + Media playing"  # what last triggered OCCUPIED
+last_positive_sources:
+  - mmwave
+  - media_playing
 timeout_remaining: 210
 room_name: Wohnzimmer
 manual_override: null        # "occupied" | "clear" | null
 sleep_mode_active: false
+sensors:                     # diagnostic — all configured sensors with current HA state
+  mmwave:
+    binary_sensor.bedroom_mmwave: "on"
+  pir:
+    binary_sensor.bedroom_pir: "off"
 ```
 
 ---
@@ -108,6 +117,7 @@ sleep_mode_active: false
 | Signal | Weight | Notes |
 |--------|-------:|-------|
 | mmWave active | +80 | Strongest signal — detects still persons |
+| Person-count sensor | +80 | Camera/people-counter; value > 0 counts as presence |
 | PIR active | +35 | Real-time motion |
 | PIR recent (decay) | up to +15 | Fades over 5 min after PIR goes off |
 | Workstation active | +35 | Binary sensor or power > 10 W |
@@ -149,6 +159,7 @@ CLEAR
 |----------|---------------|
 | mmWave | DFRobot SEN0395, FP2, LD2410, EP1, Everything Presence One |
 | PIR | Any `binary_sensor` with device class `motion` or `occupancy` |
+| Person-count | Numeric `sensor` from a camera / people-counter — value > 0 triggers presence |
 | Door contacts | `binary_sensor` with device class `door` |
 | Window contacts | `binary_sensor` with device class `window` |
 | Locks | Any `lock` entity |
@@ -207,8 +218,9 @@ triggers:
 | `ha_soft_presence.force_occupied` | Override room to occupied, ignore sensor signals |
 | `ha_soft_presence.force_clear` | Override room to clear, ignore sensor signals |
 | `ha_soft_presence.reset_override` | Remove override, return to automatic detection |
+| `ha_soft_presence.reload_all` | Reload all HA Soft Presence config entries at once |
 
-All services take the `entity_id` of the room's `binary_sensor.*_presence_soft` entity.
+`force_occupied`, `force_clear`, and `reset_override` take the `entity_id` of the room's `binary_sensor.*_presence_soft` entity.
 
 ```yaml
 actions:
@@ -235,11 +247,12 @@ AI entities show **"Waiting for evaluation"** until the first response arrives.
 ## 💡 Design principles
 
 1. 🚪 Door closing ≠ vacant — door is context only, not proof of absence
-2. 📡 mmWave is highest-weight and overrides PIR
-3. ⚡ `occupied` is set fast; `clear` is set slowly (timeout + hysteresis)
-4. 🛏️ Bed sensors → use the PIR sensor slots (binary on/off)
-5. 🌙 Sleep mode keeps the room occupied longer with minimal configuration
-6. 🔒 All processing is local — nothing leaves HA unless AI is explicitly enabled
+2. 🚶 Door-validated fast clear — if the door didn't open since the room became occupied, nobody could have left → 30 s timeout instead of the full no-presence timeout
+3. 📡 mmWave is highest-weight and overrides PIR
+4. ⚡ `occupied` is set fast; `clear` is set slowly (timeout + hysteresis)
+5. 🛏️ Bed sensors → use the PIR sensor slots (binary on/off)
+6. 🌙 Sleep mode keeps the room occupied longer with minimal configuration
+7. 🔒 All processing is local — nothing leaves HA unless AI is explicitly enabled
 
 ---
 
@@ -251,7 +264,7 @@ AI entities show **"Waiting for evaluation"** until the first response arrives.
 | Person-count sensors | ✅ done | Numeric camera / people-counter sensors; value > 0 → +80 score |
 | Camera / Frigate support | planned | Frigate person-detection binary sensors; own score weight distinct from PIR |
 | Camera snapshot + Vision AI | planned | Send camera snapshot to vision-capable AI; opt-in, privacy-first |
-| Batch AI evaluation | planned | Single LLM call for all rooms instead of one call per room — reduces API requests |
+| Batch AI evaluation | ✅ done | Single LLM call per agent covering all rooms — minimises API requests |
 | Direct HTTP AI provider | planned | Call MiniMax, Groq, or any OpenAI-compatible API directly without HA conversation agent |
 | Room-level aggregation | planned | "Anyone home on floor 1?" aggregating multiple rooms |
 | HA Quality Scale — `iot_class` | planned | Set `local_polling` correctly in manifest |

@@ -37,9 +37,7 @@ class SoftPresenceBinarySensor(CoordinatorEntity[SoftPresenceCoordinator], Binar
         super().__init__(coordinator)
         self._entry = entry
         room_slug = slugify(entry.data.get(CONF_ROOM_NAME, "room"))
-
         self._attr_unique_id = f"{entry.entry_id}_presence_soft"
-        self._attr_translation_key = "presence_soft"
         self.entity_id = f"binary_sensor.{room_slug}_presence_soft"
 
     @property

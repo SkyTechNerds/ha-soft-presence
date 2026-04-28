@@ -67,6 +67,7 @@ from .const import (
     DEFAULT_CLEAR_THRESHOLD,
     DEFAULT_NO_PRESENCE_TIMEOUT,
     DEFAULT_MIN_HOLD_TIME,
+    DEFAULT_DOOR_VALIDATED_TIMEOUT,
     DEFAULT_POLL_INTERVAL,
     DEFAULT_LLM_UPDATE_INTERVAL,
     DEFAULT_SLEEP_CLEAR_THRESHOLD,
@@ -410,6 +411,7 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._last_positive_sources = list(self._active_sources)
 
         elif self._score <= clear_threshold:
+            effective_timeout = self._effective_clear_timeout(timeout, now)
             if self._sm_state == SM_OCCUPIED:
                 # _occupied_since can be None if we entered OCCUPIED via the
                 # hysteresis recovery path (CLEAR_PENDING → OCCUPIED) without
@@ -418,10 +420,10 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 held = (now - self._occupied_since) if self._occupied_since else min_hold
                 if held >= min_hold:
                     self._sm_state = SM_CLEAR_PENDING
-                    self._schedule_clear(timeout)
+                    self._schedule_clear(effective_timeout)
             elif self._sm_state in (SM_POSSIBLE_ENTRY, SM_LIKELY_OCCUPIED, SM_POSSIBLE_EXIT):
                 self._sm_state = SM_CLEAR_PENDING
-                self._schedule_clear(timeout)
+                self._schedule_clear(effective_timeout)
 
         else:
             if self._sm_state == SM_CLEAR_PENDING:
@@ -432,6 +434,28 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     self._occupied_since = now
             elif self._sm_state == SM_CLEAR:
                 self._sm_state = SM_POSSIBLE_ENTRY
+
+    def _effective_clear_timeout(self, default_timeout: float, now: float) -> float:
+        """Return a shorter timeout when door proves no one entered/left since last signal.
+
+        If the room has a door, a door contact is configured, and the door has not
+        opened since the room last became occupied → nobody could have left undetected
+        → use a short 30 s grace period instead of the full no-presence timeout.
+        """
+        if not self.config.get(CONF_HAS_DOOR, False):
+            return default_timeout
+        sensors = self.config.get("sensors", {})
+        if not sensors.get(CONF_DOOR_SENSORS):
+            return default_timeout
+        door_last = self._last_event.get("door", 0)
+        occupied_since = self._occupied_since or now
+        if door_last < occupied_since:
+            _LOGGER.debug(
+                "[%s] Door-validated fast clear: timeout %ds → %ds",
+                self.config.get(CONF_ROOM_NAME), int(default_timeout), DEFAULT_DOOR_VALIDATED_TIMEOUT,
+            )
+            return DEFAULT_DOOR_VALIDATED_TIMEOUT
+        return default_timeout
 
     def _schedule_clear(self, timeout: float) -> None:
         self._cancel_clear_pending()

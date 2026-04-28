@@ -76,6 +76,7 @@ DEFAULT_OCCUPIED_THRESHOLD = 50
 DEFAULT_CLEAR_THRESHOLD = 20
 DEFAULT_NO_PRESENCE_TIMEOUT = 300   # 5 min
 DEFAULT_MIN_HOLD_TIME = 60          # 1 min
+DEFAULT_DOOR_VALIDATED_TIMEOUT = 30 # 30 s — door hasn't opened since last signal
 DEFAULT_POLL_INTERVAL = 5           # seconds
 DEFAULT_SLEEP_CLEAR_THRESHOLD = 5   # very hard to go clear during sleep mode
 

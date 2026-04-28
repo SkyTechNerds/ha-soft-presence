@@ -1,9 +1,9 @@
 # HA Soft Presence
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=flat-square)](https://github.com/hacs/integration)
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/SkyTechNerds/ha-soft-presence?style=flat-square)
-![GitHub commit activity](https://img.shields.io/github/commit-activity/m/SkyTechNerds/ha-soft-presence?style=flat-square&color=brightgreen)
-![License](https://img.shields.io/github/license/SkyTechNerds/ha-soft-presence?style=flat-square)
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=flat-square)](https://my.home-assistant.io/redirect/hacs_repository/?owner=SkyTechNerds&repository=ha-soft-presence&category=integration)
+[![GitHub release](https://img.shields.io/github/v/release/SkyTechNerds/ha-soft-presence?style=flat-square)](https://github.com/SkyTechNerds/ha-soft-presence/releases)
+[![GitHub commit activity](https://img.shields.io/github/commit-activity/m/SkyTechNerds/ha-soft-presence?style=flat-square&color=brightgreen)](https://github.com/SkyTechNerds/ha-soft-presence/commits/main)
+[![License](https://img.shields.io/github/license/SkyTechNerds/ha-soft-presence?style=flat-square)](https://github.com/SkyTechNerds/ha-soft-presence/blob/main/LICENSE)
 
 **Virtual presence sensors for Home Assistant** — inspired by the [Aqara Presence Soft Sensor concept](https://www.youtube.com/watch?v=L85_hqJ6lUw), but fully transparent, fully local, and fully configurable.
 

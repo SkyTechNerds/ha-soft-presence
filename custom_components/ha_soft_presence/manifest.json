@@ -1,13 +1,13 @@
 {
   "domain": "ha_soft_presence",
   "name": "HA Soft Presence",
-  "version": "2026.4.28",
   "codeowners": ["@skycryer"],
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/SkyTechNerds/ha-soft-presence",
   "integration_type": "service",
   "iot_class": "local_push",
-  "quality_scale": "internal",
-  "requirements": []
+  "issue_tracker": "https://github.com/SkyTechNerds/ha-soft-presence/issues",
+  "requirements": [],
+  "version": "2026.4.28"
 }

@@ -484,25 +484,36 @@ class SoftPresenceOptionsFlow(config_entries.OptionsFlow):
     async def async_step_edit_llm(self, user_input=None):
         data = self.config_entry.data
         if user_input is not None:
+            # If user didn't pick a new agent, keep the previously saved one
+            agent = user_input.get(CONF_CONVERSATION_AGENT) or data.get(CONF_CONVERSATION_AGENT)
             updated = dict(data)
             updated.update(self._data)
             updated.update({
                 CONF_LLM_ENABLED: user_input.get(CONF_LLM_ENABLED, False),
-                CONF_CONVERSATION_AGENT: user_input.get(CONF_CONVERSATION_AGENT),
+                CONF_CONVERSATION_AGENT: agent,
                 CONF_LLM_UPDATE_INTERVAL: int(user_input.get(CONF_LLM_UPDATE_INTERVAL, DEFAULT_LLM_UPDATE_INTERVAL)),
             })
             self.hass.config_entries.async_update_entry(self.config_entry, data=updated)
             return self.async_create_entry(title="", data={})
 
+        saved_agent = data.get(CONF_CONVERSATION_AGENT)
+        schema: dict = {
+            vol.Optional(CONF_LLM_ENABLED, default=data.get(CONF_LLM_ENABLED, False)): selector.BooleanSelector(),
+        }
+        # Pre-fill conversation agent only when a value is already saved
+        if saved_agent:
+            schema[vol.Optional(CONF_CONVERSATION_AGENT, default=saved_agent)] = selector.EntitySelector(
+                selector.EntitySelectorConfig(domain=["conversation"])
+            )
+        else:
+            schema[vol.Optional(CONF_CONVERSATION_AGENT)] = selector.EntitySelector(
+                selector.EntitySelectorConfig(domain=["conversation"])
+            )
+        schema[vol.Optional(CONF_LLM_UPDATE_INTERVAL, default=data.get(CONF_LLM_UPDATE_INTERVAL, DEFAULT_LLM_UPDATE_INTERVAL))] = selector.NumberSelector(
+            selector.NumberSelectorConfig(min=60, max=3600, step=60, unit_of_measurement="s", mode="box")
+        )
+
         return self.async_show_form(
             step_id="edit_llm",
-            data_schema=vol.Schema({
-                vol.Optional(CONF_LLM_ENABLED, default=data.get(CONF_LLM_ENABLED, False)): selector.BooleanSelector(),
-                vol.Optional(CONF_CONVERSATION_AGENT): selector.EntitySelector(
-                    selector.EntitySelectorConfig(domain=["conversation"])
-                ),
-                vol.Optional(CONF_LLM_UPDATE_INTERVAL, default=data.get(CONF_LLM_UPDATE_INTERVAL, DEFAULT_LLM_UPDATE_INTERVAL)): selector.NumberSelector(
-                    selector.NumberSelectorConfig(min=60, max=3600, step=60, unit_of_measurement="s", mode="box")
-                ),
-            }),
+            data_schema=vol.Schema(schema),
         )

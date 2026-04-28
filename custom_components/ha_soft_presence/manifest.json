@@ -1,7 +1,7 @@
 {
   "domain": "ha_soft_presence",
   "name": "HA Soft Presence",
-  "version": "0.1.0",
+  "version": "2026.4.28",
   "codeowners": ["@skycryer"],
   "config_flow": true,
   "dependencies": [],

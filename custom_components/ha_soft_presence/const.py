@@ -116,7 +116,8 @@ DEFAULT_OCCUPIED_THRESHOLD = 50
 DEFAULT_CLEAR_THRESHOLD = 20
 DEFAULT_NO_PRESENCE_TIMEOUT = 300       # 5 min before transitioning to CLEAR
 DEFAULT_MIN_HOLD_TIME = 60              # 1 min minimum in OCCUPIED before clearing
-DEFAULT_DOOR_VALIDATED_TIMEOUT = 30     # 30 s fast-clear when door proves no entry/exit
+DEFAULT_DOOR_LOCKED_IN_TIMEOUT = 14400  # 4 h cap when door has been closed since OCCUPIED (locked-in)
+DOOR_LOCK_SOLID_DURATION = 120          # need this many seconds of (score>=occupied AND all doors closed) to trust lock-in
 DEFAULT_POLL_INTERVAL = 5               # coordinator polling interval in seconds
 DEFAULT_SLEEP_CLEAR_THRESHOLD = 5       # very hard to go clear while sleep mode is active
 

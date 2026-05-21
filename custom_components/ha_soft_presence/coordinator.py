@@ -67,7 +67,8 @@ from .const import (
     DEFAULT_CLEAR_THRESHOLD,
     DEFAULT_NO_PRESENCE_TIMEOUT,
     DEFAULT_MIN_HOLD_TIME,
-    DEFAULT_DOOR_VALIDATED_TIMEOUT,
+    DEFAULT_DOOR_LOCKED_IN_TIMEOUT,
+    DOOR_LOCK_SOLID_DURATION,
     DEFAULT_POLL_INTERVAL,
     DEFAULT_LLM_UPDATE_INTERVAL,
     DEFAULT_SLEEP_CLEAR_THRESHOLD,
@@ -139,6 +140,12 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         # Event firing — track previous occupied state
         self._was_occupied: bool | None = None
+
+        # Door lock-in tracking: True once we have observed score>=occupied
+        # AND all doors closed continuously for DOOR_LOCK_SOLID_DURATION seconds.
+        # Reset on any door-open event and on transition to CLEAR.
+        self._has_been_solid: bool = False
+        self._solid_candidate_since: float | None = None
 
         # Manual override: "occupied" | "clear" | None
         self._manual_override: str | None = None
@@ -215,6 +222,11 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         elif entity_id in sensors.get(CONF_DOOR_SENSORS, []):
             if state == "on":
                 self._last_event["door"] = now
+                # Door opened — someone could have entered or left during this interval.
+                # Drop the lock-in trust and restart the solid-streak timer from scratch
+                # once the door closes again and score stays high.
+                self._has_been_solid = False
+                self._solid_candidate_since = None
             self._record_event(f"door_{'opened' if state == 'on' else 'closed'}", now)
         elif entity_id in sensors.get(CONF_LOCK_ENTITIES, []):
             if state in ("unlocked", "unlocking"):
@@ -253,11 +265,59 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _async_update_data(self) -> dict[str, Any]:
         try:
             self._recalculate_score()
+            self._update_solid_tracking(time.time())
             self._run_state_machine()
         except Exception as err:
             _LOGGER.error("[%s] Score/state error: %s", self.config.get(CONF_ROOM_NAME), err)
 
         return self._build_data()
+
+    def _update_solid_tracking(self, now: float) -> None:
+        """Track whether we have observed a continuous \"solid\" presence streak.
+
+        A streak counts while: score is at or above the occupied threshold AND
+        every configured door contact is currently closed. Once such a streak
+        has lasted DOOR_LOCK_SOLID_DURATION seconds, ``_has_been_solid`` flips
+        to True and stays True for the rest of the OCCUPIED session — even if
+        the score later drops because the occupant sits still. The flag is
+        only cleared by a door-open event (handled in ``_on_entity_changed``)
+        or by the OCCUPIED → CLEAR transition.
+        """
+        if not self.config.get(CONF_HAS_DOOR, False):
+            return
+        sensors = self.config.get("sensors", {})
+        door_ids = sensors.get(CONF_DOOR_SENSORS, [])
+        if not door_ids:
+            return
+        occupied_threshold = int(
+            self.config.get(CONF_OCCUPIED_THRESHOLD, DEFAULT_OCCUPIED_THRESHOLD)
+        )
+
+        all_closed = True
+        for eid in door_ids:
+            st = self.hass.states.get(eid)
+            if st is None or st.state != "off":
+                all_closed = False
+                break
+
+        if self._score >= occupied_threshold and all_closed:
+            if self._solid_candidate_since is None:
+                self._solid_candidate_since = now
+            elif (
+                not self._has_been_solid
+                and (now - self._solid_candidate_since) >= DOOR_LOCK_SOLID_DURATION
+            ):
+                self._has_been_solid = True
+                _LOGGER.debug(
+                    "[%s] Door lock-in armed (solid streak %ds)",
+                    self.config.get(CONF_ROOM_NAME), DOOR_LOCK_SOLID_DURATION,
+                )
+        else:
+            # Streak broken — either score dropped or a door is open/unavailable.
+            # _has_been_solid is intentionally NOT cleared here: a score dip is
+            # exactly the situation lock-in is meant to bridge. It only clears
+            # on door-open or on the CLEAR transition.
+            self._solid_candidate_since = None
 
     # ------------------------------------------------------------------
     # Score engine
@@ -436,26 +496,40 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 self._sm_state = SM_POSSIBLE_ENTRY
 
     def _effective_clear_timeout(self, default_timeout: float, now: float) -> float:
-        """Return a shorter timeout when door proves no one entered/left since last signal.
+        """Return a longer timeout when the room is in a locked-in state.
 
-        If the room has a door, a door contact is configured, and the door has not
-        opened since the room last became occupied → nobody could have left undetected
-        → use a short 30 s grace period instead of the full no-presence timeout.
+        Lock-in trust (``_has_been_solid``) is earned by a continuous
+        DOOR_LOCK_SOLID_DURATION window of score>=occupied AND all doors
+        closed (see ``_update_solid_tracking``). It is dropped whenever a
+        door opens (someone could have left) or when the OCCUPIED session
+        ends. When trust is held AND every configured door is currently
+        closed, we extend the no-presence timeout to a 4 h sanity cap so
+        sitting still doesn't clear the room. Otherwise the default applies.
+
+        This handles e.g. a brief visit from another person: door opens →
+        trust dropped → default 5 min timeout. After they leave and the
+        door closes, the solid streak rebuilds from zero, re-arming the
+        lock-in once the room has been quiet-with-occupant for the
+        configured duration.
         """
         if not self.config.get(CONF_HAS_DOOR, False):
             return default_timeout
         sensors = self.config.get("sensors", {})
-        if not sensors.get(CONF_DOOR_SENSORS):
+        door_ids = sensors.get(CONF_DOOR_SENSORS, [])
+        if not door_ids:
             return default_timeout
-        door_last = self._last_event.get("door", 0)
-        occupied_since = self._occupied_since or now
-        if door_last < occupied_since:
-            _LOGGER.debug(
-                "[%s] Door-validated fast clear: timeout %ds → %ds",
-                self.config.get(CONF_ROOM_NAME), int(default_timeout), DEFAULT_DOOR_VALIDATED_TIMEOUT,
-            )
-            return DEFAULT_DOOR_VALIDATED_TIMEOUT
-        return default_timeout
+        if not self._has_been_solid:
+            return default_timeout
+        # Lock-in is armed — confirm doors are still all closed right now.
+        for eid in door_ids:
+            st = self.hass.states.get(eid)
+            if st is None or st.state != "off":
+                return default_timeout
+        _LOGGER.debug(
+            "[%s] Door locked-in: timeout %ds → %ds (solid streak armed, all doors closed)",
+            self.config.get(CONF_ROOM_NAME), int(default_timeout), DEFAULT_DOOR_LOCKED_IN_TIMEOUT,
+        )
+        return DEFAULT_DOOR_LOCKED_IN_TIMEOUT
 
     def _schedule_clear(self, timeout: float) -> None:
         self._cancel_clear_pending()
@@ -478,6 +552,10 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             if self._score < occupied_threshold:
                 self._sm_state = SM_CLEAR
                 self._occupied_since = None
+                # End of OCCUPIED session — drop lock-in trust so it has to be
+                # re-earned on the next entry.
+                self._has_been_solid = False
+                self._solid_candidate_since = None
                 _LOGGER.debug("[%s] → CLEAR (timeout expired)", self.config.get(CONF_ROOM_NAME))
                 await self.async_request_refresh()
 

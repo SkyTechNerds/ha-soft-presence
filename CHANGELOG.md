@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow `YYYY.M.D` (Home Assistant style).
 
+## [2026.5.23] — 2026-05-22
+
+### Added
+
+- **`diagnostics.py`** — Download Diagnostics button now appears on the
+  integration's device page. The dump includes the (redacted) config
+  entry, the current coordinator output, and internal debug state
+  (`_has_been_solid`, `_in_clear_pending`, event log, etc.).
+- **Repair Issues** (`repairs.py`) — three actionable warnings now surface
+  in Settings → System → Repairs:
+  1. *No presence sensors* — room can never reach the occupied threshold.
+  2. *has_door without door contact* — door-closed lock-in silently
+     disabled because no door contact is configured.
+  3. *Missing entities* — lists up to five entity IDs that are configured
+     but not found in HA's state machine (removed, renamed, or not yet
+     loaded).
+  Issues are re-evaluated on every integration load and cleared on unload.
+- **Config-entry `unique_id`** — set to the room slug (e.g. `wohnzimmer`)
+  on first setup. Prevents creating a duplicate room entry with the same
+  name.
+- **README roadmap** — marked Diagnostics, Repairs / Issues, and Entity
+  unique_id as ✅ done; clarified `iot_class = local_push`.
+
 ## [2026.5.22] — 2026-05-22
 
 ### Fixed
@@ -61,6 +84,7 @@ versions follow `YYYY.M.D` (Home Assistant style).
 - Initial release: sensor fusion, state machine, batch LLM advisory,
   door-validated fast clear, 11 languages, HACS support.
 
+[2026.5.23]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.5.22...2026.5.23
 [2026.5.22]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.5.21...2026.5.22
 [2026.5.21]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.4.28...2026.5.21
 [2026.4.28]: https://github.com/SkyTechNerds/ha-soft-presence/releases/tag/2026.4.28

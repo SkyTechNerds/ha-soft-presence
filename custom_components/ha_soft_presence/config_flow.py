@@ -6,6 +6,7 @@ from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import area_registry as ar, device_registry as dr, entity_registry as er, selector
 
+from .coordinator import slugify
 from .const import (
     DOMAIN,
     CONF_ROOM_NAME,
@@ -115,6 +116,9 @@ class SoftPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(self, user_input=None):
         if user_input is not None:
+            room_slug = slugify(user_input[CONF_ROOM_NAME])
+            await self.async_set_unique_id(room_slug)
+            self._abort_if_unique_id_configured()
             self._data.update(user_input)
             self._area_id = _find_area_id(self.hass, user_input[CONF_ROOM_NAME])
             return await self.async_step_presence_sensors()

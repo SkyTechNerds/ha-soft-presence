@@ -13,6 +13,7 @@ from homeassistant.helpers.event import async_track_time_interval
 from .const import DOMAIN
 from .coordinator import SoftPresenceCoordinator
 from .llm_batch import async_batch_llm_update
+from .repairs import check_and_raise_issues, clear_all_issues
 
 _BATCH_LLM_INTERVAL = timedelta(seconds=60)  # check every 60 s; each room's own interval still applies
 
@@ -80,6 +81,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
+    # Surface any config problems as HA repair issues
+    check_and_raise_issues(hass, entry)
+
     # Register services once (idempotent)
     if not hass.services.has_service(DOMAIN, SERVICE_FORCE_OCCUPIED):
         _register_services(hass)
@@ -104,4 +108,5 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         coordinator: SoftPresenceCoordinator = hass.data[DOMAIN].pop(entry.entry_id)
         coordinator.async_teardown()
+        clear_all_issues(hass, entry)
     return unload_ok

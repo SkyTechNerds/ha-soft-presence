@@ -108,6 +108,20 @@
       }
     }
   },
+  "issues": {
+    "no_presence_sensors": {
+      "title": "No presence sensors in {room_name}",
+      "description": "Room \"{room_name}\" has no presence sensors (mmWave, PIR, ESPresense, or person-count) configured. The score can never reach the occupied threshold based on sensor signals alone — the room will always stay CLEAR. Open the room options and add at least one presence sensor."
+    },
+    "has_door_no_sensor": {
+      "title": "Door lock-in disabled in {room_name}",
+      "description": "Room \"{room_name}\" is marked as having a door, but no door contact sensor is configured. The door-closed lock-in feature (which keeps the room occupied while the door stays closed) requires at least one door contact. Open the room options and add a door contact under Context Sensors."
+    },
+    "missing_entities": {
+      "title": "{count} configured sensor(s) missing in {room_name}",
+      "description": "The following entities configured for room \"{room_name}\" do not exist in Home Assistant: {entities}. They may have been removed, renamed, or not yet loaded. Open the room options to update the sensor configuration."
+    }
+  },
   "entity": {
     "binary_sensor": {
       "presence_soft": {

@@ -560,6 +560,43 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 await self.async_request_refresh()
 
     # ------------------------------------------------------------------
+    # Diagnostics
+    # ------------------------------------------------------------------
+
+    def get_diagnostic_data(self) -> dict[str, Any]:
+        """Return internal coordinator state for the diagnostics endpoint.
+
+        Exposes private fields that are not visible in the public entity
+        attributes but are essential for debugging presence issues (e.g.
+        why lock-in did not arm, how long a clear-pending has been running).
+        """
+        now = time.time()
+        return {
+            "sm_state": self._sm_state,
+            "score": self._score,
+            "active_sources": self._active_sources,
+            "occupied_since": self._occupied_since,
+            "occupied_since_age_s": round(now - self._occupied_since, 1) if self._occupied_since else None,
+            # Lock-in state
+            "has_been_solid": self._has_been_solid,
+            "solid_candidate_since": self._solid_candidate_since,
+            "solid_candidate_age_s": round(now - self._solid_candidate_since, 1) if self._solid_candidate_since else None,
+            # Clear-pending state
+            "clear_pending_start": self._clear_pending_start,
+            "clear_pending_timeout": self._clear_pending_timeout,
+            "clear_pending_elapsed_s": round(now - self._clear_pending_start, 1) if self._clear_pending_start else None,
+            # Overrides / mode
+            "manual_override": self._manual_override,
+            "sleep_mode_active": self._sleep_mode_active(),
+            "was_occupied": self._was_occupied,
+            # Recent event timestamps (epoch)
+            "last_events": dict(self._last_event),
+            # Last 10 events for the LLM / debug log
+            "event_log_last_10": list(self._event_log[-10:]),
+            "uptime_now": now,
+        }
+
+    # ------------------------------------------------------------------
     # LLM advisory — called by llm_batch.py, not directly
     # ------------------------------------------------------------------
 

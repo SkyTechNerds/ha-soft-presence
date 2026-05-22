@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow `YYYY.M.D` (Home Assistant style).
 
+## [2026.5.22] — 2026-05-22
+
+### Fixed
+
+- **Icon now displayed in HACS overview and HA update view.** The `brand/`
+  folder already contained `icon.png` but was missing `icon@2x.png`
+  (512×512). Since HA 2026.3 custom integrations serve their own brand
+  images directly from `brand/` — no external brands-repo PR needed.
+  Added `icon@2x.png` (LANCZOS upscale). Logo files were intentionally
+  omitted due to gradient artefacts; `icon.png` + `icon@2x.png` are
+  sufficient for all HA and HACS display contexts.
+
 ## [2026.5.21] — 2026-05-21
 
 ### Fixed
@@ -49,5 +61,6 @@ versions follow `YYYY.M.D` (Home Assistant style).
 - Initial release: sensor fusion, state machine, batch LLM advisory,
   door-validated fast clear, 11 languages, HACS support.
 
+[2026.5.22]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.5.21...2026.5.22
 [2026.5.21]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.4.28...2026.5.21
 [2026.4.28]: https://github.com/SkyTechNerds/ha-soft-presence/releases/tag/2026.4.28

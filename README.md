@@ -267,11 +267,11 @@ AI entities show **"Waiting for evaluation"** until the first response arrives.
 | Batch AI evaluation | ✅ done | Single LLM call per agent covering all rooms — minimises API requests |
 | Direct HTTP AI provider | planned | Call MiniMax, Groq, or any OpenAI-compatible API directly without HA conversation agent |
 | Room-level aggregation | planned | "Anyone home on floor 1?" aggregating multiple rooms |
-| HA Quality Scale — `iot_class` | planned | Set `local_polling` correctly in manifest |
-| HA Quality Scale — `diagnostics.py` | planned | Coordinator data dump for easier debugging in HA |
+| HA Quality Scale — `iot_class` | ✅ done | `local_push` is correct — coordinator is primarily event-driven via `async_track_state_change_event` |
+| HA Quality Scale — `diagnostics.py` | ✅ done | Download Diagnostics button on integration device page; dumps config, entity state, and internal coordinator state (lock-in, clear-pending, event log) |
 | HA Quality Scale — Tests | planned | `pytest-homeassistant-custom-component` test suite |
-| HA Quality Scale — Repairs / Issues | planned | Surface config errors as actionable HA repair issues |
-| HA Quality Scale — Entity unique_id | planned | Stricter unique_id naming per HA guidelines |
+| HA Quality Scale — Repairs / Issues | ✅ done | Three actionable repair issues: no presence sensors, has_door without contact, missing entities |
+| HA Quality Scale — Entity unique_id | ✅ done | Config entry unique_id set to room slug; prevents duplicate room entries |
 | Sleep mode | ✅ done | Configurable entities raise clear threshold when active |
 | HA Events | ✅ done | `ha_soft_presence_state_changed` on every transition |
 | Service calls | ✅ done | `force_occupied`, `force_clear`, `reset_override` |

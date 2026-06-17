@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow `YYYY.M.D` (Home Assistant style).
 
+## [2026.6.17] — 2026-06-17
+
+### Fixed
+
+- **LLM advisory silently stopped updating after ~30 sensor events.**
+  `needs_llm_update()` detected new activity by comparing
+  `len(self._event_log)` against the count recorded at the last LLM call.
+  But `_event_log` is capped at `_MAX_EVENT_LOG` (30), so once a room had
+  logged 30 events its length saturated at 30. After the next
+  `mark_llm_called()` stored `30`, the check became `30 > 30 == False`
+  permanently — the room was never again included in a batch LLM call, and
+  its four AI entities froze at their last value. Because no call was made,
+  nothing appeared in the log; the failure was invisible. In a 4-room test
+  setup all rooms froze within a day of setup.
+- Introduced a monotonic `_event_total` counter (incremented on every
+  recorded event, never reset, never capped). `needs_llm_update()` and
+  `mark_llm_called()` now compare/store `_event_total` instead of the
+  capped list length, so the "new events" check keeps working for the life
+  of the integration.
+
+### Added
+
+- Diagnostics now expose `event_total`, `llm_last_event_count`,
+  `llm_last_called`, and `llm_last_called_age_s` so a stalled LLM advisory
+  is diagnosable from the Download Diagnostics dump.
+
 ## [2026.5.23] — 2026-05-22
 
 ### Added
@@ -84,6 +110,7 @@ versions follow `YYYY.M.D` (Home Assistant style).
 - Initial release: sensor fusion, state machine, batch LLM advisory,
   door-validated fast clear, 11 languages, HACS support.
 
+[2026.6.17]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.5.23...2026.6.17
 [2026.5.23]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.5.22...2026.5.23
 [2026.5.22]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.5.21...2026.5.22
 [2026.5.21]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.4.28...2026.5.21

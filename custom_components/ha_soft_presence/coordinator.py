@@ -130,8 +130,13 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._last_positive_reason: str = ""
         self._last_positive_sources: list[str] = []
 
-        # Event log for LLM (anonymised)
+        # Event log for LLM (anonymised). The list is capped at _MAX_EVENT_LOG,
+        # so its length saturates — never use len() to detect "new events".
         self._event_log: list[dict[str, Any]] = []
+        # Monotonic total of events ever recorded (never reset, never capped).
+        # This is what needs_llm_update() compares against so the "new events"
+        # check keeps working after the capped log fills up.
+        self._event_total: int = 0
 
         # LLM state
         self._llm_last_called: float = 0.0
@@ -255,6 +260,7 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     def _record_event(self, event_type: str, timestamp: float) -> None:
         self._event_log.append({"type": event_type, "ts": timestamp})
+        self._event_total += 1
         if len(self._event_log) > _MAX_EVENT_LOG:
             self._event_log = self._event_log[-_MAX_EVENT_LOG:]
 
@@ -593,6 +599,14 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "last_events": dict(self._last_event),
             # Last 10 events for the LLM / debug log
             "event_log_last_10": list(self._event_log[-10:]),
+            # LLM gating — total events vs. last count seen by an LLM call.
+            # If these are equal and llm_last_called is old, the room is simply
+            # idle; if event_total keeps growing without llm_last_called moving,
+            # the LLM batch is not running.
+            "event_total": self._event_total,
+            "llm_last_event_count": self._llm_last_event_count,
+            "llm_last_called": self._llm_last_called,
+            "llm_last_called_age_s": round(now - self._llm_last_called, 1) if self._llm_last_called else None,
             "uptime_now": now,
         }
 
@@ -615,7 +629,7 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if not self.llm_enabled():
             return False
         never_called = self._llm_last_called == 0.0
-        new_events = len(self._event_log) > self._llm_last_event_count
+        new_events = self._event_total > self._llm_last_event_count
         time_elapsed = (time.time() - self._llm_last_called) >= self.llm_update_interval()
         return (never_called or new_events) and time_elapsed
 
@@ -641,7 +655,7 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def mark_llm_called(self) -> None:
         """Record that this room was included in a batch LLM call."""
         self._llm_last_called = time.time()
-        self._llm_last_event_count = len(self._event_log)
+        self._llm_last_event_count = self._event_total
 
     def apply_llm_result(self, data: dict) -> None:
         """Apply a parsed LLM result dict to this room's LLM state."""

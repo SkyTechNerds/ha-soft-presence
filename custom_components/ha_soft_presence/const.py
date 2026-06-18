@@ -10,6 +10,10 @@ DOMAIN = "ha_soft_presence"
 CONF_ROOM_NAME = "room_name"
 CONF_HAS_DOOR = "has_door"
 CONF_IS_TRANSIT = "is_transit"
+# Entry gate: require a door-open since the room was last CLEAR before any
+# presence signal may mark it occupied. For single-door rooms this rejects
+# false PIR/mmWave triggers when physically nobody entered. Opt-in per room.
+CONF_REQUIRE_DOOR_ENTRY = "require_door_entry"
 
 # Threshold & timing
 CONF_OCCUPIED_THRESHOLD = "occupied_threshold"
@@ -144,6 +148,7 @@ CONFIDENCE_LOW = "low"
 # LLM advisory
 # ---------------------------------------------------------------------------
 
+DEFAULT_REQUIRE_DOOR_ENTRY = False  # entry-gate opt-in, off by default
 DEFAULT_LLM_UPDATE_INTERVAL = 300   # minimum seconds between LLM batch calls
 DEFAULT_LLM_PROVIDER = LLM_PROVIDER_CONVERSATION
 # Sensible default for the direct HTTP provider — MiniMax global, OpenAI-compatible

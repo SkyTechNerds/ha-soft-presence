@@ -39,8 +39,17 @@ from .const import (
     CONF_SLEEP_MODE_ENTITIES,
     CONF_SLEEP_CLEAR_THRESHOLD,
     CONF_LLM_ENABLED,
+    CONF_LLM_PROVIDER,
     CONF_CONVERSATION_AGENT,
     CONF_LLM_UPDATE_INTERVAL,
+    CONF_LLM_BASE_URL,
+    CONF_LLM_API_KEY,
+    CONF_LLM_MODEL,
+    LLM_PROVIDER_CONVERSATION,
+    LLM_PROVIDER_HTTP,
+    DEFAULT_LLM_PROVIDER,
+    DEFAULT_LLM_BASE_URL,
+    DEFAULT_LLM_MODEL,
     SM_CLEAR,
     SM_POSSIBLE_ENTRY,
     SM_OCCUPIED,
@@ -607,6 +616,8 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "llm_last_event_count": self._llm_last_event_count,
             "llm_last_called": self._llm_last_called,
             "llm_last_called_age_s": round(now - self._llm_last_called, 1) if self._llm_last_called else None,
+            "llm_provider": self.llm_provider(),
+            "llm_backend_key": self.llm_backend_key(),
             "uptime_now": now,
         }
 
@@ -614,12 +625,41 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     # LLM advisory — called by llm_batch.py, not directly
     # ------------------------------------------------------------------
 
+    def llm_provider(self) -> str:
+        """Return the configured LLM backend: 'conversation' or 'http'."""
+        return self.config.get(CONF_LLM_PROVIDER, DEFAULT_LLM_PROVIDER)
+
     def llm_enabled(self) -> bool:
-        """Return True if LLM is configured for this room."""
-        return bool(self.config.get(CONF_LLM_ENABLED) and self.config.get(CONF_CONVERSATION_AGENT))
+        """Return True if a usable LLM backend is configured for this room."""
+        if not self.config.get(CONF_LLM_ENABLED):
+            return False
+        if self.llm_provider() == LLM_PROVIDER_HTTP:
+            # Direct HTTP needs at least a base URL and a model
+            return bool(self.llm_base_url() and self.llm_model())
+        return bool(self.config.get(CONF_CONVERSATION_AGENT))
 
     def llm_agent_id(self) -> str | None:
         return self.config.get(CONF_CONVERSATION_AGENT)
+
+    def llm_base_url(self) -> str:
+        return (self.config.get(CONF_LLM_BASE_URL) or DEFAULT_LLM_BASE_URL).rstrip("/")
+
+    def llm_api_key(self) -> str:
+        return self.config.get(CONF_LLM_API_KEY) or ""
+
+    def llm_model(self) -> str:
+        return self.config.get(CONF_LLM_MODEL) or DEFAULT_LLM_MODEL
+
+    def llm_backend_key(self) -> str:
+        """Stable key identifying the backend, so rooms sharing it batch together.
+
+        Rooms with the same backend are sent in a single LLM call. For HTTP the
+        key includes endpoint + model (not the api key) so distinct endpoints
+        don't get merged into one request.
+        """
+        if self.llm_provider() == LLM_PROVIDER_HTTP:
+            return f"http|{self.llm_base_url()}|{self.llm_model()}"
+        return f"conversation|{self.llm_agent_id()}"
 
     def llm_update_interval(self) -> int:
         return int(self.config.get(CONF_LLM_UPDATE_INTERVAL, DEFAULT_LLM_UPDATE_INTERVAL))

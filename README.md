@@ -265,7 +265,7 @@ AI entities show **"Waiting for evaluation"** until the first response arrives.
 | Camera / Frigate support | planned | Frigate person-detection binary sensors; own score weight distinct from PIR |
 | Camera snapshot + Vision AI | planned | Send camera snapshot to vision-capable AI; opt-in, privacy-first |
 | Batch AI evaluation | ✅ done | Single LLM call per agent covering all rooms — minimises API requests |
-| Direct HTTP AI provider | planned | Call MiniMax, Groq, or any OpenAI-compatible API directly without HA conversation agent |
+| Direct HTTP AI provider | ✅ done | Call MiniMax, Groq, or any OpenAI-compatible `/chat/completions` API directly without an HA conversation agent. Per-room provider toggle + base URL / key / model; rooms sharing a backend still batch into one call. Handles reasoning-model output (`<think>` / code fences) |
 | Room-level aggregation | planned | "Anyone home on floor 1?" aggregating multiple rooms |
 | HA Quality Scale — `iot_class` | ✅ done | `local_push` is correct — coordinator is primarily event-driven via `async_track_state_change_event` |
 | HA Quality Scale — `diagnostics.py` | ✅ done | Download Diagnostics button on integration device page; dumps config, entity state, and internal coordinator state (lock-in, clear-pending, event log) |

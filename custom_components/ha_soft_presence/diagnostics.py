@@ -15,7 +15,7 @@ from homeassistant.core import HomeAssistant
 from .const import DOMAIN
 
 # Redact keys that could contain sensitive credentials.
-_REDACT_KEYS: frozenset[str] = frozenset({"api_key", "token", "password"})
+_REDACT_KEYS: frozenset[str] = frozenset({"api_key", "llm_api_key", "token", "password"})
 
 
 async def async_get_config_entry_diagnostics(

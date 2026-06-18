@@ -47,10 +47,14 @@
       },
       "llm": {
         "title": "LLM Advisory",
-        "description": "Optional AI analysis via your HA conversation agent (Gemini, Ollama, OpenAI, …). Disabled by default. Only called when new sensor events are detected.",
+        "description": "Optional AI analysis. Disabled by default. Provider 'HA conversation agent' uses a configured agent (Gemini, OpenAI, Ollama, …). Provider 'Direct HTTP' calls any OpenAI-compatible chat-completions endpoint directly (e.g. MiniMax https://api.minimax.io/v1, model MiniMax-M3) — fill base URL, API key and model. Only called when new sensor events are detected.",
         "data": {
           "llm_enabled": "Enable LLM Advisory",
-          "conversation_agent": "Conversation Agent",
+          "llm_provider": "Provider",
+          "conversation_agent": "Conversation Agent (for provider 'HA conversation agent')",
+          "llm_base_url": "API Base URL (for provider 'Direct HTTP')",
+          "llm_api_key": "API Key (for provider 'Direct HTTP')",
+          "llm_model": "Model (for provider 'Direct HTTP')",
           "llm_update_interval": "Minimum interval between LLM calls (s)"
         }
       }
@@ -102,7 +106,11 @@
         "title": "LLM Advisory",
         "data": {
           "llm_enabled": "Enable LLM Advisory",
-          "conversation_agent": "Conversation Agent",
+          "llm_provider": "Provider",
+          "conversation_agent": "Conversation Agent (for provider 'HA conversation agent')",
+          "llm_base_url": "API Base URL (for provider 'Direct HTTP')",
+          "llm_api_key": "API Key (for provider 'Direct HTTP')",
+          "llm_model": "Model (for provider 'Direct HTTP')",
           "llm_update_interval": "Minimum interval between LLM calls (s)"
         }
       }

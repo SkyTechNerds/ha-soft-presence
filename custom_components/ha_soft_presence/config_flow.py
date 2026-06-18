@@ -32,15 +32,83 @@ from .const import (
     CONF_SLEEP_MODE_ENTITIES,
     CONF_SLEEP_CLEAR_THRESHOLD,
     CONF_LLM_ENABLED,
+    CONF_LLM_PROVIDER,
     CONF_CONVERSATION_AGENT,
     CONF_LLM_UPDATE_INTERVAL,
+    CONF_LLM_BASE_URL,
+    CONF_LLM_API_KEY,
+    CONF_LLM_MODEL,
+    LLM_PROVIDER_CONVERSATION,
+    LLM_PROVIDER_HTTP,
     DEFAULT_OCCUPIED_THRESHOLD,
     DEFAULT_CLEAR_THRESHOLD,
     DEFAULT_NO_PRESENCE_TIMEOUT,
     DEFAULT_MIN_HOLD_TIME,
     DEFAULT_SLEEP_CLEAR_THRESHOLD,
     DEFAULT_LLM_UPDATE_INTERVAL,
+    DEFAULT_LLM_PROVIDER,
+    DEFAULT_LLM_BASE_URL,
+    DEFAULT_LLM_MODEL,
 )
+
+
+# ------------------------------------------------------------------
+# LLM step schema (shared by config + options flow)
+# ------------------------------------------------------------------
+
+def _llm_schema_fields(data: dict | None = None) -> dict:
+    """Build the voluptuous field map for the LLM step.
+
+    `data` carries previously-saved values so the options flow pre-fills them.
+    Both the conversation-agent field and the direct-HTTP fields are shown; the
+    provider dropdown decides which set the integration actually uses.
+    """
+    data = data or {}
+    fields: dict = {
+        vol.Optional(
+            CONF_LLM_ENABLED, default=data.get(CONF_LLM_ENABLED, False)
+        ): selector.BooleanSelector(),
+        vol.Optional(
+            CONF_LLM_PROVIDER, default=data.get(CONF_LLM_PROVIDER, DEFAULT_LLM_PROVIDER)
+        ): selector.SelectSelector(
+            selector.SelectSelectorConfig(
+                options=[
+                    {"value": LLM_PROVIDER_CONVERSATION, "label": "HA conversation agent"},
+                    {"value": LLM_PROVIDER_HTTP, "label": "Direct HTTP (OpenAI-compatible, e.g. MiniMax)"},
+                ],
+                mode="dropdown",
+            )
+        ),
+    }
+
+    # Conversation-agent path
+    saved_agent = data.get(CONF_CONVERSATION_AGENT)
+    agent_sel = selector.EntitySelector(selector.EntitySelectorConfig(domain=["conversation"]))
+    if saved_agent:
+        fields[vol.Optional(CONF_CONVERSATION_AGENT, default=saved_agent)] = agent_sel
+    else:
+        fields[vol.Optional(CONF_CONVERSATION_AGENT)] = agent_sel
+
+    # Direct-HTTP path (OpenAI-compatible chat-completions)
+    fields[vol.Optional(
+        CONF_LLM_BASE_URL, default=data.get(CONF_LLM_BASE_URL, DEFAULT_LLM_BASE_URL)
+    )] = selector.TextSelector()
+    saved_key = data.get(CONF_LLM_API_KEY)
+    key_sel = selector.TextSelector(selector.TextSelectorConfig(type="password"))
+    if saved_key:
+        fields[vol.Optional(CONF_LLM_API_KEY, default=saved_key)] = key_sel
+    else:
+        fields[vol.Optional(CONF_LLM_API_KEY)] = key_sel
+    fields[vol.Optional(
+        CONF_LLM_MODEL, default=data.get(CONF_LLM_MODEL, DEFAULT_LLM_MODEL)
+    )] = selector.TextSelector()
+
+    fields[vol.Optional(
+        CONF_LLM_UPDATE_INTERVAL, default=data.get(CONF_LLM_UPDATE_INTERVAL, DEFAULT_LLM_UPDATE_INTERVAL)
+    )] = selector.NumberSelector(
+        selector.NumberSelectorConfig(min=60, max=3600, step=60, unit_of_measurement="s", mode="box")
+    )
+    return fields
 
 
 # ------------------------------------------------------------------
@@ -294,22 +362,18 @@ class SoftPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             self._data.update({
                 CONF_LLM_ENABLED: user_input.get(CONF_LLM_ENABLED, False),
+                CONF_LLM_PROVIDER: user_input.get(CONF_LLM_PROVIDER, DEFAULT_LLM_PROVIDER),
                 CONF_CONVERSATION_AGENT: user_input.get(CONF_CONVERSATION_AGENT),
+                CONF_LLM_BASE_URL: user_input.get(CONF_LLM_BASE_URL),
+                CONF_LLM_API_KEY: user_input.get(CONF_LLM_API_KEY),
+                CONF_LLM_MODEL: user_input.get(CONF_LLM_MODEL),
                 CONF_LLM_UPDATE_INTERVAL: int(user_input.get(CONF_LLM_UPDATE_INTERVAL, DEFAULT_LLM_UPDATE_INTERVAL)),
             })
             return self.async_create_entry(title=self._data[CONF_ROOM_NAME], data=self._data)
 
         return self.async_show_form(
             step_id="llm",
-            data_schema=vol.Schema({
-                vol.Optional(CONF_LLM_ENABLED, default=False): selector.BooleanSelector(),
-                vol.Optional(CONF_CONVERSATION_AGENT): selector.EntitySelector(
-                    selector.EntitySelectorConfig(domain=["conversation"])
-                ),
-                vol.Optional(CONF_LLM_UPDATE_INTERVAL, default=DEFAULT_LLM_UPDATE_INTERVAL): selector.NumberSelector(
-                    selector.NumberSelectorConfig(min=60, max=3600, step=60, unit_of_measurement="s", mode="box")
-                ),
-            }),
+            data_schema=vol.Schema(_llm_schema_fields()),
         )
 
     # ------------------------------------------------------------------
@@ -488,36 +552,24 @@ class SoftPresenceOptionsFlow(config_entries.OptionsFlow):
     async def async_step_edit_llm(self, user_input=None):
         data = self.config_entry.data
         if user_input is not None:
-            # If user didn't pick a new agent, keep the previously saved one
+            # If user didn't pick/enter a value, keep the previously saved one
             agent = user_input.get(CONF_CONVERSATION_AGENT) or data.get(CONF_CONVERSATION_AGENT)
+            api_key = user_input.get(CONF_LLM_API_KEY) or data.get(CONF_LLM_API_KEY)
             updated = dict(data)
             updated.update(self._data)
             updated.update({
                 CONF_LLM_ENABLED: user_input.get(CONF_LLM_ENABLED, False),
+                CONF_LLM_PROVIDER: user_input.get(CONF_LLM_PROVIDER, DEFAULT_LLM_PROVIDER),
                 CONF_CONVERSATION_AGENT: agent,
+                CONF_LLM_BASE_URL: user_input.get(CONF_LLM_BASE_URL, DEFAULT_LLM_BASE_URL),
+                CONF_LLM_API_KEY: api_key,
+                CONF_LLM_MODEL: user_input.get(CONF_LLM_MODEL, DEFAULT_LLM_MODEL),
                 CONF_LLM_UPDATE_INTERVAL: int(user_input.get(CONF_LLM_UPDATE_INTERVAL, DEFAULT_LLM_UPDATE_INTERVAL)),
             })
             self.hass.config_entries.async_update_entry(self.config_entry, data=updated)
             return self.async_create_entry(title="", data={})
 
-        saved_agent = data.get(CONF_CONVERSATION_AGENT)
-        schema: dict = {
-            vol.Optional(CONF_LLM_ENABLED, default=data.get(CONF_LLM_ENABLED, False)): selector.BooleanSelector(),
-        }
-        # Pre-fill conversation agent only when a value is already saved
-        if saved_agent:
-            schema[vol.Optional(CONF_CONVERSATION_AGENT, default=saved_agent)] = selector.EntitySelector(
-                selector.EntitySelectorConfig(domain=["conversation"])
-            )
-        else:
-            schema[vol.Optional(CONF_CONVERSATION_AGENT)] = selector.EntitySelector(
-                selector.EntitySelectorConfig(domain=["conversation"])
-            )
-        schema[vol.Optional(CONF_LLM_UPDATE_INTERVAL, default=data.get(CONF_LLM_UPDATE_INTERVAL, DEFAULT_LLM_UPDATE_INTERVAL))] = selector.NumberSelector(
-            selector.NumberSelectorConfig(min=60, max=3600, step=60, unit_of_measurement="s", mode="box")
-        )
-
         return self.async_show_form(
             step_id="edit_llm",
-            data_schema=vol.Schema(schema),
+            data_schema=vol.Schema(_llm_schema_fields(data)),
         )

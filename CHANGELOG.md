@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow `YYYY.M.D` (Home Assistant style).
 
+## [2026.6.18] — 2026-06-18
+
+### Added
+
+- **Direct HTTP AI provider** (roadmap item). The LLM advisory can now call any
+  OpenAI-compatible `/chat/completions` endpoint directly — no Home Assistant
+  conversation agent required. New per-room config options under LLM Advisory:
+  - **Provider** — `HA conversation agent` (default, unchanged) or `Direct HTTP`.
+  - **API Base URL** / **API Key** / **Model** for the HTTP provider
+    (defaults: `https://api.minimax.io/v1`, model `MiniMax-M3`).
+  This enables flat-rate / prompt-quota backends like **MiniMax** as a drop-in
+  replacement when a per-token agent (e.g. Gemini) hits a spending cap.
+- The batch builder now groups rooms by **backend** (conversation agent *or*
+  HTTP endpoint+model) instead of conversation agent only — rooms sharing a
+  backend are still sent in a single call, preserving the one-call-for-all-rooms
+  efficiency that matters for prompt-quota billing.
+- Response parsing is hardened for reasoning models: `<think>…</think>` blocks
+  and ```` ```json ```` code fences are stripped before extracting the JSON
+  array (MiniMax-M3 emits both).
+- Diagnostics now report `llm_provider` and `llm_backend_key`. The HTTP
+  `api_key` is redacted in the diagnostics dump.
+
 ## [2026.6.17] — 2026-06-17
 
 ### Fixed
@@ -110,6 +132,7 @@ versions follow `YYYY.M.D` (Home Assistant style).
 - Initial release: sensor fusion, state machine, batch LLM advisory,
   door-validated fast clear, 11 languages, HACS support.
 
+[2026.6.18]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.17...2026.6.18
 [2026.6.17]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.5.23...2026.6.17
 [2026.5.23]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.5.22...2026.5.23
 [2026.5.22]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.5.21...2026.5.22

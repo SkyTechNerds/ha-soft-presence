@@ -47,7 +47,7 @@
       },
       "llm": {
         "title": "LLM Advisory",
-        "description": "Optional AI analysis. Disabled by default. Provider 'HA conversation agent' uses a configured agent (Gemini, OpenAI, Ollama, …). Provider 'Direct HTTP' calls any OpenAI-compatible chat-completions endpoint directly (e.g. MiniMax https://api.minimax.io/v1, model MiniMax-M3) — fill base URL, API key and model. Only activates when new sensor events are detected.",
+        "description": "Optional AI analysis. Disabled by default. Provider 'HA conversation agent' uses a configured agent (Gemini, OpenAI, Ollama, …). Provider 'Direct HTTP' calls any OpenAI-compatible chat-completions endpoint directly (e.g. MiniMax, model MiniMax-M3) — fill base URL, API key and model. Only activates when new sensor events are detected.",
         "data": {
           "llm_enabled": "Enable LLM Advisory",
           "llm_provider": "Provider",

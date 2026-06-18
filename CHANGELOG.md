@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow `YYYY.M.D` (Home Assistant style).
 
+## [2026.6.19] — 2026-06-18
+
+### Fixed
+
+- **Entity restore after an HA restart no longer fakes events.** When HA
+  restarts (or a device reconnects), tracked entities come back online via a
+  `unavailable`/`unknown` → state transition. The coordinator treated such a
+  transition like a real-world event — e.g. a door sensor restoring to `on`
+  was logged as "door opened", which reset the lock-in, started the
+  "door recently opened" score decay, and (with the new entry-gate) would
+  spuriously lift the gate. `_on_entity_changed` now ignores transitions out
+  of `None`/`unavailable`/`unknown` (it still refreshes so the live score is
+  current). Observed: four door rooms all showing `score=6, "Door recently
+  opened"` simultaneously right after a restart although no door had moved.
+
+### Added
+
+- **Door entry-gate** (opt-in per room, `require_door_entry`, default off). For a
+  room with door contacts, presence signals (PIR/mmWave/…) may only mark the room
+  OCCUPIED if a door has opened since the room was last CLEAR. A closed door that
+  never opened proves nobody entered, so the signal is treated as a false trigger
+  and the room stays CLEAR. This is the mirror image of the existing door-closed
+  lock-in (which keeps a room occupied while the door stays closed):
+  - **Lock-in:** door closed + was occupied → stays occupied.
+  - **Entry-gate:** door closed + nobody entered → cannot become occupied.
+  - **Fail-open at startup** — occupancy is allowed until the room has been
+    observed CLEAR once (pre-startup history is unknown).
+  - The gate only blocks *promotion* from clear; it never releases an
+    already-occupied room (that remains the lock-in's job).
+  - When a signal is suppressed, the reason string shows
+    `… (suppressed: no door entry)`.
+  - Intended for single-door rooms with a reliable door contact. Diagnostics
+    expose `require_door_entry`, `door_opened_since_clear`, and
+    `entry_gate_blocks`.
+
 ## [2026.6.18] — 2026-06-18
 
 ### Added
@@ -132,6 +167,7 @@ versions follow `YYYY.M.D` (Home Assistant style).
 - Initial release: sensor fusion, state machine, batch LLM advisory,
   door-validated fast clear, 11 languages, HACS support.
 
+[2026.6.19]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.18...2026.6.19
 [2026.6.18]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.17...2026.6.18
 [2026.6.17]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.5.23...2026.6.17
 [2026.5.23]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.5.22...2026.5.23

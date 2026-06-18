@@ -11,6 +11,7 @@ from .const import (
     DOMAIN,
     CONF_ROOM_NAME,
     CONF_HAS_DOOR,
+    CONF_REQUIRE_DOOR_ENTRY,
     CONF_IS_TRANSIT,
     CONF_OCCUPIED_THRESHOLD,
     CONF_CLEAR_THRESHOLD,
@@ -45,6 +46,7 @@ from .const import (
     DEFAULT_NO_PRESENCE_TIMEOUT,
     DEFAULT_MIN_HOLD_TIME,
     DEFAULT_SLEEP_CLEAR_THRESHOLD,
+    DEFAULT_REQUIRE_DOOR_ENTRY,
     DEFAULT_LLM_UPDATE_INTERVAL,
     DEFAULT_LLM_PROVIDER,
     DEFAULT_LLM_BASE_URL,
@@ -197,6 +199,7 @@ class SoftPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(CONF_ROOM_NAME): str,
                 vol.Required(CONF_HAS_DOOR, default=True): selector.BooleanSelector(),
                 vol.Required(CONF_IS_TRANSIT, default=False): selector.BooleanSelector(),
+                vol.Required(CONF_REQUIRE_DOOR_ENTRY, default=DEFAULT_REQUIRE_DOOR_ENTRY): selector.BooleanSelector(),
             }),
         )
 
@@ -413,6 +416,7 @@ class SoftPresenceOptionsFlow(config_entries.OptionsFlow):
                 vol.Required(CONF_ROOM_NAME, default=data.get(CONF_ROOM_NAME, "")): str,
                 vol.Required(CONF_HAS_DOOR, default=data.get(CONF_HAS_DOOR, True)): selector.BooleanSelector(),
                 vol.Required(CONF_IS_TRANSIT, default=data.get(CONF_IS_TRANSIT, False)): selector.BooleanSelector(),
+                vol.Required(CONF_REQUIRE_DOOR_ENTRY, default=data.get(CONF_REQUIRE_DOOR_ENTRY, DEFAULT_REQUIRE_DOOR_ENTRY)): selector.BooleanSelector(),
             }),
         )
 

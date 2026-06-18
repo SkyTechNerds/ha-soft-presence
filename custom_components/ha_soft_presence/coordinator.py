@@ -18,6 +18,7 @@ from .const import (
     DOMAIN,
     CONF_ROOM_NAME,
     CONF_HAS_DOOR,
+    CONF_REQUIRE_DOOR_ENTRY,
     CONF_IS_TRANSIT,
     CONF_OCCUPIED_THRESHOLD,
     CONF_CLEAR_THRESHOLD,
@@ -39,8 +40,17 @@ from .const import (
     CONF_SLEEP_MODE_ENTITIES,
     CONF_SLEEP_CLEAR_THRESHOLD,
     CONF_LLM_ENABLED,
+    CONF_LLM_PROVIDER,
     CONF_CONVERSATION_AGENT,
     CONF_LLM_UPDATE_INTERVAL,
+    CONF_LLM_BASE_URL,
+    CONF_LLM_API_KEY,
+    CONF_LLM_MODEL,
+    LLM_PROVIDER_CONVERSATION,
+    LLM_PROVIDER_HTTP,
+    DEFAULT_LLM_PROVIDER,
+    DEFAULT_LLM_BASE_URL,
+    DEFAULT_LLM_MODEL,
     SM_CLEAR,
     SM_POSSIBLE_ENTRY,
     SM_OCCUPIED,
@@ -152,6 +162,13 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._has_been_solid: bool = False
         self._solid_candidate_since: float | None = None
 
+        # Entry-gate tracking: has a door opened since the room was last CLEAR?
+        # Starts True (fail-open) so occupancy is allowed before the first clear
+        # observation — we can't know the pre-startup history. Set True on any
+        # door-open, reset to False on the transition to CLEAR. While False the
+        # gate blocks promotion to OCCUPIED (only when the option is enabled).
+        self._door_opened_since_clear: bool = True
+
         # Manual override: "occupied" | "clear" | None
         self._manual_override: str | None = None
 
@@ -214,6 +231,18 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if new_state is None:
             return
 
+        # A transition OUT OF None/unknown/unavailable is the entity coming back
+        # online (HA restart, device reconnect) — not a real-world event. Recording
+        # it would fake a "door opened" / "pir on", reset the lock-in, or lift the
+        # entry-gate (a restored door reporting "on" is NOT someone entering).
+        # Skip event recording but still refresh so the live score reflects the
+        # now-current state.
+        old_state = event.data.get("old_state")
+        old_val = old_state.state if old_state is not None else None
+        if old_val in (None, "unavailable", "unknown"):
+            self.hass.async_create_task(self.async_request_refresh())
+            return
+
         sensors = self.config.get("sensors", {})
         now = time.time()
         state = new_state.state
@@ -232,6 +261,9 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 # once the door closes again and score stays high.
                 self._has_been_solid = False
                 self._solid_candidate_since = None
+                # Entry-gate: a door-open means someone could have entered, so
+                # presence signals are now trusted again until the next clear.
+                self._door_opened_since_clear = True
             self._record_event(f"door_{'opened' if state == 'on' else 'closed'}", now)
         elif entity_id in sensors.get(CONF_LOCK_ENTITIES, []):
             if state in ("unlocked", "unlocking"):
@@ -466,7 +498,12 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         min_hold = float(self.config.get(CONF_MIN_HOLD_TIME, DEFAULT_MIN_HOLD_TIME))
         now = time.time()
 
-        if self._score >= occupied_threshold:
+        # Entry-gate: while it blocks, presence signals cannot promote the room
+        # to OCCUPIED — force the clear path instead. Only ever True when the
+        # room is currently clear and no door has opened since (see helper).
+        gate_blocks = self._entry_gate_blocks()
+
+        if self._score >= occupied_threshold and not gate_blocks:
             if self._sm_state != SM_OCCUPIED:
                 _LOGGER.debug("[%s] → OCCUPIED (score=%d)", self.config.get(CONF_ROOM_NAME), self._score)
                 self._sm_state = SM_OCCUPIED
@@ -476,7 +513,9 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._last_positive_reason = self._reason
             self._last_positive_sources = list(self._active_sources)
 
-        elif self._score <= clear_threshold:
+        elif self._score <= clear_threshold or gate_blocks:
+            if gate_blocks and self._score >= occupied_threshold:
+                self._reason = f"{self._reason} (suppressed: no door entry)"
             effective_timeout = self._effective_clear_timeout(timeout, now)
             if self._sm_state == SM_OCCUPIED:
                 # _occupied_since can be None if we entered OCCUPIED via the
@@ -500,6 +539,24 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     self._occupied_since = now
             elif self._sm_state == SM_CLEAR:
                 self._sm_state = SM_POSSIBLE_ENTRY
+
+    def _entry_gate_blocks(self) -> bool:
+        """Return True if the entry-gate currently blocks promotion to OCCUPIED.
+
+        Opt-in via CONF_REQUIRE_DOOR_ENTRY. For a room with door contacts, a
+        closed door that has not opened since the room was last CLEAR proves
+        nobody entered — so any PIR/mmWave signal is a false trigger and must
+        not mark the room occupied. ``_door_opened_since_clear`` starts True
+        (fail-open at startup) and is only False after a clean CLEAR with no
+        subsequent door-open, so this never blocks an already-occupied room.
+        """
+        if not self.config.get(CONF_REQUIRE_DOOR_ENTRY, False):
+            return False
+        if not self.config.get(CONF_HAS_DOOR, False):
+            return False
+        if not self.config.get("sensors", {}).get(CONF_DOOR_SENSORS, []):
+            return False
+        return not self._door_opened_since_clear
 
     def _effective_clear_timeout(self, default_timeout: float, now: float) -> float:
         """Return a longer timeout when the room is in a locked-in state.
@@ -562,6 +619,9 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 # re-earned on the next entry.
                 self._has_been_solid = False
                 self._solid_candidate_since = None
+                # Entry-gate: room is now empty — require a fresh door-open before
+                # presence signals may mark it occupied again.
+                self._door_opened_since_clear = False
                 _LOGGER.debug("[%s] → CLEAR (timeout expired)", self.config.get(CONF_ROOM_NAME))
                 await self.async_request_refresh()
 
@@ -587,6 +647,10 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "has_been_solid": self._has_been_solid,
             "solid_candidate_since": self._solid_candidate_since,
             "solid_candidate_age_s": round(now - self._solid_candidate_since, 1) if self._solid_candidate_since else None,
+            # Entry-gate state
+            "require_door_entry": self.config.get(CONF_REQUIRE_DOOR_ENTRY, False),
+            "door_opened_since_clear": self._door_opened_since_clear,
+            "entry_gate_blocks": self._entry_gate_blocks(),
             # Clear-pending state
             "clear_pending_start": self._clear_pending_start,
             "clear_pending_timeout": self._clear_pending_timeout,
@@ -607,6 +671,8 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "llm_last_event_count": self._llm_last_event_count,
             "llm_last_called": self._llm_last_called,
             "llm_last_called_age_s": round(now - self._llm_last_called, 1) if self._llm_last_called else None,
+            "llm_provider": self.llm_provider(),
+            "llm_backend_key": self.llm_backend_key(),
             "uptime_now": now,
         }
 
@@ -614,12 +680,41 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     # LLM advisory — called by llm_batch.py, not directly
     # ------------------------------------------------------------------
 
+    def llm_provider(self) -> str:
+        """Return the configured LLM backend: 'conversation' or 'http'."""
+        return self.config.get(CONF_LLM_PROVIDER, DEFAULT_LLM_PROVIDER)
+
     def llm_enabled(self) -> bool:
-        """Return True if LLM is configured for this room."""
-        return bool(self.config.get(CONF_LLM_ENABLED) and self.config.get(CONF_CONVERSATION_AGENT))
+        """Return True if a usable LLM backend is configured for this room."""
+        if not self.config.get(CONF_LLM_ENABLED):
+            return False
+        if self.llm_provider() == LLM_PROVIDER_HTTP:
+            # Direct HTTP needs at least a base URL and a model
+            return bool(self.llm_base_url() and self.llm_model())
+        return bool(self.config.get(CONF_CONVERSATION_AGENT))
 
     def llm_agent_id(self) -> str | None:
         return self.config.get(CONF_CONVERSATION_AGENT)
+
+    def llm_base_url(self) -> str:
+        return (self.config.get(CONF_LLM_BASE_URL) or DEFAULT_LLM_BASE_URL).rstrip("/")
+
+    def llm_api_key(self) -> str:
+        return self.config.get(CONF_LLM_API_KEY) or ""
+
+    def llm_model(self) -> str:
+        return self.config.get(CONF_LLM_MODEL) or DEFAULT_LLM_MODEL
+
+    def llm_backend_key(self) -> str:
+        """Stable key identifying the backend, so rooms sharing it batch together.
+
+        Rooms with the same backend are sent in a single LLM call. For HTTP the
+        key includes endpoint + model (not the api key) so distinct endpoints
+        don't get merged into one request.
+        """
+        if self.llm_provider() == LLM_PROVIDER_HTTP:
+            return f"http|{self.llm_base_url()}|{self.llm_model()}"
+        return f"conversation|{self.llm_agent_id()}"
 
     def llm_update_interval(self) -> int:
         return int(self.config.get(CONF_LLM_UPDATE_INTERVAL, DEFAULT_LLM_UPDATE_INTERVAL))

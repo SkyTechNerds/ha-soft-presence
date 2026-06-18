@@ -3,11 +3,12 @@
     "step": {
       "user": {
         "title": "Room Setup",
-        "description": "Configure the basic properties of the room.",
+        "description": "Configure the basic properties of the room. 'Require door-open before presence' rejects false PIR/mmWave triggers in single-door rooms when nobody actually entered — enable only for rooms with exactly one door and a reliable door contact.",
         "data": {
           "room_name": "Room Name",
           "has_door": "Room has door(s)",
-          "is_transit": "Is a transit room (hallway, corridor)"
+          "is_transit": "Is a transit room (hallway, corridor)",
+          "require_door_entry": "Require door-open before presence (single-door rooms)"
         }
       },
       "presence_sensors": {
@@ -47,10 +48,14 @@
       },
       "llm": {
         "title": "LLM Advisory",
-        "description": "Optional AI analysis using your configured HA conversation agent (Gemini, Ollama, OpenAI, …). Disabled by default. Only activates when new sensor events are detected.",
+        "description": "Optional AI analysis. Disabled by default. Provider 'HA conversation agent' uses a configured agent (Gemini, OpenAI, Ollama, …). Provider 'Direct HTTP' calls any OpenAI-compatible chat-completions endpoint directly (e.g. MiniMax, model MiniMax-M3) — fill base URL, API key and model. Only activates when new sensor events are detected.",
         "data": {
           "llm_enabled": "Enable LLM Advisory",
-          "conversation_agent": "Conversation Agent",
+          "llm_provider": "Provider",
+          "conversation_agent": "Conversation Agent (for provider 'HA conversation agent')",
+          "llm_base_url": "API Base URL (for provider 'Direct HTTP')",
+          "llm_api_key": "API Key (for provider 'Direct HTTP')",
+          "llm_model": "Model (for provider 'Direct HTTP')",
           "llm_update_interval": "Minimum interval between LLM calls (s)"
         }
       }
@@ -77,7 +82,8 @@
         "data": {
           "room_name": "Room Name",
           "has_door": "Room has door(s)",
-          "is_transit": "Is a transit room"
+          "is_transit": "Is a transit room",
+          "require_door_entry": "Require door-open before presence (single-door rooms)"
         }
       },
       "edit_presence_sensors": {
@@ -116,7 +122,11 @@
         "title": "LLM Advisory",
         "data": {
           "llm_enabled": "Enable LLM Advisory",
-          "conversation_agent": "Conversation Agent",
+          "llm_provider": "Provider",
+          "conversation_agent": "Conversation Agent (for provider 'HA conversation agent')",
+          "llm_base_url": "API Base URL (for provider 'Direct HTTP')",
+          "llm_api_key": "API Key (for provider 'Direct HTTP')",
+          "llm_model": "Model (for provider 'Direct HTTP')",
           "llm_update_interval": "Minimum interval between LLM calls (s)"
         }
       }

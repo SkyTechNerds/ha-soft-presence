@@ -10,6 +10,10 @@ DOMAIN = "ha_soft_presence"
 CONF_ROOM_NAME = "room_name"
 CONF_HAS_DOOR = "has_door"
 CONF_IS_TRANSIT = "is_transit"
+# Entry gate: require a door-open since the room was last CLEAR before any
+# presence signal may mark it occupied. For single-door rooms this rejects
+# false PIR/mmWave triggers when physically nobody entered. Opt-in per room.
+CONF_REQUIRE_DOOR_ENTRY = "require_door_entry"
 
 # Threshold & timing
 CONF_OCCUPIED_THRESHOLD = "occupied_threshold"
@@ -40,8 +44,17 @@ CONF_SLEEP_CLEAR_THRESHOLD = "sleep_clear_threshold"
 
 # LLM advisory
 CONF_LLM_ENABLED = "llm_enabled"
+CONF_LLM_PROVIDER = "llm_provider"          # "conversation" | "http"
 CONF_CONVERSATION_AGENT = "conversation_agent"
 CONF_LLM_UPDATE_INTERVAL = "llm_update_interval"
+# Direct HTTP provider (OpenAI-compatible chat-completions, e.g. MiniMax, Groq)
+CONF_LLM_BASE_URL = "llm_base_url"
+CONF_LLM_API_KEY = "llm_api_key"
+CONF_LLM_MODEL = "llm_model"
+
+# Provider choices
+LLM_PROVIDER_CONVERSATION = "conversation"  # HA conversation agent (default)
+LLM_PROVIDER_HTTP = "http"                  # direct OpenAI-compatible HTTP endpoint
 
 
 # ---------------------------------------------------------------------------
@@ -135,4 +148,10 @@ CONFIDENCE_LOW = "low"
 # LLM advisory
 # ---------------------------------------------------------------------------
 
+DEFAULT_REQUIRE_DOOR_ENTRY = False  # entry-gate opt-in, off by default
 DEFAULT_LLM_UPDATE_INTERVAL = 300   # minimum seconds between LLM batch calls
+DEFAULT_LLM_PROVIDER = LLM_PROVIDER_CONVERSATION
+# Sensible default for the direct HTTP provider — MiniMax global, OpenAI-compatible
+DEFAULT_LLM_BASE_URL = "https://api.minimax.io/v1"
+DEFAULT_LLM_MODEL = "MiniMax-M3"
+LLM_HTTP_TIMEOUT = 60               # seconds; reasoning models can be slow

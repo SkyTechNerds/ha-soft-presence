@@ -7,6 +7,19 @@ versions follow `YYYY.M.D` (Home Assistant style).
 
 ## [2026.6.19] — 2026-06-18
 
+### Fixed
+
+- **Entity restore after an HA restart no longer fakes events.** When HA
+  restarts (or a device reconnects), tracked entities come back online via a
+  `unavailable`/`unknown` → state transition. The coordinator treated such a
+  transition like a real-world event — e.g. a door sensor restoring to `on`
+  was logged as "door opened", which reset the lock-in, started the
+  "door recently opened" score decay, and (with the new entry-gate) would
+  spuriously lift the gate. `_on_entity_changed` now ignores transitions out
+  of `None`/`unavailable`/`unknown` (it still refreshes so the live score is
+  current). Observed: four door rooms all showing `score=6, "Door recently
+  opened"` simultaneously right after a restart although no door had moved.
+
 ### Added
 
 - **Door entry-gate** (opt-in per room, `require_door_entry`, default off). For a

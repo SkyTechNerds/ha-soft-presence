@@ -231,6 +231,18 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if new_state is None:
             return
 
+        # A transition OUT OF None/unknown/unavailable is the entity coming back
+        # online (HA restart, device reconnect) — not a real-world event. Recording
+        # it would fake a "door opened" / "pir on", reset the lock-in, or lift the
+        # entry-gate (a restored door reporting "on" is NOT someone entering).
+        # Skip event recording but still refresh so the live score reflects the
+        # now-current state.
+        old_state = event.data.get("old_state")
+        old_val = old_state.state if old_state is not None else None
+        if old_val in (None, "unavailable", "unknown"):
+            self.hass.async_create_task(self.async_request_refresh())
+            return
+
         sensors = self.config.get("sensors", {})
         now = time.time()
         state = new_state.state

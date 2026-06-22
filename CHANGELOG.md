@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow `YYYY.M.D` (Home Assistant style).
 
+## [2026.6.22] — 2026-06-22
+
+### Fixed
+
+- **Entry-gate no longer suppresses real, proven presence.** The gate trusted
+  that *every* door-open is captured. In practice a door sensor can miss an
+  open (Zigbee glitch), or the door is left open to air the room and the
+  occupant walks in and closes it behind them — in both cases no open-event
+  fires, so the gate wrongly suppressed the occupant. Observed: an office
+  showed CLEAR for ~83 min while BLE placed the phone in the room and mmWave
+  fired continuously, reason logged `(suppressed: no door entry)` the whole
+  time, until the door finally registered an open. `_entry_gate_blocks()` now
+  has two additional exemptions:
+  - **Door currently open** → free access, presence is plausible without a
+    captured open-transition; the gate stands down.
+  - **Strong presence signal active** → a BLE device located in the room or a
+    person-count sensor > 0 is positive proof of a specific person/headcount
+    and is never suppressed. Only ambiguous motion (PIR/mmWave) is still gated,
+    preserving the anti-false-positive value for noisy motion sensors.
+
 ## [2026.6.19] — 2026-06-18
 
 ### Fixed
@@ -167,6 +187,7 @@ versions follow `YYYY.M.D` (Home Assistant style).
 - Initial release: sensor fusion, state machine, batch LLM advisory,
   door-validated fast clear, 11 languages, HACS support.
 
+[2026.6.22]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.19...2026.6.22
 [2026.6.19]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.18...2026.6.19
 [2026.6.18]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.17...2026.6.18
 [2026.6.17]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.5.23...2026.6.17

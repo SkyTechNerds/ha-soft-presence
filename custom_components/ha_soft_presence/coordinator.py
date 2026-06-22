@@ -103,6 +103,11 @@ _SOURCE_LABELS: dict[str, str] = {
     "lock_recent": "Lock recently used",
 }
 
+# Signals that are positive proof of a *specific* person/headcount in the room
+# (identity via BLE, or a counted person). Unlike ambiguous motion (PIR/mmWave)
+# these never need door corroboration, so the entry-gate must not suppress them.
+_STRONG_SOURCES: tuple[str, ...] = ("ble_home", "person_count")
+
 
 _MAX_EVENT_LOG = 30
 
@@ -544,19 +549,43 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Return True if the entry-gate currently blocks promotion to OCCUPIED.
 
         Opt-in via CONF_REQUIRE_DOOR_ENTRY. For a room with door contacts, a
-        closed door that has not opened since the room was last CLEAR proves
-        nobody entered — so any PIR/mmWave signal is a false trigger and must
-        not mark the room occupied. ``_door_opened_since_clear`` starts True
-        (fail-open at startup) and is only False after a clean CLEAR with no
-        subsequent door-open, so this never blocks an already-occupied room.
+        closed door that has not opened since the room was last CLEAR normally
+        proves nobody entered — so an ambiguous PIR/mmWave signal is a likely
+        false trigger and must not mark the room occupied.
+        ``_door_opened_since_clear`` starts True (fail-open at startup) and is
+        only False after a clean CLEAR with no subsequent door-open, so this
+        never blocks an already-occupied room.
+
+        Three exemptions keep the gate from suppressing *real* presence:
+          1. Entry was captured — a door opened since the last CLEAR.
+          2. A door is currently OPEN — free access, presence is plausible even
+             without a captured open-transition (e.g. the door is left open to
+             air the room, the occupant walks in and closes it behind them, so
+             no open-event ever fires; or a door sensor simply missed the open).
+          3. A STRONG presence signal is active — a BLE device located in this
+             room, or a person-count sensor > 0. These are positive proof of a
+             specific person/headcount and never need door corroboration; only
+             ambiguous motion (PIR/mmWave) is gated.
         """
         if not self.config.get(CONF_REQUIRE_DOOR_ENTRY, False):
             return False
         if not self.config.get(CONF_HAS_DOOR, False):
             return False
-        if not self.config.get("sensors", {}).get(CONF_DOOR_SENSORS, []):
+        door_ids = self.config.get("sensors", {}).get(CONF_DOOR_SENSORS, [])
+        if not door_ids:
             return False
-        return not self._door_opened_since_clear
+        # 1) Entry captured since the last clear → trust presence
+        if self._door_opened_since_clear:
+            return False
+        # 2) A door is currently open → free access, don't gate
+        for eid in door_ids:
+            st = self.hass.states.get(eid)
+            if st is not None and st.state == "on":
+                return False
+        # 3) A strong identity/headcount signal is positive proof of presence
+        if any(src in self._active_sources for src in _STRONG_SOURCES):
+            return False
+        return True
 
     def _effective_clear_timeout(self, default_timeout: float, now: float) -> float:
         """Return a longer timeout when the room is in a locked-in state.

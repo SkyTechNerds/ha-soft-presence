@@ -1,7 +1,9 @@
 {
   "domain": "ha_soft_presence",
   "name": "HA Soft Presence",
-  "codeowners": ["@skycryer"],
+  "codeowners": [
+    "@skycryer"
+  ],
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/SkyTechNerds/ha-soft-presence",
@@ -9,5 +11,5 @@
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/SkyTechNerds/ha-soft-presence/issues",
   "requirements": [],
-  "version": "2026.6.22"
+  "version": "2026.6.22.1"
 }

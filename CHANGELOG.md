@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow `YYYY.M.D` (Home Assistant style).
 
+## [2026.6.22.1] — 2026-06-22
+
+### Fixed
+
+- **`slugify` transliterates German umlauts** instead of replacing them with
+  `_`. Room names with ä/ö/ü/ß now produce readable entity IDs:
+  „Küche" → `kueche` (was `k_che`), „Gästezimmer" → `gaestezimmer`
+  (was `g_stezimmer`). ä→ae, ö→oe, ü→ue, ß→ss. Rooms without umlauts are
+  unchanged. Existing entities keep their old IDs until renamed in the entity
+  registry (the per-entity `unique_id` is `entry_id`-based and unaffected).
+
 ## [2026.6.22] — 2026-06-22
 
 ### Fixed
@@ -187,6 +198,7 @@ versions follow `YYYY.M.D` (Home Assistant style).
 - Initial release: sensor fusion, state machine, batch LLM advisory,
   door-validated fast clear, 11 languages, HACS support.
 
+[2026.6.22.1]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.22...2026.6.22.1
 [2026.6.22]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.19...2026.6.22
 [2026.6.19]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.18...2026.6.19
 [2026.6.18]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.17...2026.6.18

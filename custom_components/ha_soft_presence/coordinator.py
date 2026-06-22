@@ -114,6 +114,9 @@ _MAX_EVENT_LOG = 30
 
 def slugify(text: str) -> str:
     text = text.lower().strip()
+    # German umlauts / eszett → ASCII digraphs (ä→ae, ö→oe, ü→ue, ß→ss)
+    for a, b in (("ä", "ae"), ("ö", "oe"), ("ü", "ue"), ("ß", "ss")):
+        text = text.replace(a, b)
     text = re.sub(r"[^a-z0-9]+", "_", text)
     return text.strip("_")
 

@@ -7,7 +7,8 @@
         "data": {
           "room_name": "Nom de la pièce",
           "has_door": "La pièce a une ou plusieurs portes",
-          "is_transit": "Pièce de transit (couloir, corridor)"
+          "is_transit": "Pièce de transit (couloir, corridor)",
+          "require_door_entry": "Exiger l'ouverture de la porte avant la présence (pièces à une seule porte)"
         }
       },
       "presence_sensors": {
@@ -50,7 +51,11 @@
         "data": {
           "llm_enabled": "Activer l'assistance IA",
           "conversation_agent": "Agent de conversation",
-          "llm_update_interval": "Intervalle minimum entre les appels IA (s)"
+          "llm_update_interval": "Intervalle minimum entre les appels IA (s)",
+          "llm_provider": "Fournisseur",
+          "llm_base_url": "URL de base de l'API (Direct HTTP)",
+          "llm_api_key": "Clé API (Direct HTTP)",
+          "llm_model": "Modèle (Direct HTTP)"
         }
       }
     }
@@ -62,7 +67,8 @@
         "data": {
           "room_name": "Nom de la pièce",
           "has_door": "La pièce a une ou plusieurs portes",
-          "is_transit": "Pièce de transit"
+          "is_transit": "Pièce de transit",
+          "require_door_entry": "Exiger l'ouverture de la porte avant la présence (pièces à une seule porte)"
         }
       },
       "edit_presence_sensors": {
@@ -101,7 +107,11 @@
         "data": {
           "llm_enabled": "Activer l'assistance IA",
           "conversation_agent": "Agent de conversation",
-          "llm_update_interval": "Intervalle minimum entre les appels IA (s)"
+          "llm_update_interval": "Intervalle minimum entre les appels IA (s)",
+          "llm_provider": "Fournisseur",
+          "llm_base_url": "URL de base de l'API (Direct HTTP)",
+          "llm_api_key": "Clé API (Direct HTTP)",
+          "llm_model": "Modèle (Direct HTTP)"
         }
       }
     }

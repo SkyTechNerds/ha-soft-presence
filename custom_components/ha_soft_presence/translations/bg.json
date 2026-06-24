@@ -7,7 +7,8 @@
         "data": {
           "room_name": "Име на стаята",
           "has_door": "Стаята има врата(и)",
-          "is_transit": "Транзитна стая (коридор, антре)"
+          "is_transit": "Транзитна стая (коридор, антре)",
+          "require_door_entry": "Изисквай отваряне на врата преди присъствие (стаи с една врата)"
         }
       },
       "presence_sensors": {
@@ -50,7 +51,11 @@
         "data": {
           "llm_enabled": "Активиране на ИИ поддръжка",
           "conversation_agent": "Разговорен агент",
-          "llm_update_interval": "Минимален интервал между ИИ заявки (с)"
+          "llm_update_interval": "Минимален интервал между ИИ заявки (с)",
+          "llm_provider": "Доставчик",
+          "llm_base_url": "Базов URL на API (Direct HTTP)",
+          "llm_api_key": "API ключ (Direct HTTP)",
+          "llm_model": "Модел (Direct HTTP)"
         }
       }
     }
@@ -62,7 +67,8 @@
         "data": {
           "room_name": "Име на стаята",
           "has_door": "Стаята има врата(и)",
-          "is_transit": "Транзитна стая"
+          "is_transit": "Транзитна стая",
+          "require_door_entry": "Изисквай отваряне на врата преди присъствие (стаи с една врата)"
         }
       },
       "edit_presence_sensors": {
@@ -101,7 +107,11 @@
         "data": {
           "llm_enabled": "Активиране на ИИ поддръжка",
           "conversation_agent": "Разговорен агент",
-          "llm_update_interval": "Минимален интервал между ИИ заявки (с)"
+          "llm_update_interval": "Минимален интервал между ИИ заявки (с)",
+          "llm_provider": "Доставчик",
+          "llm_base_url": "Базов URL на API (Direct HTTP)",
+          "llm_api_key": "API ключ (Direct HTTP)",
+          "llm_model": "Модел (Direct HTTP)"
         }
       }
     }

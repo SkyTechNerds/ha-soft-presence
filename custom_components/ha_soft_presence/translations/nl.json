@@ -7,7 +7,8 @@
         "data": {
           "room_name": "Kamernaam",
           "has_door": "Kamer heeft deur(en)",
-          "is_transit": "Doorgangsruimte (hal, gang)"
+          "is_transit": "Doorgangsruimte (hal, gang)",
+          "require_door_entry": "Deuropening vereist vóór aanwezigheid (kamers met één deur)"
         }
       },
       "presence_sensors": {
@@ -50,7 +51,11 @@
         "data": {
           "llm_enabled": "AI-ondersteuning inschakelen",
           "conversation_agent": "Gespreksagent",
-          "llm_update_interval": "Minimaal interval tussen AI-aanroepen (s)"
+          "llm_update_interval": "Minimaal interval tussen AI-aanroepen (s)",
+          "llm_provider": "Provider",
+          "llm_base_url": "API-basis-URL (Direct HTTP)",
+          "llm_api_key": "API-sleutel (Direct HTTP)",
+          "llm_model": "Model (Direct HTTP)"
         }
       }
     }
@@ -62,7 +67,8 @@
         "data": {
           "room_name": "Kamernaam",
           "has_door": "Kamer heeft deur(en)",
-          "is_transit": "Doorgangsruimte"
+          "is_transit": "Doorgangsruimte",
+          "require_door_entry": "Deuropening vereist vóór aanwezigheid (kamers met één deur)"
         }
       },
       "edit_presence_sensors": {
@@ -101,7 +107,11 @@
         "data": {
           "llm_enabled": "AI-ondersteuning inschakelen",
           "conversation_agent": "Gespreksagent",
-          "llm_update_interval": "Minimaal interval tussen AI-aanroepen (s)"
+          "llm_update_interval": "Minimaal interval tussen AI-aanroepen (s)",
+          "llm_provider": "Provider",
+          "llm_base_url": "API-basis-URL (Direct HTTP)",
+          "llm_api_key": "API-sleutel (Direct HTTP)",
+          "llm_model": "Model (Direct HTTP)"
         }
       }
     }

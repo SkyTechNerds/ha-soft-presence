@@ -7,7 +7,8 @@
         "data": {
           "room_name": "Название комнаты",
           "has_door": "В комнате есть дверь (двери)",
-          "is_transit": "Транзитная комната (коридор, прихожая)"
+          "is_transit": "Транзитная комната (коридор, прихожая)",
+          "require_door_entry": "Требовать открытия двери перед присутствием (комнаты с одной дверью)"
         }
       },
       "presence_sensors": {
@@ -50,7 +51,11 @@
         "data": {
           "llm_enabled": "Включить ИИ-поддержку",
           "conversation_agent": "Агент разговора",
-          "llm_update_interval": "Минимальный интервал между вызовами ИИ (с)"
+          "llm_update_interval": "Минимальный интервал между вызовами ИИ (с)",
+          "llm_provider": "Провайдер",
+          "llm_base_url": "Базовый URL API (Direct HTTP)",
+          "llm_api_key": "Ключ API (Direct HTTP)",
+          "llm_model": "Модель (Direct HTTP)"
         }
       }
     }
@@ -62,7 +67,8 @@
         "data": {
           "room_name": "Название комнаты",
           "has_door": "В комнате есть дверь (двери)",
-          "is_transit": "Транзитная комната"
+          "is_transit": "Транзитная комната",
+          "require_door_entry": "Требовать открытия двери перед присутствием (комнаты с одной дверью)"
         }
       },
       "edit_presence_sensors": {
@@ -101,7 +107,11 @@
         "data": {
           "llm_enabled": "Включить ИИ-поддержку",
           "conversation_agent": "Агент разговора",
-          "llm_update_interval": "Минимальный интервал между вызовами ИИ (с)"
+          "llm_update_interval": "Минимальный интервал между вызовами ИИ (с)",
+          "llm_provider": "Провайдер",
+          "llm_base_url": "Базовый URL API (Direct HTTP)",
+          "llm_api_key": "Ключ API (Direct HTTP)",
+          "llm_model": "Модель (Direct HTTP)"
         }
       }
     }

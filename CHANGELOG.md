@@ -9,11 +9,12 @@ versions follow `YYYY.M.D` (Home Assistant style).
 
 ### Fixed
 
-- **German translation (`de.json`) for the new config options.** The entry-gate
-  field and the Direct-HTTP provider fields (`llm_provider`, `llm_base_url`,
-  `llm_api_key`, `llm_model`) were English-only in the German UI. Added German
-  labels + descriptions in config and options flow. (Other languages still
-  fall back to English for these keys.)
+- **Translations for the new config options (all languages).** The entry-gate
+  field (`require_door_entry`) and the Direct-HTTP provider fields
+  (`llm_provider`, `llm_base_url`, `llm_api_key`, `llm_model`) were English-only
+  (the locale files predated those features). German got full labels +
+  descriptions; the other 11 locales (bg/es/fr/it/nl/pl/pt/ru/sv) got the new
+  field labels in config and options flow.
 
 ## [2026.6.22.1] — 2026-06-22
 

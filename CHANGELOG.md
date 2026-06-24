@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow `YYYY.M.D` (Home Assistant style).
 
+## [2026.6.22.2] — 2026-06-22
+
+### Fixed
+
+- **German translation (`de.json`) for the new config options.** The entry-gate
+  field and the Direct-HTTP provider fields (`llm_provider`, `llm_base_url`,
+  `llm_api_key`, `llm_model`) were English-only in the German UI. Added German
+  labels + descriptions in config and options flow. (Other languages still
+  fall back to English for these keys.)
+
 ## [2026.6.22.1] — 2026-06-22
 
 ### Fixed
@@ -198,6 +208,7 @@ versions follow `YYYY.M.D` (Home Assistant style).
 - Initial release: sensor fusion, state machine, batch LLM advisory,
   door-validated fast clear, 11 languages, HACS support.
 
+[2026.6.22.2]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.22.1...2026.6.22.2
 [2026.6.22.1]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.22...2026.6.22.1
 [2026.6.22]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.19...2026.6.22
 [2026.6.19]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.18...2026.6.19

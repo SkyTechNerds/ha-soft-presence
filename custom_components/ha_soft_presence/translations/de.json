@@ -3,11 +3,12 @@
     "step": {
       "user": {
         "title": "Raum einrichten",
-        "description": "Grundeinstellungen für den Raum.",
+        "description": "Grundeinstellungen für den Raum. „Anwesenheit erfordert Tür-Öffnung“ verwirft falsche PIR/mmWave-Auslöser in Ein-Tür-Räumen, wenn niemand wirklich hereingekommen ist — nur für Räume mit genau einer Tür und zuverlässigem Türkontakt aktivieren.",
         "data": {
           "room_name": "Raumname",
           "has_door": "Raum hat Tür(en)",
-          "is_transit": "Durchgangsraum (Flur, Korridor)"
+          "is_transit": "Durchgangsraum (Flur, Korridor)",
+          "require_door_entry": "Anwesenheit erfordert Tür-Öffnung (Ein-Tür-Räume)"
         }
       },
       "presence_sensors": {
@@ -47,11 +48,15 @@
       },
       "llm": {
         "title": "KI-Unterstützung",
-        "description": "Optionale KI-Analyse über den konfigurierten HA-Konversationsagenten (Gemini, Ollama, OpenAI, …). Standardmäßig deaktiviert. Wird nur bei neuen Sensor-Events aufgerufen.",
+        "description": "Optionale KI-Analyse. Standardmäßig deaktiviert. Anbieter „HA-Konversationsagent“ nutzt einen konfigurierten Agenten (Gemini, OpenAI, Ollama, …). Anbieter „Direct HTTP“ ruft direkt einen OpenAI-kompatiblen chat-completions-Endpoint auf (z. B. MiniMax, Modell MiniMax-M3) — Basis-URL, API-Schlüssel und Modell ausfüllen. Wird nur bei neuen Sensor-Events aufgerufen.",
         "data": {
           "llm_enabled": "KI-Unterstützung aktivieren",
-          "conversation_agent": "Konversationsagent",
-          "llm_update_interval": "Mindestabstand zwischen KI-Anfragen (s)"
+          "conversation_agent": "Konversationsagent (für Anbieter „HA-Konversationsagent“)",
+          "llm_update_interval": "Mindestabstand zwischen KI-Anfragen (s)",
+          "llm_provider": "Anbieter",
+          "llm_base_url": "API-Basis-URL (für Anbieter „Direct HTTP“)",
+          "llm_api_key": "API-Schlüssel (für Anbieter „Direct HTTP“)",
+          "llm_model": "Modell (für Anbieter „Direct HTTP“)"
         }
       }
     }
@@ -63,7 +68,8 @@
         "data": {
           "room_name": "Raumname",
           "has_door": "Raum hat Tür(en)",
-          "is_transit": "Durchgangsraum"
+          "is_transit": "Durchgangsraum",
+          "require_door_entry": "Anwesenheit erfordert Tür-Öffnung (Ein-Tür-Räume)"
         }
       },
       "edit_presence_sensors": {
@@ -102,8 +108,12 @@
         "title": "KI-Unterstützung",
         "data": {
           "llm_enabled": "KI-Unterstützung aktivieren",
-          "conversation_agent": "Konversationsagent",
-          "llm_update_interval": "Mindestabstand zwischen KI-Anfragen (s)"
+          "conversation_agent": "Konversationsagent (für Anbieter „HA-Konversationsagent“)",
+          "llm_update_interval": "Mindestabstand zwischen KI-Anfragen (s)",
+          "llm_provider": "Anbieter",
+          "llm_base_url": "API-Basis-URL (für Anbieter „Direct HTTP“)",
+          "llm_api_key": "API-Schlüssel (für Anbieter „Direct HTTP“)",
+          "llm_model": "Modell (für Anbieter „Direct HTTP“)"
         }
       }
     }

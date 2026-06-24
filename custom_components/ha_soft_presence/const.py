@@ -102,7 +102,12 @@ WEIGHT_WORKSTATION_ACTIVE = 35
 WEIGHT_MEDIA_PLAYING = 30
 WEIGHT_MEDIA_PAUSED = 15
 WEIGHT_PIR_RECENT = 15
-WEIGHT_LIGHT_MANUAL = 20
+# A manually-on light is weak evidence, not proof of presence. Kept strictly
+# below DEFAULT_CLEAR_THRESHOLD (20) so a light left on cannot on its own hold a
+# room OCCUPIED — otherwise an empty room with the light on never clears and the
+# lighting automation re-asserts the light (feedback loop). Was 20 (== clear
+# threshold) which caused exactly that.
+WEIGHT_LIGHT_MANUAL = 10
 WEIGHT_LOCK_UNLOCKED = 15
 WEIGHT_DOOR_OPENED = 10
 

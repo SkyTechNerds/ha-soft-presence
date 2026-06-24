@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow `YYYY.M.D` (Home Assistant style).
 
+## [2026.6.22.3] — 2026-06-24
+
+### Fixed
+
+- **A light left on no longer keeps an empty room OCCUPIED (feedback loop).**
+  `WEIGHT_LIGHT_MANUAL` was `20`, exactly equal to `DEFAULT_CLEAR_THRESHOLD`
+  (20), so a manually-on light pinned the score at the clear threshold and the
+  room never cleared (`reason: "Light on"`). With lighting automations now
+  driven by `*_presence_soft`, that meant: light on → room "occupied" →
+  automation keeps the light on → score stays 20 → never clears; and turning
+  the light off by hand let the still-"occupied" room switch it back on shortly
+  after. Lowered `WEIGHT_LIGHT_MANUAL` to `10` (strictly below the clear
+  threshold), so a lit light is still a weak hint but can no longer hold a room
+  on its own. Real presence (mmWave/PIR/BLE) is unaffected. Observed in
+  Badezimmer (held at score 20, "Light on") and Wohnzimmer.
+
+## [2026.6.22.2] — 2026-06-22
+
+### Fixed
+
+- **Translations for the new config options (all languages).** The entry-gate
+  field (`require_door_entry`) and the Direct-HTTP provider fields
+  (`llm_provider`, `llm_base_url`, `llm_api_key`, `llm_model`) were English-only
+  (the locale files predated those features). German got full labels +
+  descriptions; the other 11 locales (bg/es/fr/it/nl/pl/pt/ru/sv) got the new
+  field labels in config and options flow.
+
 ## [2026.6.22.1] — 2026-06-22
 
 ### Fixed
@@ -198,6 +225,8 @@ versions follow `YYYY.M.D` (Home Assistant style).
 - Initial release: sensor fusion, state machine, batch LLM advisory,
   door-validated fast clear, 11 languages, HACS support.
 
+[2026.6.22.3]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.22.2...2026.6.22.3
+[2026.6.22.2]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.22.1...2026.6.22.2
 [2026.6.22.1]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.22...2026.6.22.1
 [2026.6.22]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.19...2026.6.22
 [2026.6.19]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.18...2026.6.19

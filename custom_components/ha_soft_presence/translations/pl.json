@@ -7,7 +7,8 @@
         "data": {
           "room_name": "Nazwa pokoju",
           "has_door": "Pokój ma drzwi",
-          "is_transit": "Pokój tranzytowy (korytarz, przedpokój)"
+          "is_transit": "Pokój tranzytowy (korytarz, przedpokój)",
+          "require_door_entry": "Wymagaj otwarcia drzwi przed wykryciem obecności (pomieszczenia z jednymi drzwiami)"
         }
       },
       "presence_sensors": {
@@ -50,7 +51,11 @@
         "data": {
           "llm_enabled": "Włącz wsparcie AI",
           "conversation_agent": "Agent konwersacji",
-          "llm_update_interval": "Minimalny interwał między wywołaniami AI (s)"
+          "llm_update_interval": "Minimalny interwał między wywołaniami AI (s)",
+          "llm_provider": "Dostawca",
+          "llm_base_url": "Bazowy adres URL API (Direct HTTP)",
+          "llm_api_key": "Klucz API (Direct HTTP)",
+          "llm_model": "Model (Direct HTTP)"
         }
       }
     }
@@ -62,7 +67,8 @@
         "data": {
           "room_name": "Nazwa pokoju",
           "has_door": "Pokój ma drzwi",
-          "is_transit": "Pokój tranzytowy"
+          "is_transit": "Pokój tranzytowy",
+          "require_door_entry": "Wymagaj otwarcia drzwi przed wykryciem obecności (pomieszczenia z jednymi drzwiami)"
         }
       },
       "edit_presence_sensors": {
@@ -101,7 +107,11 @@
         "data": {
           "llm_enabled": "Włącz wsparcie AI",
           "conversation_agent": "Agent konwersacji",
-          "llm_update_interval": "Minimalny interwał między wywołaniami AI (s)"
+          "llm_update_interval": "Minimalny interwał między wywołaniami AI (s)",
+          "llm_provider": "Dostawca",
+          "llm_base_url": "Bazowy adres URL API (Direct HTTP)",
+          "llm_api_key": "Klucz API (Direct HTTP)",
+          "llm_model": "Model (Direct HTTP)"
         }
       }
     }

@@ -7,7 +7,8 @@
         "data": {
           "room_name": "Rumsnamn",
           "has_door": "Rummet har dörr(ar)",
-          "is_transit": "Transitrum (hall, korridor)"
+          "is_transit": "Transitrum (hall, korridor)",
+          "require_door_entry": "Kräv dörröppning före närvaro (rum med en dörr)"
         }
       },
       "presence_sensors": {
@@ -50,7 +51,11 @@
         "data": {
           "llm_enabled": "Aktivera AI-stöd",
           "conversation_agent": "Konversationsagent",
-          "llm_update_interval": "Minsta intervall mellan AI-anrop (s)"
+          "llm_update_interval": "Minsta intervall mellan AI-anrop (s)",
+          "llm_provider": "Leverantör",
+          "llm_base_url": "API-bas-URL (Direct HTTP)",
+          "llm_api_key": "API-nyckel (Direct HTTP)",
+          "llm_model": "Modell (Direct HTTP)"
         }
       }
     }
@@ -62,7 +67,8 @@
         "data": {
           "room_name": "Rumsnamn",
           "has_door": "Rummet har dörr(ar)",
-          "is_transit": "Transitrum"
+          "is_transit": "Transitrum",
+          "require_door_entry": "Kräv dörröppning före närvaro (rum med en dörr)"
         }
       },
       "edit_presence_sensors": {
@@ -101,7 +107,11 @@
         "data": {
           "llm_enabled": "Aktivera AI-stöd",
           "conversation_agent": "Konversationsagent",
-          "llm_update_interval": "Minsta intervall mellan AI-anrop (s)"
+          "llm_update_interval": "Minsta intervall mellan AI-anrop (s)",
+          "llm_provider": "Leverantör",
+          "llm_base_url": "API-bas-URL (Direct HTTP)",
+          "llm_api_key": "API-nyckel (Direct HTTP)",
+          "llm_model": "Modell (Direct HTTP)"
         }
       }
     }

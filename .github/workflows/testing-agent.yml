@@ -1,0 +1,26 @@
+---
+# Notify Discord (Hermes-Work) — zentrale Composite-Action.
+# Drop-in für neue Projekte: diese Datei + Repo-Secret
+# DISCORD_WEBHOOK_URL (auf den QA-Channel zeigen), fertig.
+# Der Hermes-Bot reagiert auf die Discord-Message und
+# führt die projektspezifischen Tests aus.
+name: Notify Testing Agent
+
+"on":
+  pull_request:
+    types: [opened, synchronize, edited]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: SkyTechNerds/hermes-work-commons@v4
+        with:
+          discord_webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          trigger_prefix: 'TEST_REQUEST'

@@ -1,10 +1,12 @@
-# Notify Discord (Hermes-Work v3) für ha-soft-presence
-# Pattern: hermes-work-commons v3 mit trigger_prefix für HA-Bot
-# Secret DISCORD_WEBHOOK_URL muss im Repo gesetzt sein (auf #ha-soft-presence-qa zeigen)
-
+---
+# Notify Discord (Hermes-Work) — zentrale Composite-Action.
+# Drop-in für neue Projekte: diese Datei + Repo-Secret
+# DISCORD_WEBHOOK_URL (auf den QA-Channel zeigen), fertig.
+# Der Hermes-Bot reagiert auf die Discord-Message und
+# führt die projektspezifischen Tests aus.
 name: Notify Testing Agent
 
-on:
+"on":
   pull_request:
     types: [opened, synchronize, edited]
   issue_comment:

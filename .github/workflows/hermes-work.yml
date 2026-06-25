@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: SkyTechNerds/hermes-work-commons@v3
+      - uses: SkyTechNerds/hermes-work-commons@v4
         with:
           discord_webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           trigger_prefix: 'TEST_REQUEST'

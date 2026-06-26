@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow `YYYY.M.D` (Home Assistant style).
 
-## [2026.6.27] — 2026-06-27
+## [2026.6.26.1] — 2026-06-26
 
 ### Added
 
@@ -264,7 +264,7 @@ versions follow `YYYY.M.D` (Home Assistant style).
 - Initial release: sensor fusion, state machine, batch LLM advisory,
   door-validated fast clear, 11 languages, HACS support.
 
-[2026.6.27]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.26...2026.6.27
+[2026.6.26.1]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.26...2026.6.26.1
 [2026.6.26]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.22.3...2026.6.26
 [2026.6.22.3]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.22.2...2026.6.22.3
 [2026.6.22.2]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.22.1...2026.6.22.2

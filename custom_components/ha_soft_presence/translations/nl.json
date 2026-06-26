@@ -17,7 +17,8 @@
         "data": {
           "mmwave_sensors": "mmWave / Radarsensoren",
           "pir_sensors": "PIR / Bewegingssensoren",
-          "person_count_sensors": "Persoonstellers (camera / mensen-teller, numeriek)"
+          "person_count_sensors": "Persoonstellers (camera / mensen-teller, numeriek)",
+          "espresense_sensors": "ESPresense / BLE-sensoren"
         }
       },
       "context_sensors": {
@@ -76,7 +77,8 @@
         "data": {
           "mmwave_sensors": "mmWave / Radarsensoren",
           "pir_sensors": "PIR / Bewegingssensoren",
-          "person_count_sensors": "Persoonstellers (camera / mensen-teller, numeriek)"
+          "person_count_sensors": "Persoonstellers (camera / mensen-teller, numeriek)",
+          "espresense_sensors": "ESPresense / BLE-sensoren"
         }
       },
       "edit_context_sensors": {
@@ -150,6 +152,20 @@
           "pending": "Wachten op evaluatie"
         }
       }
+    }
+  },
+  "issues": {
+    "no_presence_sensors": {
+      "title": "Geen aanwezigheidssensoren in {room_name}",
+      "description": "Kamer \"{room_name}\" heeft geen aanwezigheidssensoren (mmWave, PIR, ESPresense of personenteller) geconfigureerd. De score kan de bezet-drempel nooit bereiken op basis van sensorsignalen alleen — de kamer blijft altijd VRIJ. Open de kameropties en voeg ten minste één aanwezigheidssensor toe."
+    },
+    "has_door_no_sensor": {
+      "title": "Deurvergrendeling uitgeschakeld in {room_name}",
+      "description": "Kamer \"{room_name}\" is gemarkeerd als met deur, maar er is geen deurcontact geconfigureerd. De functie deur-dicht-vergrendeling (die de kamer bezet houdt zolang de deur dicht blijft) vereist ten minste één deurcontact. Open de kameropties en voeg een deurcontact toe onder Contextsensoren."
+    },
+    "missing_entities": {
+      "title": "{count} geconfigureerde sensor(en) ontbreekt/ontbreken in {room_name}",
+      "description": "De volgende voor kamer \"{room_name}\" geconfigureerde entiteiten bestaan niet in Home Assistant: {entities}. Ze zijn mogelijk verwijderd, hernoemd of nog niet geladen. Open de kameropties om de sensorconfiguratie bij te werken."
     }
   }
 }

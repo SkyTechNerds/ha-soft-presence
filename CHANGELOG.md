@@ -20,6 +20,10 @@ versions follow `YYYY.M.D` (Home Assistant style).
 
 ### Fixed
 
+- **Translation parity across all locales.** Added the `issues.*` repair
+  strings (3 messages) to all 11 locales and the missing `espresense_sensors`
+  label to the non-German ones, so every locale now matches `en.json` (no more
+  English fallback in the Repairs dialog / BLE-sensor field).
 - **Config-entry edits now apply live (no manual reload).** The options flow
   writes changes (sensor lists, thresholds, LLM settings, …) to `entry.data`,
   but no update listener was registered — so the running coordinator kept the

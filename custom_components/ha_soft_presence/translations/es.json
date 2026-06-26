@@ -17,7 +17,8 @@
         "data": {
           "mmwave_sensors": "Sensores mmWave / Radar",
           "pir_sensors": "Sensores PIR / Movimiento",
-          "person_count_sensors": "Sensores de conteo de personas (cámara / contador, numérico)"
+          "person_count_sensors": "Sensores de conteo de personas (cámara / contador, numérico)",
+          "espresense_sensors": "Sensores ESPresense / BLE"
         }
       },
       "context_sensors": {
@@ -76,7 +77,8 @@
         "data": {
           "mmwave_sensors": "Sensores mmWave / Radar",
           "pir_sensors": "Sensores PIR / Movimiento",
-          "person_count_sensors": "Sensores de conteo de personas (cámara / contador, numérico)"
+          "person_count_sensors": "Sensores de conteo de personas (cámara / contador, numérico)",
+          "espresense_sensors": "Sensores ESPresense / BLE"
         }
       },
       "edit_context_sensors": {
@@ -150,6 +152,20 @@
           "pending": "Esperando evaluación"
         }
       }
+    }
+  },
+  "issues": {
+    "no_presence_sensors": {
+      "title": "No hay sensores de presencia en {room_name}",
+      "description": "La habitación \"{room_name}\" no tiene sensores de presencia (mmWave, PIR, ESPresense o recuento de personas) configurados. La puntuación nunca puede alcanzar el umbral de ocupación solo con señales de sensores: la habitación siempre permanecerá LIBRE. Abre las opciones de la habitación y añade al menos un sensor de presencia."
+    },
+    "has_door_no_sensor": {
+      "title": "Bloqueo por puerta desactivado en {room_name}",
+      "description": "La habitación \"{room_name}\" está marcada como con puerta, pero no hay ningún sensor de contacto de puerta configurado. La función de bloqueo con puerta cerrada (que mantiene la habitación ocupada mientras la puerta permanece cerrada) requiere al menos un contacto de puerta. Abre las opciones de la habitación y añade un contacto de puerta en Sensores de contexto."
+    },
+    "missing_entities": {
+      "title": "Faltan {count} sensor(es) configurado(s) en {room_name}",
+      "description": "Las siguientes entidades configuradas para la habitación \"{room_name}\" no existen en Home Assistant: {entities}. Puede que se hayan eliminado, renombrado o aún no se hayan cargado. Abre las opciones de la habitación para actualizar la configuración de sensores."
     }
   }
 }

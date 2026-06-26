@@ -17,7 +17,8 @@
         "data": {
           "mmwave_sensors": "mmWave / Radarsensorer",
           "pir_sensors": "PIR / Rörelsesensorer",
-          "person_count_sensors": "Personräknare (kamera / personräknare, numerisk)"
+          "person_count_sensors": "Personräknare (kamera / personräknare, numerisk)",
+          "espresense_sensors": "ESPresense / BLE-sensorer"
         }
       },
       "context_sensors": {
@@ -76,7 +77,8 @@
         "data": {
           "mmwave_sensors": "mmWave / Radarsensorer",
           "pir_sensors": "PIR / Rörelsesensorer",
-          "person_count_sensors": "Personräknare (kamera / personräknare, numerisk)"
+          "person_count_sensors": "Personräknare (kamera / personräknare, numerisk)",
+          "espresense_sensors": "ESPresense / BLE-sensorer"
         }
       },
       "edit_context_sensors": {
@@ -150,6 +152,20 @@
           "pending": "Väntar på utvärdering"
         }
       }
+    }
+  },
+  "issues": {
+    "no_presence_sensors": {
+      "title": "Inga närvarosensorer i {room_name}",
+      "description": "Rummet \"{room_name}\" har inga närvarosensorer (mmWave, PIR, ESPresense eller persondetektor) konfigurerade. Poängen kan aldrig nå beläggningströskeln enbart utifrån sensorsignaler — rummet förblir alltid LEDIGT. Öppna rumsalternativen och lägg till minst en närvarosensor."
+    },
+    "has_door_no_sensor": {
+      "title": "Dörrlås inaktiverat i {room_name}",
+      "description": "Rummet \"{room_name}\" är markerat som att det har en dörr, men ingen dörrkontakt är konfigurerad. Funktionen för låsning vid stängd dörr (som håller rummet upptaget så länge dörren är stängd) kräver minst en dörrkontakt. Öppna rumsalternativen och lägg till en dörrkontakt under Kontextsensorer."
+    },
+    "missing_entities": {
+      "title": "{count} konfigurerad(e) sensor(er) saknas i {room_name}",
+      "description": "Följande entiteter som konfigurerats för rummet \"{room_name}\" finns inte i Home Assistant: {entities}. De kan ha tagits bort, bytt namn eller inte laddats ännu. Öppna rumsalternativen för att uppdatera sensorkonfigurationen."
     }
   }
 }

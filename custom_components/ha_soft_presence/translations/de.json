@@ -153,5 +153,19 @@
         }
       }
     }
+  },
+  "issues": {
+    "no_presence_sensors": {
+      "title": "Keine Anwesenheitssensoren in {room_name}",
+      "description": "Der Raum \"{room_name}\" hat keine Anwesenheitssensoren (mmWave, PIR, ESPresense oder Personenzähler) konfiguriert. Der Score kann allein durch Sensorsignale nie die Belegt-Schwelle erreichen — der Raum bleibt immer FREI. Öffne die Raum-Optionen und füge mindestens einen Anwesenheitssensor hinzu."
+    },
+    "has_door_no_sensor": {
+      "title": "Tür-Lock-in deaktiviert in {room_name}",
+      "description": "Der Raum \"{room_name}\" ist als Raum mit Tür markiert, aber es ist kein Türkontakt konfiguriert. Das Tür-zu-Lock-in (das den Raum belegt hält, solange die Tür geschlossen ist) braucht mindestens einen Türkontakt. Öffne die Raum-Optionen und füge unter Kontextsensoren einen Türkontakt hinzu."
+    },
+    "missing_entities": {
+      "title": "{count} konfigurierte(r) Sensor(en) fehlt/fehlen in {room_name}",
+      "description": "Die folgenden für den Raum \"{room_name}\" konfigurierten Entitäten existieren nicht in Home Assistant: {entities}. Sie wurden evtl. entfernt, umbenannt oder noch nicht geladen. Öffne die Raum-Optionen, um die Sensor-Konfiguration zu aktualisieren."
+    }
   }
 }

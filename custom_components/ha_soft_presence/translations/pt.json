@@ -17,7 +17,8 @@
         "data": {
           "mmwave_sensors": "Sensores mmWave / Radar",
           "pir_sensors": "Sensores PIR / Movimento",
-          "person_count_sensors": "Sensores de contagem de pessoas (câmera / contador, numérico)"
+          "person_count_sensors": "Sensores de contagem de pessoas (câmera / contador, numérico)",
+          "espresense_sensors": "Sensores ESPresense / BLE"
         }
       },
       "context_sensors": {
@@ -76,7 +77,8 @@
         "data": {
           "mmwave_sensors": "Sensores mmWave / Radar",
           "pir_sensors": "Sensores PIR / Movimento",
-          "person_count_sensors": "Sensores de contagem de pessoas (câmera / contador, numérico)"
+          "person_count_sensors": "Sensores de contagem de pessoas (câmera / contador, numérico)",
+          "espresense_sensors": "Sensores ESPresense / BLE"
         }
       },
       "edit_context_sensors": {
@@ -150,6 +152,20 @@
           "pending": "Aguardando avaliação"
         }
       }
+    }
+  },
+  "issues": {
+    "no_presence_sensors": {
+      "title": "Sem sensores de presença em {room_name}",
+      "description": "A divisão \"{room_name}\" não tem sensores de presença (mmWave, PIR, ESPresense ou contagem de pessoas) configurados. A pontuação nunca pode atingir o limiar de ocupação apenas com sinais dos sensores — a divisão permanecerá sempre LIVRE. Abra as opções da divisão e adicione pelo menos um sensor de presença."
+    },
+    "has_door_no_sensor": {
+      "title": "Bloqueio por porta desativado em {room_name}",
+      "description": "A divisão \"{room_name}\" está marcada como tendo porta, mas não há sensor de contacto de porta configurado. A função de bloqueio com porta fechada (que mantém a divisão ocupada enquanto a porta permanece fechada) requer pelo menos um contacto de porta. Abra as opções da divisão e adicione um contacto de porta em Sensores de contexto."
+    },
+    "missing_entities": {
+      "title": "Faltam {count} sensor(es) configurado(s) em {room_name}",
+      "description": "As seguintes entidades configuradas para a divisão \"{room_name}\" não existem no Home Assistant: {entities}. Podem ter sido removidas, renomeadas ou ainda não carregadas. Abra as opções da divisão para atualizar a configuração dos sensores."
     }
   }
 }

@@ -429,6 +429,14 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     sources.append("media_playing")
                     break
                 if st.state == "paused":
+                    # A "speaker" (e.g. a voice-assistant satellite) sits in
+                    # "paused" as its idle state — that is not a presence signal.
+                    # Count "paused" only for video devices (TV/receiver/…).
+                    # device_class is often None (e.g. Apple TV via pyatv), so we
+                    # blacklist speakers rather than whitelist tv/receiver — a
+                    # paused movie on a device_class-less player must still count.
+                    if st.attributes.get("device_class") == "speaker":
+                        continue
                     score += WEIGHT_MEDIA_PAUSED
                     sources.append("media_paused")
                     break

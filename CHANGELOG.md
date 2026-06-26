@@ -7,6 +7,17 @@ versions follow `YYYY.M.D` (Home Assistant style).
 
 ## [2026.6.26] — 2026-06-26
 
+### Changed
+
+- **A `paused` media player with `device_class: speaker` no longer counts as
+  presence.** Voice-assistant satellites (e.g. Home Assistant Voice) sit in
+  `paused` as their permanent idle state, which kept a room occupied forever.
+  `paused` is now ignored for `speaker` devices; `playing` still counts (active
+  music is a real, transient signal), and TVs/receivers are unaffected. A
+  blacklist (skip `speaker`) is used rather than a whitelist (`tv`/`receiver`)
+  because many video players report no `device_class` at all (e.g. Apple TV via
+  pyatv) and must keep counting.
+
 ### Fixed
 
 - **Config-entry edits now apply live (no manual reload).** The options flow

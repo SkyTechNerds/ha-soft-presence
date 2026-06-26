@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow `YYYY.M.D` (Home Assistant style).
 
+## [2026.6.26] — 2026-06-26
+
+### Fixed
+
+- **Config-entry edits now apply live (no manual reload).** The options flow
+  writes changes (sensor lists, thresholds, LLM settings, …) to `entry.data`,
+  but no update listener was registered — so the running coordinator kept the
+  old config until the entry was reloaded by hand. Example: a media player
+  removed from a room still counted toward presence (a permanently "paused"
+  voice satellite kept the room occupied). Added
+  `entry.add_update_listener` → the entry reloads on any config change and the
+  coordinator rebuilds with the new config immediately.
+
 ## [2026.6.22.3] — 2026-06-24
 
 ### Fixed
@@ -225,6 +238,7 @@ versions follow `YYYY.M.D` (Home Assistant style).
 - Initial release: sensor fusion, state machine, batch LLM advisory,
   door-validated fast clear, 11 languages, HACS support.
 
+[2026.6.26]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.22.3...2026.6.26
 [2026.6.22.3]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.22.2...2026.6.22.3
 [2026.6.22.2]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.22.1...2026.6.22.2
 [2026.6.22.1]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.22...2026.6.22.1

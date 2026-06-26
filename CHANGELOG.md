@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow `YYYY.M.D` (Home Assistant style).
 
+## [2026.6.26] — 2026-06-26
+
+### Changed
+
+- **A `paused` media player with `device_class: speaker` no longer counts as
+  presence.** Voice-assistant satellites (e.g. Home Assistant Voice) sit in
+  `paused` as their permanent idle state, which kept a room occupied forever.
+  `paused` is now ignored for `speaker` devices; `playing` still counts (active
+  music is a real, transient signal), and TVs/receivers are unaffected. A
+  blacklist (skip `speaker`) is used rather than a whitelist (`tv`/`receiver`)
+  because many video players report no `device_class` at all (e.g. Apple TV via
+  pyatv) and must keep counting.
+
+### Fixed
+
+- **Translation parity across all locales.** Added the `issues.*` repair
+  strings (3 messages) to all 11 locales and the missing `espresense_sensors`
+  label to the non-German ones, so every locale now matches `en.json` (no more
+  English fallback in the Repairs dialog / BLE-sensor field).
+- **Config-entry edits now apply live (no manual reload).** The options flow
+  writes changes (sensor lists, thresholds, LLM settings, …) to `entry.data`,
+  but no update listener was registered — so the running coordinator kept the
+  old config until the entry was reloaded by hand. Example: a media player
+  removed from a room still counted toward presence (a permanently "paused"
+  voice satellite kept the room occupied). Added
+  `entry.add_update_listener` → the entry reloads on any config change and the
+  coordinator rebuilds with the new config immediately.
+
 ## [2026.6.22.3] — 2026-06-24
 
 ### Fixed
@@ -225,6 +253,7 @@ versions follow `YYYY.M.D` (Home Assistant style).
 - Initial release: sensor fusion, state machine, batch LLM advisory,
   door-validated fast clear, 11 languages, HACS support.
 
+[2026.6.26]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.22.3...2026.6.26
 [2026.6.22.3]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.22.2...2026.6.22.3
 [2026.6.22.2]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.22.1...2026.6.22.2
 [2026.6.22.1]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.22...2026.6.22.1

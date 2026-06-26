@@ -17,7 +17,8 @@
         "data": {
           "mmwave_sensors": "Capteurs mmWave / Radar",
           "pir_sensors": "Capteurs PIR / Mouvement",
-          "person_count_sensors": "Capteurs de comptage de personnes (caméra / compteur, numérique)"
+          "person_count_sensors": "Capteurs de comptage de personnes (caméra / compteur, numérique)",
+          "espresense_sensors": "Capteurs ESPresense / BLE"
         }
       },
       "context_sensors": {
@@ -76,7 +77,8 @@
         "data": {
           "mmwave_sensors": "Capteurs mmWave / Radar",
           "pir_sensors": "Capteurs PIR / Mouvement",
-          "person_count_sensors": "Capteurs de comptage de personnes (caméra / compteur, numérique)"
+          "person_count_sensors": "Capteurs de comptage de personnes (caméra / compteur, numérique)",
+          "espresense_sensors": "Capteurs ESPresense / BLE"
         }
       },
       "edit_context_sensors": {
@@ -150,6 +152,20 @@
           "pending": "En attente d'évaluation"
         }
       }
+    }
+  },
+  "issues": {
+    "no_presence_sensors": {
+      "title": "Aucun capteur de présence dans {room_name}",
+      "description": "La pièce \"{room_name}\" n'a aucun capteur de présence (mmWave, PIR, ESPresense ou comptage de personnes) configuré. Le score ne peut jamais atteindre le seuil d'occupation avec les seuls signaux des capteurs — la pièce restera toujours LIBRE. Ouvrez les options de la pièce et ajoutez au moins un capteur de présence."
+    },
+    "has_door_no_sensor": {
+      "title": "Verrouillage par porte désactivé dans {room_name}",
+      "description": "La pièce \"{room_name}\" est marquée comme ayant une porte, mais aucun capteur d'ouverture de porte n'est configuré. La fonction de verrouillage porte fermée (qui maintient la pièce occupée tant que la porte reste fermée) nécessite au moins un contact de porte. Ouvrez les options de la pièce et ajoutez un contact de porte sous Capteurs de contexte."
+    },
+    "missing_entities": {
+      "title": "{count} capteur(s) configuré(s) manquant(s) dans {room_name}",
+      "description": "Les entités suivantes configurées pour la pièce \"{room_name}\" n'existent pas dans Home Assistant : {entities}. Elles ont peut-être été supprimées, renommées ou pas encore chargées. Ouvrez les options de la pièce pour mettre à jour la configuration des capteurs."
     }
   }
 }

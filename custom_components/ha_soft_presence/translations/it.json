@@ -17,7 +17,8 @@
         "data": {
           "mmwave_sensors": "Sensori mmWave / Radar",
           "pir_sensors": "Sensori PIR / Movimento",
-          "person_count_sensors": "Sensori conteggio persone (fotocamera / contatore, numerico)"
+          "person_count_sensors": "Sensori conteggio persone (fotocamera / contatore, numerico)",
+          "espresense_sensors": "Sensori ESPresense / BLE"
         }
       },
       "context_sensors": {
@@ -76,7 +77,8 @@
         "data": {
           "mmwave_sensors": "Sensori mmWave / Radar",
           "pir_sensors": "Sensori PIR / Movimento",
-          "person_count_sensors": "Sensori conteggio persone (fotocamera / contatore, numerico)"
+          "person_count_sensors": "Sensori conteggio persone (fotocamera / contatore, numerico)",
+          "espresense_sensors": "Sensori ESPresense / BLE"
         }
       },
       "edit_context_sensors": {
@@ -150,6 +152,20 @@
           "pending": "In attesa di valutazione"
         }
       }
+    }
+  },
+  "issues": {
+    "no_presence_sensors": {
+      "title": "Nessun sensore di presenza in {room_name}",
+      "description": "La stanza \"{room_name}\" non ha sensori di presenza (mmWave, PIR, ESPresense o conteggio persone) configurati. Il punteggio non può mai raggiungere la soglia di occupazione con i soli segnali dei sensori: la stanza resterà sempre LIBERA. Apri le opzioni della stanza e aggiungi almeno un sensore di presenza."
+    },
+    "has_door_no_sensor": {
+      "title": "Blocco porta disattivato in {room_name}",
+      "description": "La stanza \"{room_name}\" è contrassegnata come dotata di porta, ma non è configurato alcun sensore di contatto porta. La funzione di blocco a porta chiusa (che mantiene la stanza occupata finché la porta resta chiusa) richiede almeno un contatto porta. Apri le opzioni della stanza e aggiungi un contatto porta in Sensori di contesto."
+    },
+    "missing_entities": {
+      "title": "{count} sensore/i configurato/i mancante/i in {room_name}",
+      "description": "Le seguenti entità configurate per la stanza \"{room_name}\" non esistono in Home Assistant: {entities}. Potrebbero essere state rimosse, rinominate o non ancora caricate. Apri le opzioni della stanza per aggiornare la configurazione dei sensori."
     }
   }
 }

@@ -71,6 +71,18 @@ def _register_services(hass: HomeAssistant) -> None:
     hass.services.async_register(DOMAIN, SERVICE_RELOAD_ALL, _handle_reload_all)
 
 
+async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Reload the entry when its config changes.
+
+    The options flow edits ``entry.data`` (sensor lists, thresholds, LLM, …) via
+    ``async_update_entry``. Without this listener the running coordinator keeps the
+    old config until a manual reload — e.g. a media player removed from a room
+    still counted toward presence. Reloading rebuilds the coordinator with the new
+    config so edits take effect immediately.
+    """
+    await hass.config_entries.async_reload(entry.entry_id)
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up one room from a config entry."""
     coordinator = SoftPresenceCoordinator(hass, entry)
@@ -78,6 +90,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await coordinator.async_config_entry_first_refresh()
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
+
+    # Apply config-entry (options-flow) edits live — reload on update.
+    entry.async_on_unload(entry.add_update_listener(_async_update_listener))
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 

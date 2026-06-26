@@ -17,7 +17,8 @@
         "data": {
           "mmwave_sensors": "Czujniki mmWave / Radar",
           "pir_sensors": "Czujniki PIR / Ruchu",
-          "person_count_sensors": "Czujniki liczenia osób (kamera / licznik, numeryczny)"
+          "person_count_sensors": "Czujniki liczenia osób (kamera / licznik, numeryczny)",
+          "espresense_sensors": "Czujniki ESPresense / BLE"
         }
       },
       "context_sensors": {
@@ -76,7 +77,8 @@
         "data": {
           "mmwave_sensors": "Czujniki mmWave / Radar",
           "pir_sensors": "Czujniki PIR / Ruchu",
-          "person_count_sensors": "Czujniki liczenia osób (kamera / licznik, numeryczny)"
+          "person_count_sensors": "Czujniki liczenia osób (kamera / licznik, numeryczny)",
+          "espresense_sensors": "Czujniki ESPresense / BLE"
         }
       },
       "edit_context_sensors": {
@@ -150,6 +152,20 @@
           "pending": "Oczekiwanie na ocenę"
         }
       }
+    }
+  },
+  "issues": {
+    "no_presence_sensors": {
+      "title": "Brak czujników obecności w {room_name}",
+      "description": "Pomieszczenie \"{room_name}\" nie ma skonfigurowanych czujników obecności (mmWave, PIR, ESPresense ani licznika osób). Wynik nigdy nie osiągnie progu zajętości na podstawie samych sygnałów czujników — pomieszczenie zawsze pozostanie WOLNE. Otwórz opcje pomieszczenia i dodaj co najmniej jeden czujnik obecności."
+    },
+    "has_door_no_sensor": {
+      "title": "Blokada drzwiowa wyłączona w {room_name}",
+      "description": "Pomieszczenie \"{room_name}\" jest oznaczone jako posiadające drzwi, ale nie skonfigurowano czujnika kontaktronowego drzwi. Funkcja blokady przy zamkniętych drzwiach (utrzymująca pomieszczenie jako zajęte, dopóki drzwi są zamknięte) wymaga co najmniej jednego kontaktronu drzwiowego. Otwórz opcje pomieszczenia i dodaj kontaktron drzwiowy w sekcji Czujniki kontekstowe."
+    },
+    "missing_entities": {
+      "title": "Brakuje {count} skonfigurowanych czujników w {room_name}",
+      "description": "Następujące encje skonfigurowane dla pomieszczenia \"{room_name}\" nie istnieją w Home Assistant: {entities}. Mogły zostać usunięte, zmienione lub jeszcze nie załadowane. Otwórz opcje pomieszczenia, aby zaktualizować konfigurację czujników."
     }
   }
 }

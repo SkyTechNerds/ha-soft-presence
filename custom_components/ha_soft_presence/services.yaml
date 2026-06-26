@@ -24,6 +24,19 @@ force_clear:
           domain: binary_sensor
           integration: ha_soft_presence
 
+toggle_override:
+  name: Toggle Override
+  description: Toggle the room's manual override — if currently occupied set it clear, otherwise set it occupied. Sticky until reset (use Reset Override to return to automatic detection). Handy for a single dashboard tap.
+  fields:
+    entity_id:
+      name: Presence Sensor
+      description: The binary presence sensor of the room to toggle.
+      required: true
+      selector:
+        entity:
+          domain: binary_sensor
+          integration: ha_soft_presence
+
 reset_override:
   name: Reset Override
   description: Remove manual override — room returns to automatic sensor-based detection.

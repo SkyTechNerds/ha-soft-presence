@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow `YYYY.M.D` (Home Assistant style).
 
+## [2026.6.27] — 2026-06-27
+
+### Added
+
+- **`ha_soft_presence.toggle_override` service.** Flips a room's manual override
+  based on its current effective state — occupied → clear, otherwise → occupied
+  — in a single call. Sticky like the other overrides (`reset_override` returns
+  to automatic detection). Intended for a one-tap dashboard tile that manually
+  marks a room free/occupied, replacing the old `input_boolean.toggle` pattern
+  that no longer works now that presence is a read-only `binary_sensor`.
+
 ## [2026.6.26] — 2026-06-26
 
 ### Changed
@@ -253,6 +264,7 @@ versions follow `YYYY.M.D` (Home Assistant style).
 - Initial release: sensor fusion, state machine, batch LLM advisory,
   door-validated fast clear, 11 languages, HACS support.
 
+[2026.6.27]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.26...2026.6.27
 [2026.6.26]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.22.3...2026.6.26
 [2026.6.22.3]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.22.2...2026.6.22.3
 [2026.6.22.2]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.22.1...2026.6.22.2

@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow `YYYY.M.D` (Home Assistant style).
 
+## [2026.7.4.1] — 2026-07-04
+
+### Fixed
+
+- **mmWave afterglow no longer arms the door-closed lock-in on an empty room.**
+  `DOOR_LOCK_SOLID_DURATION` (120 s) was shorter than a typical mmWave trailing
+  "on" hold (~2–3 min). A quick visit — walk in, grab something, walk out,
+  close the door — left the mmWave on for 124 s behind the closed door, armed
+  the lock-in 4 s before the sensor dropped, and held the empty room (lights
+  on) for the 4 h locked-in cap. Raised to 300 s: sensor afterglow can no
+  longer arm it, while a real occupant behind a closed door exceeds 5 min
+  easily, so the lock-in still engages when it should.
+
 ## [2026.7.4] — 2026-07-04
 
 ### Fixed
@@ -292,6 +305,7 @@ versions follow `YYYY.M.D` (Home Assistant style).
 - Initial release: sensor fusion, state machine, batch LLM advisory,
   door-validated fast clear, 11 languages, HACS support.
 
+[2026.7.4.1]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.7.4...2026.7.4.1
 [2026.7.4]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.26.1...2026.7.4
 [2026.6.26.1]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.26...2026.6.26.1
 [2026.6.26]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.22.3...2026.6.26

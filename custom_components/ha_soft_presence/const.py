@@ -142,7 +142,13 @@ DEFAULT_CLEAR_THRESHOLD = 20
 DEFAULT_NO_PRESENCE_TIMEOUT = 300       # 5 min before transitioning to CLEAR
 DEFAULT_MIN_HOLD_TIME = 60              # 1 min minimum in OCCUPIED before clearing
 DEFAULT_DOOR_LOCKED_IN_TIMEOUT = 14400  # 4 h cap when door has been closed since OCCUPIED (locked-in)
-DOOR_LOCK_SOLID_DURATION = 120          # need this many seconds of (score>=occupied AND all doors closed) to trust lock-in
+# Need this many seconds of (score>=occupied AND all doors closed) to trust
+# lock-in. Must exceed the trailing "on" hold time of mmWave sensors (~2-3 min):
+# a quick visit (walk in, grab something, walk out, close the door) leaves the
+# mmWave on for minutes after the room is empty — at 120 s that residual armed
+# the lock-in and held the empty room for the 4 h cap. A real occupant behind a
+# closed door easily exceeds 5 min, so lock-in still engages when it should.
+DOOR_LOCK_SOLID_DURATION = 300
 DEFAULT_POLL_INTERVAL = 5               # coordinator polling interval in seconds
 DEFAULT_SLEEP_CLEAR_THRESHOLD = 5       # very hard to go clear while sleep mode is active
 

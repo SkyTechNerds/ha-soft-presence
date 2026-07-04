@@ -108,6 +108,13 @@ WEIGHT_PIR_RECENT = 15
 # lighting automation re-asserts the light (feedback loop). Was 20 (== clear
 # threshold) which caused exactly that.
 WEIGHT_LIGHT_MANUAL = 10
+# The EVENT of a human switching a light/switch ON (off→on with no automation
+# context) is positive proof someone is in the room — unlike the light *state*
+# above. Weight ≥ occupied threshold so it promotes the room immediately (e.g.
+# entering a room where the mmWave zone starts a few meters past the door),
+# decaying over DECAY_LIGHT. Automation-caused turn-ons carry a context
+# parent_id and do NOT count, so this cannot re-create the feedback loop.
+WEIGHT_LIGHT_SWITCHED_ON = 60
 WEIGHT_LOCK_UNLOCKED = 15
 WEIGHT_DOOR_OPENED = 10
 
@@ -120,7 +127,7 @@ WEIGHT_DOOR_OPENED = 10
 DECAY_PIR = 300     # 5 min — residual confidence after PIR goes off
 DECAY_DOOR = 300    # 5 min — door-opened context window
 DECAY_LOCK = 600    # 10 min — lock-used context window
-DECAY_LIGHT = 900   # 15 min — (reserved, not yet used in scoring)
+DECAY_LIGHT = 900   # 15 min — manual light-switched-on entry evidence window
 
 # A workstation sensor with power domain is considered active above this value
 WORKSTATION_POWER_THRESHOLD_W = 10.0

@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow `YYYY.M.D` (Home Assistant style).
 
+## [2026.7.4] — 2026-07-04
+
+### Fixed
+
+- **Manual overrides no longer strand a room permanently.** The
+  `toggle_override`/`force_*` override was sticky forever — a stray dashboard
+  tap forced a room "clear" and then suppressed the actual occupant: the engine
+  saw them (BLE + door + motion, score > threshold) but the room stayed off and
+  the lights kept switching off. Overrides now auto-release:
+  - a **clear-override** is released by fresh entry evidence — door opening,
+    PIR/mmWave turning on, a BLE device arriving, a person being counted, or a
+    human switching a light on;
+  - **any override** is released when the room cycles back to CLEAR (the
+    occupancy session it was meant to influence is over).
+  `reset_override` (tile hold) still returns to automatic immediately.
+
+### Added
+
+- **A human switching a light/switch ON marks the room occupied immediately.**
+  New decaying entry evidence `light_switched_on` (weight 60 ≥ occupied
+  threshold, 15 min decay): an off→on transition **without an automation
+  context** (`context.parent_id` empty — wall switch, app, voice) is positive
+  proof someone is in the room, and also opens the entry-gate. Covers rooms
+  where the motion-sensor zone starts a few meters past the door. Automation-
+  caused turn-ons carry a `parent_id` and are ignored, and the light *state*
+  keeps its low weight (10) — so the light-on feedback loop fixed in 2026.6.22.3
+  cannot return.
+
 ## [2026.6.26.1] — 2026-06-26
 
 ### Added
@@ -264,6 +292,7 @@ versions follow `YYYY.M.D` (Home Assistant style).
 - Initial release: sensor fusion, state machine, batch LLM advisory,
   door-validated fast clear, 11 languages, HACS support.
 
+[2026.7.4]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.26.1...2026.7.4
 [2026.6.26.1]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.26...2026.6.26.1
 [2026.6.26]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.22.3...2026.6.26
 [2026.6.22.3]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.22.2...2026.6.22.3

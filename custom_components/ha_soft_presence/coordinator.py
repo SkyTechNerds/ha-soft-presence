@@ -67,10 +67,12 @@ from .const import (
     WEIGHT_MEDIA_PAUSED,
     WEIGHT_WORKSTATION_ACTIVE,
     WEIGHT_LIGHT_MANUAL,
+    WEIGHT_LIGHT_SWITCHED_ON,
     WEIGHT_DOOR_OPENED,
     WEIGHT_LOCK_UNLOCKED,
     DECAY_PIR,
     DECAY_DOOR,
+    DECAY_LIGHT,
     DECAY_LOCK,
     WORKSTATION_POWER_THRESHOLD_W,
     DEFAULT_OCCUPIED_THRESHOLD,
@@ -99,6 +101,7 @@ _SOURCE_LABELS: dict[str, str] = {
     "media_paused": "Media paused",
     "workstation": "Workstation active",
     "light_manual": "Light on",
+    "light_switched_on": "Light switched on",
     "door_recent": "Door recently opened",
     "lock_recent": "Lock recently used",
 }
@@ -256,10 +259,13 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         state = new_state.state
 
         if entity_id in sensors.get(CONF_MMWAVE_SENSORS, []):
+            if state == "on":
+                self._release_clear_override("mmWave motion")
             self._record_event(f"mmwave_{'on' if state == 'on' else 'off'}", now)
         elif entity_id in sensors.get(CONF_PIR_SENSORS, []):
             if state == "on":
                 self._last_event["pir"] = now
+                self._release_clear_override("PIR motion")
             self._record_event(f"pir_{'on' if state == 'on' else 'off'}", now)
         elif entity_id in sensors.get(CONF_DOOR_SENSORS, []):
             if state == "on":
@@ -272,6 +278,7 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 # Entry-gate: a door-open means someone could have entered, so
                 # presence signals are now trusted again until the next clear.
                 self._door_opened_since_clear = True
+                self._release_clear_override("door opened")
             self._record_event(f"door_{'opened' if state == 'on' else 'closed'}", now)
         elif entity_id in sensors.get(CONF_LOCK_ENTITIES, []):
             if state in ("unlocked", "unlocking"):
@@ -280,15 +287,28 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         elif entity_id in sensors.get(CONF_MEDIA_PLAYERS, []):
             self._record_event(f"media_{state}", now)
         elif entity_id in sensors.get(CONF_LIGHT_ENTITIES, []) + sensors.get(CONF_SWITCH_ENTITIES, []):
+            if state == "on" and old_val == "off" and event.context.parent_id is None:
+                # A human flipped a light/switch on (no automation context —
+                # automations/scripts always carry a parent_id). That is positive
+                # proof someone is in the room: decaying entry evidence that
+                # promotes immediately (see WEIGHT_LIGHT_SWITCHED_ON) and opens
+                # the entry-gate. Automation-caused turn-ons never land here.
+                self._last_event["light_manual_on"] = now
+                self._door_opened_since_clear = True
+                self._release_clear_override("light switched on manually")
             self._record_event(f"light_{'on' if state == 'on' else 'off'}", now)
         elif entity_id in sensors.get(CONF_ESPRESENSE_SENSORS, []):
             in_room = state.lower() not in ("away", "unavailable", "unknown", "none", "")
+            if in_room:
+                self._release_clear_override("BLE device arrived")
             self._record_event(f"ble_{'home' if in_room else 'away'}", now)
         elif entity_id in sensors.get(CONF_PERSON_COUNT_SENSORS, []):
             try:
                 count = int(float(state))
             except (ValueError, TypeError):
                 count = 0
+            if count > 0:
+                self._release_clear_override("person counted")
             self._record_event(f"person_count_{count}", now)
         elif entity_id in (
             sensors.get(CONF_WORKSTATION_SENSORS, [])
@@ -474,6 +494,15 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 score += WEIGHT_LIGHT_MANUAL
                 sources.append("light_manual")
                 break
+
+        # Manual light-switch-on event (human action, automation turn-ons are
+        # filtered at recording time) — strong decaying entry evidence.
+        light_on_age = now - self._last_event.get("light_manual_on", 0)
+        if light_on_age < DECAY_LIGHT:
+            c = int(WEIGHT_LIGHT_SWITCHED_ON * (1.0 - light_on_age / DECAY_LIGHT))
+            if c > 0:
+                score += c
+                sources.append("light_switched_on")
 
         door_age = now - self._last_event.get("door", 0)
         if door_age < DECAY_DOOR:
@@ -662,6 +691,16 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 # Entry-gate: room is now empty — require a fresh door-open before
                 # presence signals may mark it occupied again.
                 self._door_opened_since_clear = False
+                # End of the occupancy cycle — any manual override has served its
+                # purpose (a forced-occupied room held through the session; a
+                # forced-clear room is now genuinely clear). Return to automatic
+                # so a stale override can never strand the room permanently.
+                if self._manual_override is not None:
+                    _LOGGER.info(
+                        "[%s] Manual override '%s' released (room cycled to CLEAR)",
+                        self.config.get(CONF_ROOM_NAME), self._manual_override,
+                    )
+                    self._manual_override = None
                 _LOGGER.debug("[%s] → CLEAR (timeout expired)", self.config.get(CONF_ROOM_NAME))
                 await self.async_request_refresh()
 
@@ -814,6 +853,24 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Set manual override: 'occupied', 'clear', or None to reset."""
         self._manual_override = state
         _LOGGER.info("[%s] Manual override set to: %s", self.config.get(CONF_ROOM_NAME), state)
+
+    def _release_clear_override(self, evidence: str) -> None:
+        """Auto-release a manual 'clear' override on fresh entry evidence.
+
+        A clear-override says "treat this room as empty" — but a door opening,
+        new motion, a BLE arrival, a counted person, or a human flipping a light
+        on is positive proof someone (re-)entered, so the override is stale and
+        must not suppress real presence (observed: a stray dashboard tap forced
+        a room clear and the lights kept switching off on the actual occupant).
+        Overrides in either direction are additionally released when the room
+        cycles back to CLEAR (see _async_clear_after_timeout).
+        """
+        if self._manual_override == "clear":
+            self._manual_override = None
+            _LOGGER.info(
+                "[%s] Manual clear-override released (%s)",
+                self.config.get(CONF_ROOM_NAME), evidence,
+            )
 
     def _build_data(self) -> dict[str, Any]:
         occupied = self._sm_state in SM_OCCUPIED_STATES

@@ -6,7 +6,8 @@ from datetime import timedelta
 
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
+from homeassistant.core import CoreState, HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.event import async_track_time_interval
 
@@ -107,8 +108,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    # Surface any config problems as HA repair issues
-    check_and_raise_issues(hass, entry)
+    # Surface any config problems as HA repair issues. During HA startup most
+    # platforms have not loaded their entities into the state machine yet —
+    # checking at that moment flags perfectly fine sensors as "missing" and the
+    # stale repair issues stick around. Defer the check until HA has fully
+    # started; on a plain integration reload (HA already running) check now.
+    if hass.state is CoreState.running:
+        check_and_raise_issues(hass, entry)
+    else:
+        def _deferred_issue_check(_event) -> None:
+            check_and_raise_issues(hass, entry)
+
+        entry.async_on_unload(
+            hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _deferred_issue_check)
+        )
 
     # Register services once (idempotent)
     if not hass.services.has_service(DOMAIN, SERVICE_FORCE_OCCUPIED):

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers import entity_registry as er, issue_registry as ir
 
 from .const import (
     DOMAIN,
@@ -99,7 +99,17 @@ def check_and_raise_issues(hass: HomeAssistant, entry: ConfigEntry) -> None:
     # Sleep-mode entities live at top-level config, not inside "sensors"
     all_configured.extend(entry.data.get("sleep_mode_entities", []))
 
-    missing = [eid for eid in all_configured if hass.states.get(eid) is None]
+    # An entity counts as missing only if BOTH the state machine and the
+    # entity registry don't know it. The registry knows registered entities
+    # even before their platform has loaded (or while a device is offline),
+    # so this only flags entities that were genuinely removed or renamed —
+    # not ones that merely haven't produced a state yet.
+    registry = er.async_get(hass)
+    missing = [
+        eid
+        for eid in all_configured
+        if hass.states.get(eid) is None and registry.async_get(eid) is None
+    ]
     issue_id = f"missing_entities_{entry.entry_id}"
     if missing:
         ir.async_create_issue(

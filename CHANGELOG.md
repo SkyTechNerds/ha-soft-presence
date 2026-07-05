@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow `YYYY.M.D` (Home Assistant style).
 
+## [2026.7.4.2] — 2026-07-05
+
+### Fixed
+
+- **No more false "configured sensors missing" repair issues after an HA
+  restart.** The repair check ran during integration setup — at boot, before
+  most platforms (Zigbee/MQTT/template) had loaded their entities into the
+  state machine — so perfectly healthy sensors were flagged as missing and the
+  stale issues stuck around for every room. Two-part fix:
+  - the check is now **deferred until Home Assistant has fully started**
+    (`EVENT_HOMEASSISTANT_STARTED`); on a plain integration reload it still
+    runs immediately;
+  - an entity now counts as missing only if **neither the state machine nor
+    the entity registry** knows it — the registry knows registered entities
+    before their platform loads, so only genuinely removed/renamed entities
+    are flagged.
+
 ## [2026.7.4.1] — 2026-07-04
 
 ### Fixed
@@ -305,6 +322,7 @@ versions follow `YYYY.M.D` (Home Assistant style).
 - Initial release: sensor fusion, state machine, batch LLM advisory,
   door-validated fast clear, 11 languages, HACS support.
 
+[2026.7.4.2]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.7.4.1...2026.7.4.2
 [2026.7.4.1]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.7.4...2026.7.4.1
 [2026.7.4]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.26.1...2026.7.4
 [2026.6.26.1]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.26...2026.6.26.1

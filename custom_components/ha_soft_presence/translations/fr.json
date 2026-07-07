@@ -8,7 +8,7 @@
           "room_name": "Nom de la pièce",
           "has_door": "La pièce a une ou plusieurs portes",
           "is_transit": "Pièce de transit (couloir, corridor)",
-          "require_door_entry": "Exiger l'ouverture de la porte avant la présence (pièces à une seule porte)"
+          "disable_door_entry": "Désactiver la vérification d'entrée par la porte (contact de porte peu fiable)"
         }
       },
       "presence_sensors": {
@@ -69,7 +69,7 @@
           "room_name": "Nom de la pièce",
           "has_door": "La pièce a une ou plusieurs portes",
           "is_transit": "Pièce de transit",
-          "require_door_entry": "Exiger l'ouverture de la porte avant la présence (pièces à une seule porte)"
+          "disable_door_entry": "Désactiver la vérification d'entrée par la porte (contact de porte peu fiable)"
         }
       },
       "edit_presence_sensors": {

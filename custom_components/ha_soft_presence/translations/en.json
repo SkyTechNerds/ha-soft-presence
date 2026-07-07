@@ -3,12 +3,12 @@
     "step": {
       "user": {
         "title": "Room Setup",
-        "description": "Basic room properties. 'Require door-open before presence' rejects false PIR/mmWave triggers in single-door rooms when nobody actually entered — enable only for rooms with exactly one door and a reliable door contact.",
+        "description": "Basic room properties. Rooms with a door contact only report presence once the door has opened since the room was last clear — this rejects false PIR/mmWave triggers while the door stays closed. 'Disable door-entry check' turns that off for this room (only needed for an unreliable door contact).",
         "data": {
           "room_name": "Room Name",
           "has_door": "Room has door(s)",
           "is_transit": "Is a transit room (hallway, corridor)",
-          "require_door_entry": "Require door-open before presence (single-door rooms)"
+          "disable_door_entry": "Disable door-entry check (for an unreliable door contact)"
         }
       },
       "presence_sensors": {
@@ -69,7 +69,7 @@
           "room_name": "Room Name",
           "has_door": "Room has door(s)",
           "is_transit": "Is a transit room",
-          "require_door_entry": "Require door-open before presence (single-door rooms)"
+          "disable_door_entry": "Disable door-entry check (for an unreliable door contact)"
         }
       },
       "edit_presence_sensors": {

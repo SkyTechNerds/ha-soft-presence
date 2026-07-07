@@ -8,7 +8,7 @@
           "room_name": "Nome do cômodo",
           "has_door": "O cômodo tem porta(s)",
           "is_transit": "Cômodo de trânsito (corredor, hall)",
-          "require_door_entry": "Exigir abertura de porta antes da presença (divisões com uma porta)"
+          "disable_door_entry": "Desativar verificação de entrada pela porta (contacto de porta não fiável)"
         }
       },
       "presence_sensors": {
@@ -69,7 +69,7 @@
           "room_name": "Nome do cômodo",
           "has_door": "O cômodo tem porta(s)",
           "is_transit": "Cômodo de trânsito",
-          "require_door_entry": "Exigir abertura de porta antes da presença (divisões com uma porta)"
+          "disable_door_entry": "Desativar verificação de entrada pela porta (contacto de porta não fiável)"
         }
       },
       "edit_presence_sensors": {

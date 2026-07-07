@@ -18,7 +18,7 @@ from .const import (
     DOMAIN,
     CONF_ROOM_NAME,
     CONF_HAS_DOOR,
-    CONF_REQUIRE_DOOR_ENTRY,
+    CONF_DISABLE_DOOR_ENTRY,
     CONF_IS_TRANSIT,
     CONF_OCCUPIED_THRESHOLD,
     CONF_CLEAR_THRESHOLD,
@@ -588,13 +588,17 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def _entry_gate_blocks(self) -> bool:
         """Return True if the entry-gate currently blocks promotion to OCCUPIED.
 
-        Opt-in via CONF_REQUIRE_DOOR_ENTRY. For a room with door contacts, a
-        closed door that has not opened since the room was last CLEAR normally
-        proves nobody entered — so an ambiguous PIR/mmWave signal is a likely
-        false trigger and must not mark the room occupied.
+        **On by default** for any room that has a door contact: a closed door
+        that has not opened since the room was last CLEAR proves nobody entered,
+        so an ambiguous PIR/mmWave signal is a likely false trigger and must not
+        mark the room occupied (e.g. a normally-empty guest room where the mmWave
+        false-fires all night). Per-room opt-out via CONF_DISABLE_DOOR_ENTRY for
+        an unreliable door sensor. (The legacy opt-in CONF_REQUIRE_DOOR_ENTRY no
+        longer influences this — the door contact itself arms the gate.)
         ``_door_opened_since_clear`` starts True (fail-open at startup) and is
         only False after a clean CLEAR with no subsequent door-open, so this
-        never blocks an already-occupied room.
+        never blocks an already-occupied room — a room the lock-in holds through
+        a closed door (someone still inside) is never suppressed.
 
         Three exemptions keep the gate from suppressing *real* presence:
           1. Entry was captured — a door opened since the last CLEAR.
@@ -605,9 +609,10 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
           3. A STRONG presence signal is active — a BLE device located in this
              room, or a person-count sensor > 0. These are positive proof of a
              specific person/headcount and never need door corroboration; only
-             ambiguous motion (PIR/mmWave) is gated.
+             ambiguous motion (PIR/mmWave) is gated. (A human switching a light
+             on also opens the gate — see the light-switched-on event handler.)
         """
-        if not self.config.get(CONF_REQUIRE_DOOR_ENTRY, False):
+        if self.config.get(CONF_DISABLE_DOOR_ENTRY, False):
             return False
         if not self.config.get(CONF_HAS_DOOR, False):
             return False
@@ -727,7 +732,8 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "solid_candidate_since": self._solid_candidate_since,
             "solid_candidate_age_s": round(now - self._solid_candidate_since, 1) if self._solid_candidate_since else None,
             # Entry-gate state
-            "require_door_entry": self.config.get(CONF_REQUIRE_DOOR_ENTRY, False),
+            "disable_door_entry": self.config.get(CONF_DISABLE_DOOR_ENTRY, False),
+            "entry_gate_default_on": self.config.get(CONF_HAS_DOOR, False),
             "door_opened_since_clear": self._door_opened_since_clear,
             "entry_gate_blocks": self._entry_gate_blocks(),
             # Clear-pending state

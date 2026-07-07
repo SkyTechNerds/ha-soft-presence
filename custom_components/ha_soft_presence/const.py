@@ -12,8 +12,13 @@ CONF_HAS_DOOR = "has_door"
 CONF_IS_TRANSIT = "is_transit"
 # Entry gate: require a door-open since the room was last CLEAR before any
 # presence signal may mark it occupied. For single-door rooms this rejects
-# false PIR/mmWave triggers when physically nobody entered. Opt-in per room.
+# false PIR/mmWave triggers when physically nobody entered.
+# The entry-gate is now ON BY DEFAULT for any room that has a door contact;
+# CONF_DISABLE_DOOR_ENTRY is the per-room opt-out (e.g. an unreliable door
+# sensor). CONF_REQUIRE_DOOR_ENTRY is the legacy opt-in key, kept only so old
+# config entries still load — it no longer influences the gate.
 CONF_REQUIRE_DOOR_ENTRY = "require_door_entry"
+CONF_DISABLE_DOOR_ENTRY = "disable_door_entry"
 
 # Threshold & timing
 CONF_OCCUPIED_THRESHOLD = "occupied_threshold"
@@ -166,7 +171,8 @@ CONFIDENCE_LOW = "low"
 # LLM advisory
 # ---------------------------------------------------------------------------
 
-DEFAULT_REQUIRE_DOOR_ENTRY = False  # entry-gate opt-in, off by default
+DEFAULT_REQUIRE_DOOR_ENTRY = False  # legacy opt-in key, no longer used by the gate
+DEFAULT_DISABLE_DOOR_ENTRY = False  # entry-gate opt-out, off by default (gate on)
 DEFAULT_LLM_UPDATE_INTERVAL = 300   # minimum seconds between LLM batch calls
 DEFAULT_LLM_PROVIDER = LLM_PROVIDER_CONVERSATION
 # Sensible default for the direct HTTP provider — MiniMax global, OpenAI-compatible

@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow `YYYY.M.D` (Home Assistant style).
 
+## [2026.7.7] — 2026-07-07
+
+### Changed
+
+- **The door entry-gate is now ON by default for any room with a door contact**
+  (was opt-in per room). If the door has not opened since the room was last
+  CLEAR, ambiguous PIR/mmWave motion can no longer mark the room OCCUPIED —
+  which is exactly the "the door stayed shut, nobody came in" reasoning. Fixes
+  e.g. a normally-empty guest room whose mmWave false-fires all night keeping
+  it permanently "occupied". All existing exemptions still apply, so real
+  presence is not suppressed:
+  - a door currently **open** stands the gate down (room aired with door open),
+  - a **BLE device** in the room or a **person-count** > 0 is trusted immediately,
+  - a human **switching a light on** marks the room occupied and opens the gate,
+  - the gate only blocks *promotion from CLEAR* — a room the lock-in holds
+    through a closed door (someone still inside) is never suppressed.
+- **New per-room opt-out `disable_door_entry`** (default off) for a room with an
+  unreliable door sensor. Replaces the old opt-in `require_door_entry` field
+  (which is now redundant; existing config entries keep loading — the stale key
+  is ignored). Diagnostics expose `disable_door_entry` and `entry_gate_default_on`.
+
 ## [2026.7.4.2] — 2026-07-05
 
 ### Fixed
@@ -322,6 +343,7 @@ versions follow `YYYY.M.D` (Home Assistant style).
 - Initial release: sensor fusion, state machine, batch LLM advisory,
   door-validated fast clear, 11 languages, HACS support.
 
+[2026.7.7]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.7.4.2...2026.7.7
 [2026.7.4.2]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.7.4.1...2026.7.4.2
 [2026.7.4.1]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.7.4...2026.7.4.1
 [2026.7.4]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.6.26.1...2026.7.4

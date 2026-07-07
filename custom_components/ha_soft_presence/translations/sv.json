@@ -8,7 +8,7 @@
           "room_name": "Rumsnamn",
           "has_door": "Rummet har dörr(ar)",
           "is_transit": "Transitrum (hall, korridor)",
-          "require_door_entry": "Kräv dörröppning före närvaro (rum med en dörr)"
+          "disable_door_entry": "Inaktivera dörr-inträdeskontroll (opålitlig dörrkontakt)"
         }
       },
       "presence_sensors": {
@@ -69,7 +69,7 @@
           "room_name": "Rumsnamn",
           "has_door": "Rummet har dörr(ar)",
           "is_transit": "Transitrum",
-          "require_door_entry": "Kräv dörröppning före närvaro (rum med en dörr)"
+          "disable_door_entry": "Inaktivera dörr-inträdeskontroll (opålitlig dörrkontakt)"
         }
       },
       "edit_presence_sensors": {

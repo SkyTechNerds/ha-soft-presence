@@ -8,7 +8,7 @@
           "room_name": "Nome della stanza",
           "has_door": "La stanza ha una o più porte",
           "is_transit": "Stanza di transito (corridoio, ingresso)",
-          "require_door_entry": "Richiedi apertura porta prima della presenza (stanze con una sola porta)"
+          "disable_door_entry": "Disattiva il controllo dell'ingresso dalla porta (contatto porta inaffidabile)"
         }
       },
       "presence_sensors": {
@@ -69,7 +69,7 @@
           "room_name": "Nome della stanza",
           "has_door": "La stanza ha una o più porte",
           "is_transit": "Stanza di transito",
-          "require_door_entry": "Richiedi apertura porta prima della presenza (stanze con una sola porta)"
+          "disable_door_entry": "Disattiva il controllo dell'ingresso dalla porta (contatto porta inaffidabile)"
         }
       },
       "edit_presence_sensors": {

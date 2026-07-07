@@ -8,7 +8,7 @@
           "room_name": "Nombre de la habitación",
           "has_door": "La habitación tiene puerta(s)",
           "is_transit": "Es una habitación de tránsito (pasillo, corredor)",
-          "require_door_entry": "Requerir apertura de puerta antes de presencia (habitaciones con una puerta)"
+          "disable_door_entry": "Desactivar la comprobación de entrada por puerta (contacto de puerta poco fiable)"
         }
       },
       "presence_sensors": {
@@ -69,7 +69,7 @@
           "room_name": "Nombre de la habitación",
           "has_door": "La habitación tiene puerta(s)",
           "is_transit": "Habitación de tránsito",
-          "require_door_entry": "Requerir apertura de puerta antes de presencia (habitaciones con una puerta)"
+          "disable_door_entry": "Desactivar la comprobación de entrada por puerta (contacto de puerta poco fiable)"
         }
       },
       "edit_presence_sensors": {

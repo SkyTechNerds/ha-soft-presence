@@ -3,12 +3,12 @@
     "step": {
       "user": {
         "title": "Raum einrichten",
-        "description": "Grundeinstellungen für den Raum. „Anwesenheit erfordert Tür-Öffnung“ verwirft falsche PIR/mmWave-Auslöser in Ein-Tür-Räumen, wenn niemand wirklich hereingekommen ist — nur für Räume mit genau einer Tür und zuverlässigem Türkontakt aktivieren.",
+        "description": "Grundeinstellungen für den Raum. Räume mit Türkontakt melden Anwesenheit nur, wenn seit dem letzten Frei-Zustand die Tür geöffnet wurde — das verwirft falsche PIR/mmWave-Auslöser bei geschlossener Tür. „Tür-Eintritt-Prüfung deaktivieren“ schaltet das für diesen Raum ab (nur bei unzuverlässigem Türkontakt nötig).",
         "data": {
           "room_name": "Raumname",
           "has_door": "Raum hat Tür(en)",
           "is_transit": "Durchgangsraum (Flur, Korridor)",
-          "require_door_entry": "Anwesenheit erfordert Tür-Öffnung (Ein-Tür-Räume)"
+          "disable_door_entry": "Tür-Eintritt-Prüfung deaktivieren (bei unzuverlässigem Türkontakt)"
         }
       },
       "presence_sensors": {
@@ -69,7 +69,7 @@
           "room_name": "Raumname",
           "has_door": "Raum hat Tür(en)",
           "is_transit": "Durchgangsraum",
-          "require_door_entry": "Anwesenheit erfordert Tür-Öffnung (Ein-Tür-Räume)"
+          "disable_door_entry": "Tür-Eintritt-Prüfung deaktivieren (bei unzuverlässigem Türkontakt)"
         }
       },
       "edit_presence_sensors": {

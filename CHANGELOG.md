@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow `YYYY.M.D` (Home Assistant style).
 
+## [2026.7.7.1] — 2026-07-07
+
+### Changed
+
+- **`is_transit` (transit room / hallway) now actually changes behaviour.** It
+  was stored but never used. A transit room is pass-through, so it now:
+  - **clears fast** — the no-presence timeout is capped to
+    `TRANSIT_CLEAR_TIMEOUT` (60 s) regardless of the configured
+    `no_presence_timeout`, so a hallway does not linger 5 min after the last
+    motion;
+  - **never locks in** — the door-closed 4 h lock-in does not apply (nobody
+    sits still in a corridor);
+  - **clears FASTER at night, not slower** — sleep mode's clear-threshold
+    lowering (which keeps a bedroom occupied while you lie still) is skipped for
+    transit rooms, so a hallway with sleep mode active clears quickly instead of
+    staying occupied until the score drops to the low sleep threshold.
+  Observed: an upstairs hallway stayed "occupied" ~5 min after each nighttime
+  bathroom trip because sleep mode (`sleep_clear_threshold` 5) + a 300 s timeout
+  made it clear *slower* at night — the opposite of what a hallway should do.
+
 ## [2026.7.7] — 2026-07-07
 
 ### Changed
@@ -343,6 +363,7 @@ versions follow `YYYY.M.D` (Home Assistant style).
 - Initial release: sensor fusion, state machine, batch LLM advisory,
   door-validated fast clear, 11 languages, HACS support.
 
+[2026.7.7.1]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.7.7...2026.7.7.1
 [2026.7.7]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.7.4.2...2026.7.7
 [2026.7.4.2]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.7.4.1...2026.7.4.2
 [2026.7.4.1]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.7.4...2026.7.4.1

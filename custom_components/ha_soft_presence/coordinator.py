@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import re
 import time
@@ -46,7 +45,6 @@ from .const import (
     CONF_LLM_BASE_URL,
     CONF_LLM_API_KEY,
     CONF_LLM_MODEL,
-    LLM_PROVIDER_CONVERSATION,
     LLM_PROVIDER_HTTP,
     DEFAULT_LLM_PROVIDER,
     DEFAULT_LLM_BASE_URL,

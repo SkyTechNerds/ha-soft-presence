@@ -77,6 +77,7 @@ from .const import (
     DEFAULT_CLEAR_THRESHOLD,
     DEFAULT_NO_PRESENCE_TIMEOUT,
     DEFAULT_MIN_HOLD_TIME,
+    TRANSIT_CLEAR_TIMEOUT,
     DEFAULT_DOOR_LOCKED_IN_TIMEOUT,
     DOOR_LOCK_SOLID_DURATION,
     DEFAULT_POLL_INTERVAL,
@@ -535,7 +536,12 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def _run_state_machine(self) -> None:
         occupied_threshold = int(self.config.get(CONF_OCCUPIED_THRESHOLD, DEFAULT_OCCUPIED_THRESHOLD))
         clear_threshold = int(self.config.get(CONF_CLEAR_THRESHOLD, DEFAULT_CLEAR_THRESHOLD))
-        if self._sleep_mode_active():
+        is_transit = self.config.get(CONF_IS_TRANSIT, False)
+        # Sleep mode keeps a stationary-occupancy room (bedroom) occupied longer
+        # by lowering the clear threshold. A transit room (hallway) is the
+        # opposite — at night it should clear FASTER — so it keeps the normal
+        # threshold and relies on the short transit timeout below.
+        if self._sleep_mode_active() and not is_transit:
             clear_threshold = int(self.config.get(CONF_SLEEP_CLEAR_THRESHOLD, DEFAULT_SLEEP_CLEAR_THRESHOLD))
         timeout = float(self.config.get(CONF_NO_PRESENCE_TIMEOUT, DEFAULT_NO_PRESENCE_TIMEOUT))
         min_hold = float(self.config.get(CONF_MIN_HOLD_TIME, DEFAULT_MIN_HOLD_TIME))
@@ -646,7 +652,14 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         door closes, the solid streak rebuilds from zero, re-arming the
         lock-in once the room has been quiet-with-occupant for the
         configured duration.
+
+        Transit rooms (hallways/corridors) are the exception: they are
+        pass-through, so the timeout is capped to TRANSIT_CLEAR_TIMEOUT and the
+        lock-in never applies — a hallway should clear quickly once motion
+        stops, day or night (nobody "sits still" in a corridor).
         """
+        if self.config.get(CONF_IS_TRANSIT, False):
+            return min(default_timeout, TRANSIT_CLEAR_TIMEOUT)
         if not self.config.get(CONF_HAS_DOOR, False):
             return default_timeout
         sensors = self.config.get("sensors", {})

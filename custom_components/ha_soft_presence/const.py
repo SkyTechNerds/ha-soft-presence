@@ -146,6 +146,12 @@ DEFAULT_OCCUPIED_THRESHOLD = 50
 DEFAULT_CLEAR_THRESHOLD = 20
 DEFAULT_NO_PRESENCE_TIMEOUT = 300       # 5 min before transitioning to CLEAR
 DEFAULT_MIN_HOLD_TIME = 60              # 1 min minimum in OCCUPIED before clearing
+# Transit rooms (hallways/corridors, is_transit=True) are pass-through: the
+# no-presence timeout is capped to this so a hallway clears quickly after the
+# last motion instead of lingering the full no_presence_timeout. Transit rooms
+# also skip the door lock-in and the sleep-mode clear-threshold lowering — at
+# night a hallway should clear FASTER, not stay occupied like a bedroom.
+TRANSIT_CLEAR_TIMEOUT = 60              # cap for is_transit rooms
 DEFAULT_DOOR_LOCKED_IN_TIMEOUT = 14400  # 4 h cap when door has been closed since OCCUPIED (locked-in)
 # Need this many seconds of (score>=occupied AND all doors closed) to trust
 # lock-in. Must exceed the trailing "on" hold time of mmWave sensors (~2-3 min):

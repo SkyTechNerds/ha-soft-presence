@@ -110,6 +110,15 @@ _SOURCE_LABELS: dict[str, str] = {
 # these never need door corroboration, so the entry-gate must not suppress them.
 _STRONG_SOURCES: tuple[str, ...] = ("ble_home", "person_count")
 
+# Weak "ambient" sources that are NOT proof of presence and must never keep a
+# room OCCUPIED on their own. A manually-on light stays on in an empty room, and
+# the lighting automation re-asserts it while the room reads occupied — a
+# feedback loop. WEIGHT_LIGHT_MANUAL is kept below the normal clear threshold,
+# but sleep mode lowers the clear threshold (potentially below the light weight),
+# so this is enforced explicitly: if the ONLY active source is ambient, the room
+# takes the clear path regardless of the (sleep) threshold.
+_WEAK_HOLD_SOURCES: tuple[str, ...] = ("light_manual",)
+
 
 _MAX_EVENT_LOG = 30
 
@@ -552,6 +561,13 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         # room is currently clear and no door has opened since (see helper).
         gate_blocks = self._entry_gate_blocks()
 
+        # A weak ambient-only source (a manually-on light) must not keep the room
+        # OCCUPIED by itself — force the clear path even if its score sits above
+        # the (sleep) clear threshold. See _WEAK_HOLD_SOURCES.
+        only_ambient = bool(self._active_sources) and all(
+            s in _WEAK_HOLD_SOURCES for s in self._active_sources
+        )
+
         if self._score >= occupied_threshold and not gate_blocks:
             if self._sm_state != SM_OCCUPIED:
                 _LOGGER.debug("[%s] → OCCUPIED (score=%d)", self.config.get(CONF_ROOM_NAME), self._score)
@@ -562,7 +578,7 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._last_positive_reason = self._reason
             self._last_positive_sources = list(self._active_sources)
 
-        elif self._score <= clear_threshold or gate_blocks:
+        elif self._score <= clear_threshold or gate_blocks or only_ambient:
             if gate_blocks and self._score >= occupied_threshold:
                 self._reason = f"{self._reason} (suppressed: no door entry)"
             effective_timeout = self._effective_clear_timeout(timeout, now)

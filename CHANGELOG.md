@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow `YYYY.M.D` (Home Assistant style).
 
+## [2026.7.11] — 2026-07-11
+
+### Fixed
+
+- **A manually-on light no longer holds a room OCCUPIED in sleep mode.** The
+  2026.6.22.3 fix set `WEIGHT_LIGHT_MANUAL` (10) below the normal clear
+  threshold (20) so a lit light alone cannot keep a room occupied — but sleep
+  mode lowers the clear threshold to `sleep_clear_threshold` (often 5), which is
+  *below* the light weight, so at night one light left on pinned the room
+  OCCUPIED again (and the lighting automation kept the light on because the room
+  read occupied — the feedback loop returned). Observed: a guest bathroom held
+  occupied all night by a single light, score 10 > sleep threshold 5, nobody
+  there. Now enforced explicitly: if the ONLY active source is a weak "ambient"
+  signal (a manually-on light), the room takes the clear path regardless of the
+  (sleep) threshold. Real presence (motion/BLE/door/light-switched-on) is
+  unaffected; a lit light still counts as weak *supporting* evidence alongside a
+  real signal.
+
 ## [2026.7.7.1] — 2026-07-07
 
 ### Changed
@@ -363,6 +381,7 @@ versions follow `YYYY.M.D` (Home Assistant style).
 - Initial release: sensor fusion, state machine, batch LLM advisory,
   door-validated fast clear, 11 languages, HACS support.
 
+[2026.7.11]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.7.7.1...2026.7.11
 [2026.7.7.1]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.7.7...2026.7.7.1
 [2026.7.7]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.7.4.2...2026.7.7
 [2026.7.4.2]: https://github.com/SkyTechNerds/ha-soft-presence/compare/2026.7.4.1...2026.7.4.2

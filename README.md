@@ -31,6 +31,10 @@ Instead of relying on a single sensor, HA Soft Presence combines multiple signal
 
 ## 🚀 Installation
 
+> Not in the HACS **default** store yet (submission pending review). Add it as a
+> **custom repository** — you still get the full HACS experience including
+> automatic update notifications for new releases. No manual file copying needed.
+
 ### Via HACS (recommended)
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=SkyTechNerds&repository=ha-soft-presence&category=integration)
@@ -54,7 +58,7 @@ Instead of relying on a single sensor, HA Soft Presence combines multiple signal
 1. Click the button above **or** go to **Settings → Devices & Services → Add Integration**
 2. Search for **HA Soft Presence**
 3. Follow the 5-step wizard:
-   - **Step 1** — Room name, has door, is transit room
+   - **Step 1** — Room name, has door, transit room, disable door-entry check
    - **Step 2** — mmWave & PIR sensors *(pre-filled from matching HA area)*
    - **Step 3** — Context sensors: doors, windows, locks, media, lights, switches, workstation *(pre-filled)*
    - **Step 4** — Thresholds, timeout, sleep mode entities

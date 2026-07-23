@@ -483,6 +483,11 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             st = self.hass.states.get(eid)
             if st and st.state.lower() not in ("away", "unavailable", "unknown", "none", ""):
                 if slugify(st.state) == self.room_slug:
+                    # `now` is time.time() (wall-clock epoch, set at the top of
+                    # this method) — the same clock base as last_changed, which
+                    # HA stores as a UTC datetime. Both sides are wall-clock, so
+                    # the subtraction is a valid elapsed-seconds dwell. (The
+                    # coordinator never uses time.monotonic().)
                     dwell = now - st.last_changed.timestamp()
                     if dwell >= BLE_DWELL_SECONDS:
                         score += WEIGHT_ESPRESENSE

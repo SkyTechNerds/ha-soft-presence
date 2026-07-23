@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow `YYYY.M.D` (Home Assistant style).
 
+## [2026.7.23] — 2026-07-23
+
+### Fixed
+
+- **Flapping BLE area trackers no longer cause phantom occupancy.** A BLE area
+  tracker — BLE triangulation (e.g. Bermuda) or ESPresense — under RSSI noise
+  briefly names rooms the device is not in: the phone "jumps" through several
+  rooms in seconds while sitting still elsewhere. Because `WEIGHT_ESPRESENSE`
+  (50) equals the default occupied
+  threshold, every such single-scan blip flipped the named room to OCCUPIED.
+  Observed: an office and a guest bathroom repeatedly marked occupied overnight
+  while the phone sat on a nightstand in the bedroom. `BLE device in room` now
+  requires the tracker to report the **same room continuously for
+  `BLE_DWELL_SECONDS` (45 s)** before it contributes to the score, filtering
+  blips. A genuine arrival dwells far longer; physical motion (mmWave/PIR) is
+  never dwell-gated, so walking in still promotes instantly. Set
+  `BLE_DWELL_SECONDS = 0` to disable.
+- **A device left behind can no longer arm the 4 h door lock-in.** The lock-in
+  (which holds a room OCCUPIED through a closed door so a still occupant isn't
+  cleared) now requires a **corroborating** signal during its solid streak —
+  motion (mmWave/PIR), a counted person, an active workstation, playing/paused
+  media, or a human light-switch action. A BLE-only or ambient-only streak (a
+  phone left on a nightstand behind a closed door) no longer pins the room for
+  4 hours; the normal no-presence timeout applies instead. Observed: a guest
+  bathroom held occupied 23:09→03:27 (4 h) off a single BLE blip while the phone
+  was in the bedroom the whole time. A new `solid_had_corroboration` diagnostic
+  attribute exposes the streak's corroboration state.
+
 ## [2026.7.11] — 2026-07-11
 
 ### Fixed

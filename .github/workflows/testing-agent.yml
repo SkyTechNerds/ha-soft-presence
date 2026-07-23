@@ -7,6 +7,8 @@
 name: Notify Testing Agent
 
 "on":
+  issues:
+    types: [opened]
   pull_request:
     types: [opened, synchronize, edited]
   issue_comment:
@@ -20,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: SkyTechNerds/hermes-work-commons@v4
+      - uses: SkyTechNerds/hermes-work-commons@v5
         with:
           discord_webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           trigger_prefix: 'TEST_REQUEST'

@@ -80,6 +80,7 @@ from .const import (
     TRANSIT_CLEAR_TIMEOUT,
     DEFAULT_DOOR_LOCKED_IN_TIMEOUT,
     DOOR_LOCK_SOLID_DURATION,
+    BLE_DWELL_SECONDS,
     DEFAULT_POLL_INTERVAL,
     DEFAULT_LLM_UPDATE_INTERVAL,
     DEFAULT_SLEEP_CLEAR_THRESHOLD,
@@ -118,6 +119,23 @@ _STRONG_SOURCES: tuple[str, ...] = ("ble_home", "person_count")
 # so this is enforced explicitly: if the ONLY active source is ambient, the room
 # takes the clear path regardless of the (sleep) threshold.
 _WEAK_HOLD_SOURCES: tuple[str, ...] = ("light_manual",)
+
+# Sources that on their own must NOT arm the 4 h door lock-in. BLE proves a
+# *device* is in the room, not a person sitting still — a phone left behind on a
+# nightstand keeps scoring while its owner is elsewhere, and pinning the room
+# occupied for 4 h off that alone is exactly the false-occupancy we want to
+# avoid. A manually-on light, a recently-opened door and a recently-used lock
+# are entry/ambient context, not proof of a still-present occupant either. The
+# lock-in therefore requires at least one *corroborating* signal during the
+# solid streak — motion (mmWave/PIR), a counted person, an active workstation or
+# playing/paused media, or a human light-switch action. See
+# _update_solid_tracking.
+_LOCKIN_WEAK_SOURCES: tuple[str, ...] = (
+    "ble_home",
+    "light_manual",
+    "door_recent",
+    "lock_recent",
+)
 
 
 _MAX_EVENT_LOG = 30
@@ -180,6 +198,11 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         # Reset on any door-open event and on transition to CLEAR.
         self._has_been_solid: bool = False
         self._solid_candidate_since: float | None = None
+        # Whether the current solid streak has seen a corroborating (non-BLE,
+        # non-ambient) presence signal. The 4 h lock-in only arms when this is
+        # True, so a device left behind (BLE-only) can never pin the room. Reset
+        # whenever the streak breaks. See _LOCKIN_WEAK_SOURCES.
+        self._solid_had_corroboration: bool = False
 
         # Entry-gate tracking: has a door opened since the room was last CLEAR?
         # Starts True (fail-open) so occupancy is allowed before the first clear
@@ -283,6 +306,7 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 # once the door closes again and score stays high.
                 self._has_been_solid = False
                 self._solid_candidate_since = None
+                self._solid_had_corroboration = False
                 # Entry-gate: a door-open means someone could have entered, so
                 # presence signals are now trusted again until the next clear.
                 self._door_opened_since_clear = True
@@ -375,15 +399,22 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 break
 
         if self._score >= occupied_threshold and all_closed:
+            # Corroboration: at least one motion/headcount/human-action signal
+            # must appear during the streak. A BLE-only (or ambient-only) streak
+            # never arms the lock-in — a phone left behind must not pin the room
+            # for 4 h. Latches for the streak; cleared when the streak breaks.
+            if any(s not in _LOCKIN_WEAK_SOURCES for s in self._active_sources):
+                self._solid_had_corroboration = True
             if self._solid_candidate_since is None:
                 self._solid_candidate_since = now
             elif (
                 not self._has_been_solid
+                and self._solid_had_corroboration
                 and (now - self._solid_candidate_since) >= DOOR_LOCK_SOLID_DURATION
             ):
                 self._has_been_solid = True
                 _LOGGER.debug(
-                    "[%s] Door lock-in armed (solid streak %ds)",
+                    "[%s] Door lock-in armed (solid streak %ds, corroborated)",
                     self.config.get(CONF_ROOM_NAME), DOOR_LOCK_SOLID_DURATION,
                 )
         else:
@@ -392,6 +423,7 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             # exactly the situation lock-in is meant to bridge. It only clears
             # on door-open or on the CLEAR transition.
             self._solid_candidate_since = None
+            self._solid_had_corroboration = False
 
     # ------------------------------------------------------------------
     # Score engine
@@ -439,15 +471,23 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     score += c
                     sources.append("pir_recent")
 
-        # ESPresense: sensor state = room name where device is detected
-        # Compare slugified state against this room's slug
+        # ESPresense: sensor state = room name where device is detected.
+        # Compare slugified state against this room's slug. A flapping tracker
+        # briefly names a room it isn't in, so require the sensor to have
+        # reported THIS room continuously for BLE_DWELL_SECONDS before it counts
+        # — st.last_changed is the moment the current room value was first seen,
+        # which resets on every flap, so single-scan blips never accumulate the
+        # dwell. Only break once a sensor actually counts, so a second device
+        # that has dwelled is still considered if the first hasn't.
         for eid in sensors.get(CONF_ESPRESENSE_SENSORS, []):
             st = self.hass.states.get(eid)
             if st and st.state.lower() not in ("away", "unavailable", "unknown", "none", ""):
                 if slugify(st.state) == self.room_slug:
-                    score += WEIGHT_ESPRESENSE
-                    sources.append("ble_home")
-                    break
+                    dwell = now - st.last_changed.timestamp()
+                    if dwell >= BLE_DWELL_SECONDS:
+                        score += WEIGHT_ESPRESENSE
+                        sources.append("ble_home")
+                        break
 
         for eid in sensors.get(CONF_MEDIA_PLAYERS, []):
             st = self.hass.states.get(eid)
@@ -720,6 +760,7 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 # re-earned on the next entry.
                 self._has_been_solid = False
                 self._solid_candidate_since = None
+                self._solid_had_corroboration = False
                 # Entry-gate: room is now empty — require a fresh door-open before
                 # presence signals may mark it occupied again.
                 self._door_opened_since_clear = False
@@ -758,6 +799,7 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "has_been_solid": self._has_been_solid,
             "solid_candidate_since": self._solid_candidate_since,
             "solid_candidate_age_s": round(now - self._solid_candidate_since, 1) if self._solid_candidate_since else None,
+            "solid_had_corroboration": self._solid_had_corroboration,
             # Entry-gate state
             "disable_door_entry": self.config.get(CONF_DISABLE_DOOR_ENTRY, False),
             "entry_gate_default_on": self.config.get(CONF_HAS_DOOR, False),

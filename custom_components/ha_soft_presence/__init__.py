@@ -7,7 +7,7 @@ from datetime import timedelta
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
-from homeassistant.core import CoreState, HomeAssistant, ServiceCall
+from homeassistant.core import CoreState, HomeAssistant, ServiceCall, callback
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.event import async_track_time_interval
 
@@ -116,6 +116,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if hass.state is CoreState.running:
         check_and_raise_issues(hass, entry)
     else:
+        # @callback => HA runs the listener on the event loop. Without it the
+        # plain sync listener is dispatched to an executor thread, and the
+        # issue_registry.async_* calls inside check_and_raise_issues would then
+        # mutate the registry off-loop (HA warns: crash / data-corruption risk).
+        @callback
         def _deferred_issue_check(_event) -> None:
             check_and_raise_issues(hass, entry)
 

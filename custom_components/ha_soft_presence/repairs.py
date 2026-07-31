@@ -7,7 +7,7 @@ of silent misbehaviour.
 from __future__ import annotations
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import entity_registry as er, issue_registry as ir
 
 from .const import (
@@ -45,8 +45,13 @@ _ALL_SENSOR_KEYS: tuple[str, ...] = (
 )
 
 
+@callback
 def check_and_raise_issues(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Check integration config and surface problems as HA repair issues."""
+    """Check integration config and surface problems as HA repair issues.
+
+    Loop-only: mutates the issue registry via ir.async_* callbacks, which must
+    run on the event loop. Never dispatch this to an executor thread.
+    """
     room = entry.data.get(CONF_ROOM_NAME, "Unknown")
     sensors = entry.data.get("sensors", {})
 
@@ -130,7 +135,12 @@ def check_and_raise_issues(hass: HomeAssistant, entry: ConfigEntry) -> None:
         ir.async_delete_issue(hass, DOMAIN, issue_id)
 
 
+@callback
 def clear_all_issues(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Remove all repair issues raised for this config entry."""
+    """Remove all repair issues raised for this config entry.
+
+    Loop-only: calls ir.async_delete_issue (an event-loop callback). Never
+    dispatch this to an executor thread.
+    """
     for suffix in ("no_presence_sensors", "has_door_no_sensor", "missing_entities"):
         ir.async_delete_issue(hass, DOMAIN, f"{suffix}_{entry.entry_id}")

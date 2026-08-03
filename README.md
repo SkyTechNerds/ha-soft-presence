@@ -1,6 +1,6 @@
 # HA Soft Presence
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=flat-square)](https://my.home-assistant.io/redirect/hacs_repository/?owner=SkyTechNerds&repository=ha-soft-presence&category=integration)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg?style=flat-square)](https://my.home-assistant.io/redirect/hacs_repository/?owner=SkyTechNerds&repository=ha-soft-presence&category=integration)
 [![GitHub release](https://img.shields.io/github/v/release/SkyTechNerds/ha-soft-presence?style=flat-square)](https://github.com/SkyTechNerds/ha-soft-presence/releases)
 [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/SkyTechNerds/ha-soft-presence?style=flat-square&color=brightgreen)](https://github.com/SkyTechNerds/ha-soft-presence/commits/main)
 [![License](https://img.shields.io/github/license/SkyTechNerds/ha-soft-presence?style=flat-square)](https://github.com/SkyTechNerds/ha-soft-presence/blob/main/LICENSE)
@@ -31,18 +31,15 @@ Instead of relying on a single sensor, HA Soft Presence combines multiple signal
 
 ## 🚀 Installation
 
-> Not in the HACS **default** store yet (submission pending review). Add it as a
-> **custom repository** — you still get the full HACS experience including
-> automatic update notifications for new releases. No manual file copying needed.
-
 ### Via HACS (recommended)
+
+HA Soft Presence is available in the **HACS default store**.
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=SkyTechNerds&repository=ha-soft-presence&category=integration)
 
-1. Click the button above **or** open HACS → Integrations → ⋮ → Custom repositories
-2. Add `https://github.com/SkyTechNerds/ha-soft-presence` as **Integration**
-3. Install **HA Soft Presence**
-4. Restart Home Assistant
+1. Open HACS → search for **HA Soft Presence** (or click the button above)
+2. Install **HA Soft Presence**
+3. Restart Home Assistant
 
 ### Manual
 

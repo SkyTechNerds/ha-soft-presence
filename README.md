@@ -69,6 +69,11 @@ Repeat to add more rooms.
 > entity's settings and set **Show as** to the matching type (*Door*, *Window*, …) —
 > it then appears in the right step.
 
+<p align="center">
+  <img src="images/show-as.png" alt="Home Assistant entity settings dialog — the 'Show as' field (German: 'Anzeigen als') set to Door" width="440">
+  <br><sub>Entity settings → <b>Show as</b> (here: <i>Anzeigen als → Tür</i>)</sub>
+</p>
+
 ---
 
 ## 🏷️ Entities created per room

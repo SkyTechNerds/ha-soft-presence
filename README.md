@@ -63,6 +63,17 @@ HA Soft Presence is available in the **HACS default store**.
 
 Repeat to add more rooms.
 
+> **Tip — an entity missing from a picker?** Several steps filter by `device_class`
+> (PIR → `motion`/`occupancy`, doors → `door`, windows → `window`). Many contact and
+> motion sensors ship with a generic or wrong class, so they won't show up. Open the
+> entity's settings and set **Show as** to the matching type (*Door*, *Window*, …) —
+> it then appears in the right step.
+
+<p align="center">
+  <img src="images/show-as.png" alt="Home Assistant entity settings dialog — the 'Show as' field (German: 'Anzeigen als') set to Door" width="440">
+  <br><sub>Entity settings → <b>Show as</b> (here: <i>Anzeigen als → Tür</i>)</sub>
+</p>
+
 ---
 
 ## 🏷️ Entities created per room

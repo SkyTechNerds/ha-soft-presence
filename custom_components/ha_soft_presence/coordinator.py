@@ -10,6 +10,7 @@ from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, Event, callback
+from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
@@ -221,6 +222,15 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             _LOGGER,
             name=f"{DOMAIN}_{entry.entry_id}",
             update_interval=timedelta(seconds=DEFAULT_POLL_INTERVAL),
+            # HA's default request-refresh debouncer has a 10s cooldown, which
+            # swallows the mmWave/PIR confirmation that arrives ~1-2s after a
+            # door-open: the door fires an immediate (too-early) refresh, the
+            # confirming signal is debounced, and the promotion to OCCUPIED then
+            # waits for the next 5s poll — a felt ~5s lag on room entry. A short
+            # cooldown lets each entry signal re-evaluate almost immediately.
+            request_refresh_debouncer=Debouncer(
+                hass, _LOGGER, cooldown=0.3, immediate=True
+            ),
         )
 
     # ------------------------------------------------------------------

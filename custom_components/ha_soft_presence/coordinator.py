@@ -1029,6 +1029,15 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def set_override(self, state: str | None) -> None:
         """Set manual override: 'occupied', 'clear', or None to reset."""
         self._manual_override = state
+        # An applied override supersedes any in-flight door-entry provisional
+        # occupancy. Drop it (and its timer) now, otherwise a stale
+        # _occupied_provisional survives — the auto-clear branch is skipped while
+        # an override is set, so releasing the override later (with the grace
+        # window long expired) would fire an instant, min-hold-bypassing clear.
+        if state is not None:
+            self._occupied_provisional = False
+            self._door_entry_until = 0.0
+            self._cancel_door_entry_timer()
         _LOGGER.info("[%s] Manual override set to: %s", self.config.get(CONF_ROOM_NAME), state)
 
     def _release_clear_override(self, evidence: str) -> None:

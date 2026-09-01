@@ -904,8 +904,9 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "entry_gate_default_on": self.config.get(CONF_HAS_DOOR, False),
             "door_opened_since_clear": self._door_opened_since_clear,
             "entry_gate_blocks": self._entry_gate_blocks(),
-            # Instant door-entry occupancy
-            "door_entry_active": now < self._door_entry_until,
+            # Instant door-entry occupancy — mirror the state machine's effective
+            # guard (a manual override disables the provisional path).
+            "door_entry_active": now < self._door_entry_until and self._manual_override is None,
             "occupied_provisional": self._occupied_provisional,
             # Clear-pending state
             "clear_pending_start": self._clear_pending_start,

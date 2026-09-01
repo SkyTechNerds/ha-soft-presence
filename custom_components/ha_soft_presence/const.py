@@ -146,6 +146,11 @@ DEFAULT_OCCUPIED_THRESHOLD = 50
 DEFAULT_CLEAR_THRESHOLD = 20
 DEFAULT_NO_PRESENCE_TIMEOUT = 300       # 5 min before transitioning to CLEAR
 DEFAULT_MIN_HOLD_TIME = 60              # 1 min minimum in OCCUPIED before clearing
+# Instant occupancy on entry: a door-open provisionally promotes a door-room to
+# OCCUPIED immediately (lights react as you walk in), then auto-clears if no real
+# presence (mmWave/PIR/strong) confirms within this grace window. Opt-out per
+# room via CONF_DISABLE_DOOR_ENTRY (same switch as the entry gate).
+DOOR_ENTRY_GRACE = 45                   # s a door-open holds OCCUPIED awaiting presence confirmation
 # Transit rooms (hallways/corridors, is_transit=True) are pass-through: the
 # no-presence timeout is capped to this so a hallway clears quickly after the
 # last motion instead of lingering the full no_presence_timeout. Transit rooms

@@ -11,7 +11,7 @@ from typing import Any
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, Event, callback
 from homeassistant.helpers.debounce import Debouncer
-from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.helpers.event import async_call_later, async_track_state_change_event
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import (
@@ -78,6 +78,7 @@ from .const import (
     DEFAULT_CLEAR_THRESHOLD,
     DEFAULT_NO_PRESENCE_TIMEOUT,
     DEFAULT_MIN_HOLD_TIME,
+    DOOR_ENTRY_GRACE,
     TRANSIT_CLEAR_TIMEOUT,
     DEFAULT_DOOR_LOCKED_IN_TIMEOUT,
     DOOR_LOCK_SOLID_DURATION,
@@ -212,6 +213,19 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         # gate blocks promotion to OCCUPIED (only when the option is enabled).
         self._door_opened_since_clear: bool = True
 
+        # Instant-occupancy on entry: a door-open provisionally promotes the room
+        # to OCCUPIED until this timestamp, auto-clearing if no real presence
+        # confirms within the grace window. _occupied_provisional marks an
+        # occupancy that entered this way and has not yet been confirmed by a
+        # presence signal — it auto-clears (bypassing min-hold) when the window
+        # lapses. See _run_state_machine + the door-open event handler.
+        self._door_entry_until: float = 0.0
+        self._occupied_provisional: bool = False
+        # One-shot timer that forces a re-evaluation at grace expiry, so the
+        # auto-clear fires even when the "door opened, nobody entered" scenario
+        # produces no further sensor events to drive it.
+        self._door_entry_unsub = None
+
         # Manual override: "occupied" | "clear" | None
         self._manual_override: str | None = None
 
@@ -256,6 +270,7 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             unsub()
         self._unsubs.clear()
         self._cancel_clear_pending()
+        self._cancel_door_entry_timer()
 
     # ------------------------------------------------------------------
     # Entity helpers
@@ -320,6 +335,19 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 # Entry-gate: a door-open means someone could have entered, so
                 # presence signals are now trusted again until the next clear.
                 self._door_opened_since_clear = True
+                # Instant occupancy: provisionally hold OCCUPIED from now until the
+                # grace window ends; presence (mmWave/PIR/strong) must confirm
+                # within it or the room auto-clears. Same opt-out as the gate.
+                if self.config.get(CONF_HAS_DOOR, False) and not self.config.get(
+                    CONF_DISABLE_DOOR_ENTRY, False
+                ):
+                    self._door_entry_until = now + DOOR_ENTRY_GRACE
+                    # Force a re-evaluation exactly at grace expiry — the target
+                    # scenario (door opens, nobody enters) emits no further events.
+                    self._cancel_door_entry_timer()
+                    self._door_entry_unsub = async_call_later(
+                        self.hass, DOOR_ENTRY_GRACE, self._door_entry_expired
+                    )
                 self._release_clear_override("door opened")
             self._record_event(f"door_{'opened' if state == 'on' else 'closed'}", now)
         elif entity_id in sensors.get(CONF_LOCK_ENTITIES, []):
@@ -623,7 +651,18 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             s in _WEAK_HOLD_SOURCES for s in self._active_sources
         )
 
+        # Instant occupancy on entry: a recent door-open provisionally holds the
+        # room OCCUPIED until _door_entry_until (see the door-open handler), so
+        # lights react as you walk in instead of only once presence confirms.
+        # A manual override is in full charge — never let door-entry provisional
+        # occupancy promote or auto-clear against it.
+        door_entry_active = now < self._door_entry_until and self._manual_override is None
+
         if self._score >= occupied_threshold and not gate_blocks:
+            # Real presence confirms — normal OCCUPIED; drop any provisional entry.
+            self._door_entry_until = 0.0
+            self._occupied_provisional = False
+            self._cancel_door_entry_timer()
             if self._sm_state != SM_OCCUPIED:
                 _LOGGER.debug("[%s] → OCCUPIED (score=%d)", self.config.get(CONF_ROOM_NAME), self._score)
                 self._sm_state = SM_OCCUPIED
@@ -632,6 +671,26 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             # Always freeze the reason at the moment score crosses the threshold
             self._last_positive_reason = self._reason
             self._last_positive_sources = list(self._active_sources)
+
+        elif door_entry_active:
+            # Door recently opened, presence not (yet) confirmed — hold OCCUPIED
+            # for the grace window. Promote provisionally only from a genuinely
+            # non-occupied state: SM_OCCUPIED_STATES includes CLEAR_PENDING (a real
+            # occupancy winding down), which must NOT be re-labelled provisional —
+            # doing so would auto-clear it past its grace, bypassing min-hold.
+            if self._sm_state not in SM_OCCUPIED_STATES:
+                _LOGGER.debug("[%s] → OCCUPIED (door entry — provisional)", self.config.get(CONF_ROOM_NAME))
+                self._sm_state = SM_OCCUPIED
+                self._occupied_since = now
+                self._occupied_provisional = True
+                self._cancel_clear_pending()
+
+        elif self._occupied_provisional and self._manual_override is None:
+            # Provisional door-entry occupancy and the grace window has lapsed
+            # (door_entry_active is False here) with no presence confirmation →
+            # auto-clear now, bypassing min-hold (it was never confirmed).
+            _LOGGER.debug("[%s] → CLEAR (door entry unconfirmed)", self.config.get(CONF_ROOM_NAME))
+            self._finalize_clear()
 
         elif self._score <= clear_threshold or gate_blocks or only_ambient:
             if gate_blocks and self._score >= occupied_threshold:
@@ -764,31 +823,56 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._clear_pending_task = None
         self._clear_pending_start = None
 
+    def _cancel_door_entry_timer(self) -> None:
+        if self._door_entry_unsub is not None:
+            self._door_entry_unsub()
+            self._door_entry_unsub = None
+
+    @callback
+    def _door_entry_expired(self, _now) -> None:
+        """Grace window elapsed — re-run the state machine so an unconfirmed
+        door-entry occupancy auto-clears even with no further sensor events."""
+        self._door_entry_unsub = None
+        self.hass.async_create_task(self.async_request_refresh())
+
+    def _finalize_clear(self) -> None:
+        """Reset all per-session tracking on the transition to CLEAR.
+
+        Shared by the no-presence timeout path and the door-entry auto-clear
+        (an unconfirmed instant-occupancy that lapsed). Callers must ensure the
+        room should actually clear.
+        """
+        self._sm_state = SM_CLEAR
+        self._occupied_since = None
+        # Cancel any provisional door-entry occupancy.
+        self._occupied_provisional = False
+        self._door_entry_until = 0.0
+        self._cancel_door_entry_timer()
+        # End of OCCUPIED session — drop lock-in trust so it has to be
+        # re-earned on the next entry.
+        self._has_been_solid = False
+        self._solid_candidate_since = None
+        self._solid_had_corroboration = False
+        # Entry-gate: room is now empty — require a fresh door-open before
+        # presence signals may mark it occupied again.
+        self._door_opened_since_clear = False
+        # End of the occupancy cycle — any manual override has served its
+        # purpose (a forced-occupied room held through the session; a
+        # forced-clear room is now genuinely clear). Return to automatic
+        # so a stale override can never strand the room permanently.
+        if self._manual_override is not None:
+            _LOGGER.info(
+                "[%s] Manual override '%s' released (room cycled to CLEAR)",
+                self.config.get(CONF_ROOM_NAME), self._manual_override,
+            )
+            self._manual_override = None
+
     async def _async_clear_after_timeout(self, timeout: float) -> None:
         await asyncio.sleep(timeout)
         if self._sm_state == SM_CLEAR_PENDING:
             occupied_threshold = int(self.config.get(CONF_OCCUPIED_THRESHOLD, DEFAULT_OCCUPIED_THRESHOLD))
             if self._score < occupied_threshold:
-                self._sm_state = SM_CLEAR
-                self._occupied_since = None
-                # End of OCCUPIED session — drop lock-in trust so it has to be
-                # re-earned on the next entry.
-                self._has_been_solid = False
-                self._solid_candidate_since = None
-                self._solid_had_corroboration = False
-                # Entry-gate: room is now empty — require a fresh door-open before
-                # presence signals may mark it occupied again.
-                self._door_opened_since_clear = False
-                # End of the occupancy cycle — any manual override has served its
-                # purpose (a forced-occupied room held through the session; a
-                # forced-clear room is now genuinely clear). Return to automatic
-                # so a stale override can never strand the room permanently.
-                if self._manual_override is not None:
-                    _LOGGER.info(
-                        "[%s] Manual override '%s' released (room cycled to CLEAR)",
-                        self.config.get(CONF_ROOM_NAME), self._manual_override,
-                    )
-                    self._manual_override = None
+                self._finalize_clear()
                 _LOGGER.debug("[%s] → CLEAR (timeout expired)", self.config.get(CONF_ROOM_NAME))
                 await self.async_request_refresh()
 
@@ -820,6 +904,10 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "entry_gate_default_on": self.config.get(CONF_HAS_DOOR, False),
             "door_opened_since_clear": self._door_opened_since_clear,
             "entry_gate_blocks": self._entry_gate_blocks(),
+            # Instant door-entry occupancy — mirror the state machine's effective
+            # guard (a manual override disables the provisional path).
+            "door_entry_active": now < self._door_entry_until and self._manual_override is None,
+            "occupied_provisional": self._occupied_provisional,
             # Clear-pending state
             "clear_pending_start": self._clear_pending_start,
             "clear_pending_timeout": self._clear_pending_timeout,
@@ -942,6 +1030,15 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def set_override(self, state: str | None) -> None:
         """Set manual override: 'occupied', 'clear', or None to reset."""
         self._manual_override = state
+        # An applied override supersedes any in-flight door-entry provisional
+        # occupancy. Drop it (and its timer) now, otherwise a stale
+        # _occupied_provisional survives — the auto-clear branch is skipped while
+        # an override is set, so releasing the override later (with the grace
+        # window long expired) would fire an instant, min-hold-bypassing clear.
+        if state is not None:
+            self._occupied_provisional = False
+            self._door_entry_until = 0.0
+            self._cancel_door_entry_timer()
         _LOGGER.info("[%s] Manual override set to: %s", self.config.get(CONF_ROOM_NAME), state)
 
     def _release_clear_override(self, evidence: str) -> None:

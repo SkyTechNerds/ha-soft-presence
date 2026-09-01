@@ -11,7 +11,7 @@ from typing import Any
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, Event, callback
 from homeassistant.helpers.debounce import Debouncer
-from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.helpers.event import async_call_later, async_track_state_change_event
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import (
@@ -221,6 +221,10 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         # lapses. See _run_state_machine + the door-open event handler.
         self._door_entry_until: float = 0.0
         self._occupied_provisional: bool = False
+        # One-shot timer that forces a re-evaluation at grace expiry, so the
+        # auto-clear fires even when the "door opened, nobody entered" scenario
+        # produces no further sensor events to drive it.
+        self._door_entry_unsub = None
 
         # Manual override: "occupied" | "clear" | None
         self._manual_override: str | None = None
@@ -266,6 +270,7 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             unsub()
         self._unsubs.clear()
         self._cancel_clear_pending()
+        self._cancel_door_entry_timer()
 
     # ------------------------------------------------------------------
     # Entity helpers
@@ -337,6 +342,12 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     CONF_DISABLE_DOOR_ENTRY, False
                 ):
                     self._door_entry_until = now + DOOR_ENTRY_GRACE
+                    # Force a re-evaluation exactly at grace expiry — the target
+                    # scenario (door opens, nobody enters) emits no further events.
+                    self._cancel_door_entry_timer()
+                    self._door_entry_unsub = async_call_later(
+                        self.hass, DOOR_ENTRY_GRACE, self._door_entry_expired
+                    )
                 self._release_clear_override("door opened")
             self._record_event(f"door_{'opened' if state == 'on' else 'closed'}", now)
         elif entity_id in sensors.get(CONF_LOCK_ENTITIES, []):
@@ -651,6 +662,7 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             # Real presence confirms — normal OCCUPIED; drop any provisional entry.
             self._door_entry_until = 0.0
             self._occupied_provisional = False
+            self._cancel_door_entry_timer()
             if self._sm_state != SM_OCCUPIED:
                 _LOGGER.debug("[%s] → OCCUPIED (score=%d)", self.config.get(CONF_ROOM_NAME), self._score)
                 self._sm_state = SM_OCCUPIED
@@ -662,9 +674,11 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         elif door_entry_active:
             # Door recently opened, presence not (yet) confirmed — hold OCCUPIED
-            # for the grace window. Promote provisionally only from a non-occupied
-            # state; an already-confirmed occupancy is left as-is (not re-labelled).
-            if self._sm_state != SM_OCCUPIED:
+            # for the grace window. Promote provisionally only from a genuinely
+            # non-occupied state: SM_OCCUPIED_STATES includes CLEAR_PENDING (a real
+            # occupancy winding down), which must NOT be re-labelled provisional —
+            # doing so would auto-clear it past its grace, bypassing min-hold.
+            if self._sm_state not in SM_OCCUPIED_STATES:
                 _LOGGER.debug("[%s] → OCCUPIED (door entry — provisional)", self.config.get(CONF_ROOM_NAME))
                 self._sm_state = SM_OCCUPIED
                 self._occupied_since = now
@@ -809,6 +823,18 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._clear_pending_task = None
         self._clear_pending_start = None
 
+    def _cancel_door_entry_timer(self) -> None:
+        if self._door_entry_unsub is not None:
+            self._door_entry_unsub()
+            self._door_entry_unsub = None
+
+    @callback
+    def _door_entry_expired(self, _now) -> None:
+        """Grace window elapsed — re-run the state machine so an unconfirmed
+        door-entry occupancy auto-clears even with no further sensor events."""
+        self._door_entry_unsub = None
+        self.hass.async_create_task(self.async_request_refresh())
+
     def _finalize_clear(self) -> None:
         """Reset all per-session tracking on the transition to CLEAR.
 
@@ -821,6 +847,7 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         # Cancel any provisional door-entry occupancy.
         self._occupied_provisional = False
         self._door_entry_until = 0.0
+        self._cancel_door_entry_timer()
         # End of OCCUPIED session — drop lock-in trust so it has to be
         # re-earned on the next entry.
         self._has_been_solid = False

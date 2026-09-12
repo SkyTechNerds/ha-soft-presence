@@ -108,10 +108,17 @@ _SOURCE_LABELS: dict[str, str] = {
     "lock_recent": "Lock recently used",
 }
 
-# Signals that are positive proof of a *specific* person/headcount in the room
-# (identity via BLE, or a counted person). Unlike ambiguous motion (PIR/mmWave)
-# these never need door corroboration, so the entry-gate must not suppress them.
-_STRONG_SOURCES: tuple[str, ...] = ("ble_home", "person_count")
+# Signals that are positive proof of a person/headcount in the room and never
+# need door corroboration, so the entry-gate must not suppress them. Only a
+# counted person (camera) qualifies.
+#
+# BLE is deliberately NOT here: trilateration (Bermuda/ESPresense) regularly
+# mislocates a still phone into an ADJACENT room (e.g. a phone on the nightstand
+# in the guest room drifting into the guest bath) — that is not proof someone
+# entered. So in a door-room, BLE is subject to the entry-gate like ambiguous
+# motion: it may only mark the room occupied once a door has actually opened.
+# (Rooms without a door aren't gated, so BLE still holds them.)
+_STRONG_SOURCES: tuple[str, ...] = ("person_count",)
 
 # Weak "ambient" sources that are NOT proof of presence and must never keep a
 # room OCCUPIED on their own. A manually-on light stays on in an empty room, and
@@ -740,11 +747,13 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
              without a captured open-transition (e.g. the door is left open to
              air the room, the occupant walks in and closes it behind them, so
              no open-event ever fires; or a door sensor simply missed the open).
-          3. A STRONG presence signal is active — a BLE device located in this
-             room, or a person-count sensor > 0. These are positive proof of a
-             specific person/headcount and never need door corroboration; only
-             ambiguous motion (PIR/mmWave) is gated. (A human switching a light
-             on also opens the gate — see the light-switched-on event handler.)
+          3. A STRONG presence signal is active — a person-count sensor > 0
+             (camera). That is positive proof of a headcount and never needs door
+             corroboration. Ambiguous motion (PIR/mmWave) AND BLE are gated: BLE
+             trilateration mislocates a still phone into an adjacent room, so a
+             phone-in-room is not proof someone entered (see _STRONG_SOURCES).
+             (A human switching a light on also opens the gate — see the
+             light-switched-on event handler.)
         """
         if self.config.get(CONF_DISABLE_DOOR_ENTRY, False):
             return False

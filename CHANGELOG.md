@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow `YYYY.M.D` (Home Assistant style).
 
+## [2026.10.20] — 2026-10-20
+
+### Fixed
+
+- **A slow mmWave no longer leaves a just-entered room dark.** On door-open a
+  room is held OCCUPIED provisionally for `DOOR_ENTRY_GRACE` (45 s). If motion
+  confirmed only after that, the auto-clear also closed the entry-gate, so the
+  late mmWave/BLE signal was suppressed (`reason: … (suppressed: no door entry)`)
+  and the room stayed clear at score 100 until the door moved again. Observed:
+  an office where the occupant sat down at the desk; the SEN0395 mmWave fired
+  68 s after the door opened, the light went off at 45 s and stayed off. After
+  an unconfirmed door-entry auto-clear the gate now stays open for
+  `DOOR_ENTRY_LATE_CONFIRM` (180 s), so a late confirmation promotes the room
+  normally. A regular clear (no-presence timeout) still closes the gate at
+  once. New diagnostic attribute `entry_gate_late_confirm_s` shows the
+  remaining window.
+
 ## [2026.7.23] — 2026-07-23
 
 ### Fixed

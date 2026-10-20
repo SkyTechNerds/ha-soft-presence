@@ -79,6 +79,7 @@ from .const import (
     DEFAULT_NO_PRESENCE_TIMEOUT,
     DEFAULT_MIN_HOLD_TIME,
     DOOR_ENTRY_GRACE,
+    DOOR_ENTRY_LATE_CONFIRM,
     TRANSIT_CLEAR_TIMEOUT,
     DEFAULT_DOOR_LOCKED_IN_TIMEOUT,
     DOOR_LOCK_SOLID_DURATION,
@@ -219,6 +220,10 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         # door-open, reset to False on the transition to CLEAR. While False the
         # gate blocks promotion to OCCUPIED (only when the option is enabled).
         self._door_opened_since_clear: bool = True
+        # Late-confirm window: after an *unconfirmed* door-entry auto-clear the
+        # gate stays open until this timestamp, so presence that shows up just
+        # after the grace (slow mmWave) still counts as the captured entry.
+        self._entry_gate_open_until: float = 0.0
 
         # Instant-occupancy on entry: a door-open provisionally promotes the room
         # to OCCUPIED until this timestamp, auto-clearing if no real presence
@@ -698,6 +703,10 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             # auto-clear now, bypassing min-hold (it was never confirmed).
             _LOGGER.debug("[%s] → CLEAR (door entry unconfirmed)", self.config.get(CONF_ROOM_NAME))
             self._finalize_clear()
+            # Nobody confirmed yet, but someone may still be walking in or sit
+            # where the mmWave needs longer. Keep the gate open a little longer
+            # so a late confirmation is not suppressed as "no door entry".
+            self._entry_gate_open_until = now + DOOR_ENTRY_LATE_CONFIRM
 
         elif self._score <= clear_threshold or gate_blocks or only_ambient:
             if gate_blocks and self._score >= occupied_threshold:
@@ -741,7 +750,7 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         never blocks an already-occupied room — a room the lock-in holds through
         a closed door (someone still inside) is never suppressed.
 
-        Three exemptions keep the gate from suppressing *real* presence:
+        Four exemptions keep the gate from suppressing *real* presence:
           1. Entry was captured — a door opened since the last CLEAR.
           2. A door is currently OPEN — free access, presence is plausible even
              without a captured open-transition (e.g. the door is left open to
@@ -754,6 +763,10 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
              phone-in-room is not proof someone entered (see _STRONG_SOURCES).
              (A human switching a light on also opens the gate — see the
              light-switched-on event handler.)
+          4. Late confirmation — for DOOR_ENTRY_LATE_CONFIRM seconds after a
+             door-entry auto-clear (grace lapsed with no confirmation) the gate
+             stays open, so a slow mmWave that confirms a seated occupant just
+             after the grace is not suppressed.
         """
         if self.config.get(CONF_DISABLE_DOOR_ENTRY, False):
             return False
@@ -764,6 +777,9 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             return False
         # 1) Entry captured since the last clear → trust presence
         if self._door_opened_since_clear:
+            return False
+        # 1b) Late-confirm window after an unconfirmed door-entry auto-clear
+        if time.time() < self._entry_gate_open_until:
             return False
         # 2) A door is currently open → free access, don't gate
         for eid in door_ids:
@@ -865,6 +881,9 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         # Entry-gate: room is now empty — require a fresh door-open before
         # presence signals may mark it occupied again.
         self._door_opened_since_clear = False
+        # A real clear closes any late-confirm window (the provisional
+        # auto-clear path re-opens it right after calling this).
+        self._entry_gate_open_until = 0.0
         # End of the occupancy cycle — any manual override has served its
         # purpose (a forced-occupied room held through the session; a
         # forced-clear room is now genuinely clear). Return to automatic
@@ -912,6 +931,10 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "disable_door_entry": self.config.get(CONF_DISABLE_DOOR_ENTRY, False),
             "entry_gate_default_on": self.config.get(CONF_HAS_DOOR, False),
             "door_opened_since_clear": self._door_opened_since_clear,
+            "entry_gate_late_confirm_s": (
+                round(self._entry_gate_open_until - now, 1)
+                if now < self._entry_gate_open_until else None
+            ),
             "entry_gate_blocks": self._entry_gate_blocks(),
             # Instant door-entry occupancy — mirror the state machine's effective
             # guard (a manual override disables the provisional path).

@@ -151,6 +151,10 @@ DEFAULT_MIN_HOLD_TIME = 60              # 1 min minimum in OCCUPIED before clear
 # presence (mmWave/PIR/strong) confirms within this grace window. Opt-out per
 # room via CONF_DISABLE_DOOR_ENTRY (same switch as the entry gate).
 DOOR_ENTRY_GRACE = 45                   # s a door-open holds OCCUPIED awaiting presence confirmation
+# When the grace lapses unconfirmed, the entry-gate stays open this much longer:
+# a slow mmWave (observed 68 s for a seated occupant) can still confirm the
+# entry instead of being suppressed as "no door entry" until the door moves again.
+DOOR_ENTRY_LATE_CONFIRM = 180           # s the gate stays open after a provisional auto-clear
 # Transit rooms (hallways/corridors, is_transit=True) are pass-through: the
 # no-presence timeout is capped to this so a hallway clears quickly after the
 # last motion instead of lingering the full no_presence_timeout. Transit rooms

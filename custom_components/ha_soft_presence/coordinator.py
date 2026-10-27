@@ -83,6 +83,7 @@ from .const import (
     TRANSIT_CLEAR_TIMEOUT,
     DEFAULT_DOOR_LOCKED_IN_TIMEOUT,
     DOOR_LOCK_SOLID_DURATION,
+    DOOR_LOCK_MOTION_EDGE_MARGIN,
     BLE_DWELL_SECONDS,
     DEFAULT_POLL_INTERVAL,
     DEFAULT_LLM_UPDATE_INTERVAL,
@@ -146,6 +147,11 @@ _LOCKIN_WEAK_SOURCES: tuple[str, ...] = (
     "door_recent",
     "lock_recent",
 )
+
+# Motion sources only corroborate the lock-in after a fresh motion edge that
+# follows the last door-close (see DOOR_LOCK_MOTION_EDGE_MARGIN). Lingering
+# "on" states from someone glancing in through the door do not count.
+_LOCKIN_MOTION_SOURCES: tuple[str, ...] = ("mmwave", "pir", "pir_recent")
 
 
 _MAX_EVENT_LOG = 30
@@ -213,6 +219,11 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         # True, so a device left behind (BLE-only) can never pin the room. Reset
         # whenever the streak breaks. See _LOCKIN_WEAK_SOURCES.
         self._solid_had_corroboration: bool = False
+        # Timestamps for the lock-in motion-edge check: last door-close and last
+        # motion edge (PIR on; mmWave on only in rooms without PIR). None = not
+        # observed since startup.
+        self._door_closed_at: float | None = None
+        self._motion_edge_at: float | None = None
 
         # Entry-gate tracking: has a door opened since the room was last CLEAR?
         # Starts True (fail-open) so occupancy is allowed before the first clear
@@ -328,11 +339,14 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         if entity_id in sensors.get(CONF_MMWAVE_SENSORS, []):
             if state == "on":
+                if not sensors.get(CONF_PIR_SENSORS):
+                    self._motion_edge_at = now
                 self._release_clear_override("mmWave motion")
             self._record_event(f"mmwave_{'on' if state == 'on' else 'off'}", now)
         elif entity_id in sensors.get(CONF_PIR_SENSORS, []):
             if state == "on":
                 self._last_event["pir"] = now
+                self._motion_edge_at = now
                 self._release_clear_override("PIR motion")
             self._record_event(f"pir_{'on' if state == 'on' else 'off'}", now)
         elif entity_id in sensors.get(CONF_DOOR_SENSORS, []):
@@ -361,6 +375,8 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                         self.hass, DOOR_ENTRY_GRACE, self._door_entry_expired
                     )
                 self._release_clear_override("door opened")
+            else:
+                self._door_closed_at = now
             self._record_event(f"door_{'opened' if state == 'on' else 'closed'}", now)
         elif entity_id in sensors.get(CONF_LOCK_ENTITIES, []):
             if state in ("unlocked", "unlocking"):
@@ -453,7 +469,12 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             # must appear during the streak. A BLE-only (or ambient-only) streak
             # never arms the lock-in — a phone left behind must not pin the room
             # for 4 h. Latches for the streak; cleared when the streak breaks.
-            if any(s not in _LOCKIN_WEAK_SOURCES for s in self._active_sources):
+            motion_ok = self._motion_edge_since_door_closed()
+            if any(
+                s not in _LOCKIN_WEAK_SOURCES
+                and (motion_ok or s not in _LOCKIN_MOTION_SOURCES)
+                for s in self._active_sources
+            ):
                 self._solid_had_corroboration = True
             if self._solid_candidate_since is None:
                 self._solid_candidate_since = now
@@ -791,6 +812,19 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             return False
         return True
 
+    def _motion_edge_since_door_closed(self) -> bool:
+        """True if a fresh motion edge followed the last door-close.
+
+        Fail-open when no door-close has been observed since startup: the room
+        may already have been occupied behind a closed door before HA started.
+        """
+        if self._door_closed_at is None:
+            return True
+        return (
+            self._motion_edge_at is not None
+            and self._motion_edge_at >= self._door_closed_at + DOOR_LOCK_MOTION_EDGE_MARGIN
+        )
+
     def _effective_clear_timeout(self, default_timeout: float, now: float) -> float:
         """Return a longer timeout when the room is in a locked-in state.
 
@@ -927,6 +961,7 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "solid_candidate_since": self._solid_candidate_since,
             "solid_candidate_age_s": round(now - self._solid_candidate_since, 1) if self._solid_candidate_since else None,
             "solid_had_corroboration": self._solid_had_corroboration,
+            "motion_edge_since_door_closed": self._motion_edge_since_door_closed(),
             # Entry-gate state
             "disable_door_entry": self.config.get(CONF_DISABLE_DOOR_ENTRY, False),
             "entry_gate_default_on": self.config.get(CONF_HAS_DOOR, False),

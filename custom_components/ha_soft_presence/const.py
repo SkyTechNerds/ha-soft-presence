@@ -169,6 +169,14 @@ DEFAULT_DOOR_LOCKED_IN_TIMEOUT = 14400  # 4 h cap when door has been closed sinc
 # the lock-in and held the empty room for the 4 h cap. A real occupant behind a
 # closed door easily exceeds 5 min, so lock-in still engages when it should.
 DOOR_LOCK_SOLID_DURATION = 300
+# Motion that merely trails a door-close does not prove someone is inside. A
+# glance into the room (door open, look, close) leaves the PIR in its ~30 s
+# hold and a Tuya mmWave on for many minutes, which used to arm the 4 h
+# lock-in for an empty room. Motion only corroborates the lock-in when a fresh
+# motion edge (PIR off→on; mmWave off→on in rooms without PIR) arrives at least
+# this many seconds after the last door-close. The margin absorbs Zigbee
+# reordering of the glance's own PIR edge and the door-close report.
+DOOR_LOCK_MOTION_EDGE_MARGIN = 5
 # BLE area dwell filter. A flapping BLE area tracker (BLE triangulation such as
 # Bermuda, or ESPresense) briefly names a room the device is not actually in
 # (RSSI noise makes the phone "jump" through several rooms in seconds while it

@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow `YYYY.M.D` (Home Assistant style).
 
+## [2026.10.27] — 2026-10-27
+
+### Fixed
+
+- **Glancing into a room no longer pins it occupied for 4 h.** The door
+  lock-in armed on any motion signal during the 5 min solid streak, including
+  the trailing "on" state of a PIR (≈30 s hold) or a slow-to-clear mmWave.
+  Observed: a guest room where someone opened the door, looked in and closed it
+  again (door open for 4 s). The Tuya mmWave stayed on for 11 min, the lock-in
+  armed after 5 min and the empty room stayed occupied until the 14 400 s cap.
+  Motion now only corroborates the lock-in after a fresh motion edge (PIR
+  off→on; mmWave off→on in rooms without PIR) at least
+  `DOOR_LOCK_MOTION_EDGE_MARGIN` (5 s) after the last door-close. Non-motion
+  corroboration (person count, workstation, media) is unchanged. Without an
+  observed door-close since startup the old behaviour applies (fail-open).
+  New diagnostic field `motion_edge_since_door_closed`.
+
 ## [2026.10.20] — 2026-10-20
 
 ### Fixed

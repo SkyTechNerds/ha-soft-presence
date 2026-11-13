@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow `YYYY.M.D` (Home Assistant style).
 
+## [2026.11.13] — 2026-11-13
+
+### Fixed
+
+- **A hallway reached by stairs no longer stays dark.** The entry-gate ignores
+  motion until a door has opened since the last clear. A transit room is also
+  entered by stairs or an open passage without a door contact. Observed: an
+  upstairs hallway with six room doors, all closed, never became occupied when
+  someone came up the stairs (`suppressed: no door entry`). Transit rooms
+  (`is_transit`) are now exempt from the entry-gate. A door-open still gives
+  instant provisional occupancy there. Rooms that are not transit rooms are
+  unchanged.
+
+  Note: a PIR alone scores 35, below the default occupied threshold of 50. A
+  transit room without mmWave needs `occupied_threshold` at 35 or lower to
+  react to motion alone.
+
 ## [2026.10.27] — 2026-10-27
 
 ### Fixed

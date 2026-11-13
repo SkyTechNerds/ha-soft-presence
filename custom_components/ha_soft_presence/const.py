@@ -160,6 +160,8 @@ DOOR_ENTRY_LATE_CONFIRM = 180           # s the gate stays open after a provisio
 # last motion instead of lingering the full no_presence_timeout. Transit rooms
 # also skip the door lock-in and the sleep-mode clear-threshold lowering — at
 # night a hallway should clear FASTER, not stay occupied like a bedroom.
+# They are exempt from the entry-gate too: stairs and open passages have no
+# door contact, so a closed set of doors does not prove nobody walked in.
 TRANSIT_CLEAR_TIMEOUT = 60              # cap for is_transit rooms
 DEFAULT_DOOR_LOCKED_IN_TIMEOUT = 14400  # 4 h cap when door has been closed since OCCUPIED (locked-in)
 # Need this many seconds of (score>=occupied AND all doors closed) to trust

@@ -788,10 +788,17 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
              door-entry auto-clear (grace lapsed with no confirmation) the gate
              stays open, so a slow mmWave that confirms a seated occupant just
              after the grace is not suppressed.
+
+        Transit rooms (CONF_IS_TRANSIT) are never gated: a hallway is reached
+        by stairs or an open passage that has no door contact, so "no door
+        opened" proves nothing there. Their doors still give instant occupancy
+        on open (see the door-open event handler).
         """
         if self.config.get(CONF_DISABLE_DOOR_ENTRY, False):
             return False
         if not self.config.get(CONF_HAS_DOOR, False):
+            return False
+        if self.config.get(CONF_IS_TRANSIT, False):
             return False
         door_ids = self.config.get("sensors", {}).get(CONF_DOOR_SENSORS, [])
         if not door_ids:
@@ -964,7 +971,10 @@ class SoftPresenceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "motion_edge_since_door_closed": self._motion_edge_since_door_closed(),
             # Entry-gate state
             "disable_door_entry": self.config.get(CONF_DISABLE_DOOR_ENTRY, False),
-            "entry_gate_default_on": self.config.get(CONF_HAS_DOOR, False),
+            "entry_gate_default_on": (
+                self.config.get(CONF_HAS_DOOR, False)
+                and not self.config.get(CONF_IS_TRANSIT, False)
+            ),
             "door_opened_since_clear": self._door_opened_since_clear,
             "entry_gate_late_confirm_s": (
                 round(self._entry_gate_open_until - now, 1)
